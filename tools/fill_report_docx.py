@@ -4,6 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import shutil
 import tempfile
 import xml.etree.ElementTree as ET
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -423,6 +424,12 @@ def main() -> None:
         for idx, (paragraph, current) in enumerate(nonempty):
             if current == "Üliõpilane:":
                 set_paragraph_text(paragraph, "Üliõpilased: Tristan Aik Sild, Gustav Tamkivi")
+            if current == "Õpperühm:":
+                set_paragraph_text(paragraph, "Õpperühm: IAIB23")
+            if current == "Matrikli nr:":
+                set_paragraph_text(paragraph, "Matrikli nr: , 253787IAIB")
+            if current == "e-posti aadress:":
+                set_paragraph_text(paragraph, "e-posti aadressid: gustav@taltech.ee, trists@taltech.ee")
             if current == "Treeningutele registreerumise funktsionaalne allsüsteem" and idx > 0 and "Aktiveeri treening" in nonempty[idx - 1][1]:
                 set_paragraph_text(paragraph, "Joonisel esitatakse treeningu aktiveerimise protsess alates treeneri soovist muuta treening aktiivseks kuni seisundimuudatuse salvestamiseni.")
             if current == "treeningu_seisundi_liik" and idx + 8 < len(nonempty):
@@ -477,6 +484,106 @@ def main() -> None:
         for idx, (paragraph, current) in enumerate(nonempty):
             if current == ")" and idx > 0 and nonempty[idx - 1][1] == ")":
                 set_paragraph_text(paragraph, "")
+
+        body = root.find("w:body", NS)
+        if body is not None:
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if "HYPERLINK" not in text:
+                    continue
+                if (
+                    "Sissejuhatus (Andmebaasid II)" in text
+                    or re.search(r'"\s+[45](?:\.\d+)*', text)
+                    or "Realisatsioon PostgreSQLis" in text
+                    or "Realisatsioon Oracles" in text
+                ):
+                    body.remove(child)
+                    continue
+                cleaned = replace_all(text, all_replacements)
+                cleaned = cleaned.replace("6\tTehisintellekti kasutus", "4\tTehisintellekti kasutus")
+                cleaned = cleaned.replace("7\tKasutatud materjalid", "5\tKasutatud materjalid")
+                cleaned = cleaned.replace("6Tehisintellekti kasutus", "4\tTehisintellekti kasutus")
+                cleaned = cleaned.replace("7Kasutatud materjalid", "5\tKasutatud materjalid")
+                if cleaned != text:
+                    set_paragraph_text(child, cleaned)
+
+            # Keep booking as a related whole-system process/register, but do not
+            # present it as an extra detailed entity in the selected X register.
+            deleting_booking_detail = False
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if text == "Treeningule_registreerumine":
+                    deleting_booking_detail = True
+                if deleting_booking_detail and text == "Atribuutide definitsioonid":
+                    deleting_booking_detail = False
+                if deleting_booking_detail:
+                    body.remove(child)
+
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if "Treeningule_registreerumineCRRRR" in text:
+                    set_paragraph_text(child, text.replace("Treeningule_registreerumineCRRRR", ""))
+
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if text == "Tehisintellekti kasutus on lubatud ja soositud, kuid lõpptulemuse õigsuse eest vastutavad töö autorid.":
+                    set_paragraph_text(
+                        child,
+                        "Töö koostamisel kasutati OpenAI ChatGPT/Codex abi töövihiku täitmise mustandite koostamiseks, juhendmaterjalide põhjal kontrollnimekirja tegemiseks, sõnastuse ühtlustamiseks ja dokumendi tehniliseks genereerimiseks. Autorid kontrollisid ja suunasid tehisintellekti pakutud sisu ning vastutavad lõpptulemuse õigsuse eest.",
+                    )
+
+            # Remove workbook instruction/comment tail that follows the actual
+            # references in the converted template, and cite the extra guides used.
+            trimming_tail = False
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if text.startswith("Stackoverflow. What is the maximum length of a valid email address?"):
+                    set_paragraph_text(
+                        child,
+                        text
+                        + "\nIseseisva töö ülesande püstitus ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
+                        + "\nProjekti juhend ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
+                        + "\nProjekti mustripõhine juhend ITI0206. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
+                        + "\nProjekti tüüpvigade materjal ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
+                        + "\nNäidisprojekt ITI0206 vastuvõtuajad. [WWW] https://maurus.ttu.ee/390 (01.05.2026)",
+                    )
+                    trimming_tail = True
+                    continue
+                if trimming_tail:
+                    body.remove(child)
+
+        # The 2026 ITI0206 guide explicitly says these sections may be deleted for
+        # Andmebaasid I; they are continued in Andmebaasid II.
+        def delete_section(start_title: str, end_title: str) -> None:
+            body = root.find("w:body", NS)
+            if body is None:
+                return
+            children = list(body)
+            deleting = False
+            for child in children:
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if text == start_title:
+                    deleting = True
+                if deleting and text == end_title:
+                    deleting = False
+                if deleting:
+                    body.remove(child)
+
+        delete_section("Sissejuhatus (Andmebaasid II)", "Strateegiline analüüs")
+        delete_section("Realisatsioon PostgreSQLis", "Realisatsioon Oracles")
+        delete_section("Realisatsioon Oracles", "Tehisintellekti kasutus")
 
         tree.write(doc_xml, encoding="utf-8", xml_declaration=True)
 
