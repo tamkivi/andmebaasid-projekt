@@ -199,7 +199,7 @@ def main() -> None:
             ),
             (
                 "Võimaldab rühmitada treening klassifitseerimiseks kasutatavaid kategooriaid ühise nime alla. Kategooria tüüp kirjeldab, mis liiki klassifikatsiooniga on tegemist. treeningu_kategooria_tüüp näide on <abc>, sest iga treeningu on seotud null või rohkema <abc>-ga ning iga <abc> on seotud null või rohkema Treening-ga.",
-                "Võimaldab rühmitada treeningute klassifitseerimiseks kasutatavaid kategooriaid ühise nime alla. Kategooria tüüp kirjeldab, mis liiki klassifikatsiooniga on tegemist. treeningu_kategooria_tüüp näide on treeningu liik, sest iga treening on seotud null või rohkema treeningu liigiga ning iga treeningu liik on seotud null või rohkema treeninguga.",
+                "Võimaldab rühmitada treeningute klassifitseerimiseks kasutatavaid kategooriaid ühise nime alla. Kategooria tüüp kirjeldab, mis liiki klassifikatsiooniga on tegemist. treeningu_kategooria_tüübi näide on treeningu liik, sest iga treening on seotud null või rohkema treeningu liigiga ning iga treeningu liik on seotud null või rohkema treeninguga.",
             ),
             (
                 "Näiteks treeningu_kategooria_tüüp <abc> alla kuuluvate kategooriate näited on <täienda>",
@@ -291,12 +291,12 @@ def main() -> None:
             ("Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel ja aktiivne.<täienda>Klassifikaatorite register<täienda> Võimalike väärtuste näited on<täienda><täienda><täienda><täienda>", "Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel, aktiivne, mitteaktiivne ja lõpetatud.Treeningule_registreerumineTreeningutele registreerumise registerNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul. Võimalike väärtuste näited on kliendi registreerumine grupitreeningule või eratrenni ajale.Registreeringu_seisundi_liikKlassifikaatorite registerSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud."),
             ("Treening<täienda>", "Treeningnimetus\nTreeningu nimetus, mida kuvatakse töötajatele, klientidele ja uudistajatele.\n\n{1. @Kohustuslik. 2. Nimetus ei tohi olla tühi string. 3. Nimetus peab olema treeningute hulgas unikaalne.}\nJõutreening algajatele\nTreeningkirjeldus\nTreeningu sisu lühikirjeldus kliendile ja töötajale.\n\n{1. @Kohustuslik. 2. Kirjeldus ei tohi olla tühi string.}\nAlgajatele mõeldud juhendatud jõutreening, kus õpitakse põhilisi harjutusi.\nTreeningkestus_minutites\nTreeningu planeeritud kestus minutites.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv. 3. Väärtus peab olema vahemikus 15 kuni 240.}\n60\nTreeningmaksimaalne_osalejate_arv\nTreeningul osaleda võivate klientide maksimaalne arv.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv.}\n12\nTreeningvajalik_varustus\nTreeningul osalemiseks vajalik varustus või märge, et erivarustust ei ole vaja.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla tühi string.}\nTreeningmatt ja hantlid\nTreeninghind\nTreeningul osalemise hind eurodes.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla negatiivne.}\n15.00"),
             ("OP1 Registreeri treening(\np_treeningu_kood, \n<täienda>\np_e_meil, \n<täienda>\n)", "OP1 Registreeri treening(\np_treeningu_kood,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\n<täienda>", "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\nEi leidu teist treening eksemplari, millel on sama treeningu_kood või sama nimetus"),
+            ("treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\n<täienda>", "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\nEi leidu teist treeningu eksemplari, millel on sama treeningu_kood või sama nimetus"),
             ("o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\n<täienda>", "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\no.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind"),
             ("o ja t (viimase muutja rollis) seos on registreeritud\n<täienda>", "o ja t (viimase muutja rollis) seos on registreeritud"),
-            ("OP4 Muuda treening mitteaktiivseks (\n<täienda>\n)\nEeltingimused:\n<täienda>\nJäreltingimused:\n--Kustuta seoseid\n<täienda>\n--Loo seoseid\n<täienda>\n--Väärtusta atribuute\n<täienda>", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreening eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:\n--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg"),
+            ("OP4 Muuda treening mitteaktiivseks (\n<täienda>\n)\nEeltingimused:\n<täienda>\nJäreltingimused:\n--Kustuta seoseid\n<täienda>\n--Loo seoseid\n<täienda>\n--Väärtusta atribuute\n<täienda>", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:\n--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg"),
             ("OP6 Muuda treeningut (\np_treeningu_kood_vana, \np_treeningu_kood_uus, \np_e_meil,\n<täienda>\n)", "OP6 Muuda treeningut (\np_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\n<täienda>", "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\nEi leidu teist treening eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus"),
+            ("o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\n<täienda>", "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\nEi leidu teist treeningu eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus"),
             ("o.treeningu_kood:= p_treeningu_kood_uus\n<täienda>", "o.treeningu_kood:= p_treeningu_kood_uus\no.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg"),
             ("p_treening kategooria_kood", "p_treeningu_kategooria_kood"),
             ("OP8 Eemalda treening kategooriast", "OP8 Eemalda treeningu kategooriast"),
@@ -339,14 +339,14 @@ def main() -> None:
                     "Klassifikaatorite register": "Seisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.",
                     "p_treeningu_kood,": "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
                     "p_e_meil,": "",
-                    "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud": "Ei leidu teist treening eksemplari, millel on sama treeningu_kood või sama nimetus",
+                    "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud": "Ei leidu teist treeningu eksemplari, millel on sama treeningu_kood või sama nimetus",
                     "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg": "o.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind",
                     "--Kustuta seoseid": "o olemasolev seos viimase muutjaga on kustutatud",
                     "--Loo seoseid": "o ja t (viimase muutja rollis) seos on registreeritud",
                     "--Väärtusta atribuute": "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
                     "p_e_meil,": "",
                     "p_treeningu_kood_uus,": "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
-                    "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))": "Ei leidu teist treening eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus",
+                    "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))": "Ei leidu teist treeningu eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus",
                     "o.treeningu_kood:= p_treeningu_kood_uus": "o.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
                 }
                 if previous == "Treening" and previous_previous == "Eelarve":
@@ -381,7 +381,7 @@ def main() -> None:
             "",
             "o ja t (viimase muutja rollis) seos on registreeritud",
             "p_treeningu_kood,\np_e_meil",
-            "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreening eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
+            "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
             "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
             "o olemasolev seos viimase muutjaga on kustutatud",
             "o ja t (viimase muutja rollis) seos on registreeritud",
@@ -399,15 +399,35 @@ def main() -> None:
                     set_paragraph_text(paragraph, current.replace("<täienda>", "").replace("<täienda või kustuta>", ""))
 
         final_replacements = [
+            ("Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.2024", "Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.\n2026"),
             ("Treeningutele registreerumise register Võimalike väärtuste näited onTreeningutele registreerumise register", "Treeningutele registreerumise register"),
             ("Treeningutele registreerumise register\nTreeningutele registreerumise register", "Treeningutele registreerumise register\nNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul."),
             ("Treeningutele registreerumise register\n\nTreeningutele registreerumise register", "Treeningutele registreerumise register\n\nNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul."),
             ("Registreeringu_seisundi_liik\nKlassifikaatorite register\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.", "Registreeringu_seisundi_liik\nKlassifikaatorite register\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud."),
             ("OP1 Registreeri treening(\np_treeningu_kood, \nRegistreeringu_seisundi_liik\np_e_meil, \nKlassifikaatorite register\n)", "OP1 Registreeri treening(\np_treeningu_kood,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
             ("o ja t (viimase muutja rollis) seos on registreeritud\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.", "o ja t (viimase muutja rollis) seos on registreeritud"),
-            ("OP4 Muuda treening mitteaktiivseks (\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\n)\nEeltingimused:\n\nJäreltingimused:", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreening eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:"),
+            ("OP4 Muuda treening mitteaktiivseks (\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\n)\nEeltingimused:\n\nJäreltingimused:", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:"),
             ("--Kustuta seoseid\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks", "--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks"),
             ("OP6 Muuda treeningut (\np_treeningu_kood_vana, \np_treeningu_kood_uus, \np_e_meil,\n\n)", "OP6 Muuda treeningut (\np_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
+            ("viimase muutmise aeg. treeninguga", "viimase muutmise aeg. Treeninguga"),
+            ("treening on registreeritud", "treening on registreeritud"),
+            ("Järeltingimused: treening on registreeritud", "Järeltingimused: Treening on registreeritud"),
+            ("Eeltingimused: treener on autenditud ja autoriseeritud. treening on registreeritud", "Eeltingimused: treener on autenditud ja autoriseeritud. Treening on registreeritud"),
+            ("„Mitteaktiivne“. treening on määratud", "„Mitteaktiivne“. Treening on määratud"),
+            ("Eeltingimused: Juhataja on autenditud ja autoriseeritud. treening on registreeritud", "Eeltingimused: Juhataja on autenditud ja autoriseeritud. Treening on registreeritud"),
+            ("endiselt alles. treeningu andmeid", "endiselt alles. Treeningu andmeid"),
+            ("uue treening registreerida", "uue treeningu registreerida"),
+            ("treener sisestab treeningu andmed", "treener sisestab treeningu andmed"),
+            ("viimase muudatuse teinud töötajale – need andmed", "viimase muudatuse teinud töötajale – need andmed"),
+            ("ühtegi treeningut kategooriat", "ühtegi treeningu kategooriat"),
+            ("treening enam tehinguid ei tehta", "treeninguga enam tehinguid ei tehta"),
+            ("treeningu_kategooria_tüüp näide", "treeningu_kategooria_tüübi näide"),
+            ("tegemist. treeningu_kategooria", "tegemist. Treeningu_kategooria"),
+            ("autoriseeritud. treeningu seisundi liigid", "autoriseeritud. Treeningu seisundi liigid"),
+            ("Isike_meil", "Isik\ne_meil"),
+            ("{1. @Kohustuslik.2. treening unikaalne identifikaator.}", "{1. @Kohustuslik. 2. Treeningu unikaalne identifikaator.}"),
+            ("süsteem ise automaatselt määrata. treeningu registreerimisel", "süsteem ise automaatselt määrata. Treeningu registreerimisel"),
+            ("treening eksemplar", "treeningu eksemplar"),
         ]
         whole = ET.tostring(root, encoding="unicode")
         for old, new in final_replacements:
@@ -427,9 +447,13 @@ def main() -> None:
             if current == "Õpperühm:":
                 set_paragraph_text(paragraph, "Õpperühm: IAIB23")
             if current == "Matrikli nr:":
-                set_paragraph_text(paragraph, "Matrikli nr: , 253787IAIB")
+                set_paragraph_text(paragraph, "Matrikli nr: Tristan Aik Sild: ; Gustav Tamkivi: 253787IAIB")
             if current == "e-posti aadress:":
-                set_paragraph_text(paragraph, "e-posti aadressid: gustav@taltech.ee, trists@taltech.ee")
+                set_paragraph_text(paragraph, "e-posti aadressid: Gustav Tamkivi: gustav@taltech.ee; Tristan Aik Sild: trists@taltech.ee")
+            if current == "Tallinn":
+                set_paragraph_text(paragraph, "Tallinn\n2026")
+            if current.endswith("töös viidatud.2024"):
+                set_paragraph_text(paragraph, current.replace("töös viidatud.2024", "töös viidatud.\n2026"))
             if current == "Treeningutele registreerumise funktsionaalne allsüsteem" and idx > 0 and "Aktiveeri treening" in nonempty[idx - 1][1]:
                 set_paragraph_text(paragraph, "Joonisel esitatakse treeningu aktiveerimise protsess alates treeneri soovist muuta treening aktiivseks kuni seisundimuudatuse salvestamiseni.")
             if current == "treeningu_seisundi_liik" and idx + 8 < len(nonempty):
@@ -459,7 +483,7 @@ def main() -> None:
                     "p_treeningu_kood,\np_e_meil",
                     ")",
                     "Eeltingimused:",
-                    "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreening eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
+                    "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
                     "Järeltingimused:",
                     "--Kustuta seoseid",
                     "o ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud",
@@ -506,6 +530,8 @@ def main() -> None:
                 cleaned = cleaned.replace("7\tKasutatud materjalid", "5\tKasutatud materjalid")
                 cleaned = cleaned.replace("6Tehisintellekti kasutus", "4\tTehisintellekti kasutus")
                 cleaned = cleaned.replace("7Kasutatud materjalid", "5\tKasutatud materjalid")
+                cleaned = re.sub(r"(\d+(?:\.\d+)*)treeningute", r"\1\ttreeningute", cleaned)
+                cleaned = re.sub(r"(\d+(?:\.\d+)*)Kasutusjuht:", r"\1\tKasutusjuht:", cleaned)
                 if cleaned != text:
                     set_paragraph_text(child, cleaned)
 
@@ -537,7 +563,7 @@ def main() -> None:
                 if text == "Tehisintellekti kasutus on lubatud ja soositud, kuid lõpptulemuse õigsuse eest vastutavad töö autorid.":
                     set_paragraph_text(
                         child,
-                        "Töö koostamisel kasutati OpenAI ChatGPT/Codex abi töövihiku täitmise mustandite koostamiseks, juhendmaterjalide põhjal kontrollnimekirja tegemiseks, sõnastuse ühtlustamiseks ja dokumendi tehniliseks genereerimiseks. Autorid kontrollisid ja suunasid tehisintellekti pakutud sisu ning vastutavad lõpptulemuse õigsuse eest.",
+                        "Töö koostamisel kasutati OpenAI ChatGPT/Codex abi töövihiku täitmise mustandite koostamiseks, juhendmaterjalide põhjal kontrollnimekirja tegemiseks, sõnastuse ühtlustamiseks, Enterprise Architecti mudeli tehniliseks uuendamiseks ja dokumendi tehniliseks genereerimiseks. Kasutatud viibad olid sisult näiteks: täida jõusaali/treeningute valdkonna põhjal töövihiku lüngad, kontrolli vastavust ITI0206 juhendile ja tüüpvigade materjalile, leia alles jäänud mallikohad ning uuenda EA mudelis mallinimetused valdkonnaterminitega. Tehisintellekt oli abiks mustandite ja kontrollide kiirendamisel, kuid autorid kontrollisid, parandasid ja suunasid pakutud sisu ning vastutavad lõpptulemuse õigsuse eest.",
                     )
 
             # Remove workbook instruction/comment tail that follows the actual
