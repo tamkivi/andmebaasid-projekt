@@ -6,10 +6,11 @@ import tempfile
 import xml.etree.ElementTree as ET
 import re
 
+from sql_ddl import SQL_DDL
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "work" / "AB_projekt_taidetav.docx"
-DST = ROOT / "work" / "AB_projekt_taidetav_filled.docx"
+DST = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx"
 
 
 def replace_all(text: str, replacements: list[tuple[str, str]]) -> str:
@@ -399,6 +400,7 @@ def main() -> None:
                     set_paragraph_text(paragraph, current.replace("<täienda>", "").replace("<täienda või kustuta>", ""))
 
         final_replacements = [
+            ("Vastuvõtuaegade haldamise süsteemi", "Jõusaali infosüsteemi treeningute funktsionaalse allsüsteemi"),
             ("Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.2024", "Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.\n2026"),
             ("Treeningutele registreerumise register Võimalike väärtuste näited onTreeningutele registreerumise register", "Treeningutele registreerumise register"),
             ("Treeningutele registreerumise register\nTreeningutele registreerumise register", "Treeningutele registreerumise register\nNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul."),
@@ -409,6 +411,8 @@ def main() -> None:
             ("OP4 Muuda treening mitteaktiivseks (\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\n)\nEeltingimused:\n\nJäreltingimused:", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:"),
             ("--Kustuta seoseid\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks", "--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks"),
             ("OP6 Muuda treeningut (\np_treeningu_kood_vana, \np_treeningu_kood_uus, \np_e_meil,\n\n)", "OP6 Muuda treeningut (\np_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
+            ("Eeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar", "Eeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar"),
+            ("--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\nKasutus kasutusjuhtude poolt: Muuda treeningut", "--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\nKasutus kasutusjuhtude poolt: Registreeri treening, Muuda treeningut"),
             ("viimase muutmise aeg. treeninguga", "viimase muutmise aeg. Treeninguga"),
             ("treening on registreeritud", "treening on registreeritud"),
             ("Järeltingimused: treening on registreeritud", "Järeltingimused: Treening on registreeritud"),
@@ -447,7 +451,7 @@ def main() -> None:
             if current == "Õpperühm:":
                 set_paragraph_text(paragraph, "Õpperühm: IAIB23")
             if current == "Matrikli nr:":
-                set_paragraph_text(paragraph, "Matrikli nr: Tristan Aik Sild: ; Gustav Tamkivi: 253787IAIB")
+                set_paragraph_text(paragraph, "Matrikli nr: Tristan Aik Sild: 253782IAIB; Gustav Tamkivi: 253787IAIB")
             if current == "e-posti aadress:":
                 set_paragraph_text(paragraph, "e-posti aadressid: Gustav Tamkivi: gustav@taltech.ee; Tristan Aik Sild: trists@taltech.ee")
             if current == "Tallinn":
@@ -499,6 +503,16 @@ def main() -> None:
                 set_paragraph_text(nonempty[idx + 2][0], ")")
                 set_paragraph_text(nonempty[idx + 3][0], "Eeltingimused:")
                 set_paragraph_text(nonempty[idx + 4][0], "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud")
+                # Clear the duplicate Eeltingimused + Töötaja that follows from <täienda> expansion
+                for j in range(idx + 5, min(idx + 7, len(nonempty))):
+                    t = nonempty[j][1]
+                    if t == "Eeltingimused:" or t == "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud":
+                        set_paragraph_text(nonempty[j][0], "")
+                # Fix OP6 usage reference to include Registreeri treening
+                for j in range(idx, min(idx + 25, len(nonempty))):
+                    if nonempty[j][1] == "Kasutus kasutusjuhtude poolt: Muuda treeningut":
+                        set_paragraph_text(nonempty[j][0], "Kasutus kasutusjuhtude poolt: Registreeri treening, Muuda treeningut")
+                        break
 
         nonempty = []
         for paragraph in paragraphs:
@@ -606,6 +620,42 @@ def main() -> None:
                     deleting = False
                 if deleting:
                     body.remove(child)
+
+        # Insert SQL DDL into Chapter 3 after the diagrams description
+        sql_heading = "Treeningute registrite tabelite loomise laused"
+        sql_found = False
+        for child in list(body):
+            if child.tag != f"{{{NS['w']}}}p":
+                continue
+            text = paragraph_text(child)
+            if text == sql_heading:
+                sql_found = True
+                break
+        if not sql_found:
+            insert_after = None
+            for child in list(body):
+                if child.tag != f"{{{NS['w']}}}p":
+                    continue
+                text = paragraph_text(child)
+                if text.startswith("Järgnevalt esitatakse diagrammid"):
+                    insert_after = child
+                    break
+            if insert_after is not None:
+                idx = list(body).index(insert_after) + 1
+                # Create heading paragraph
+                def make_paragraph(text: str) -> ET.Element:
+                    p = ET.Element(f"{{{NS['w']}}}p")
+                    r = ET.SubElement(p, f"{{{NS['w']}}}r")
+                    t_el = ET.SubElement(r, f"{{{NS['w']}}}t")
+                    t_el.text = text
+                    t_el.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+                    return p
+
+                body.insert(idx, make_paragraph(sql_heading))
+                idx += 1
+                for sql_line in SQL_DDL.strip().split("\n"):
+                    body.insert(idx, make_paragraph(sql_line))
+                    idx += 1
 
         delete_section("Sissejuhatus (Andmebaasid II)", "Strateegiline analüüs")
         delete_section("Realisatsioon PostgreSQLis", "Realisatsioon Oracles")

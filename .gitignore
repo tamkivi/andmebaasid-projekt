@@ -8,3 +8,5 @@ work/reference_texts/
 work/report.txt
 work/report_filled.txt
 tools/*.class
+tools/*.jar
+__pycache__/
