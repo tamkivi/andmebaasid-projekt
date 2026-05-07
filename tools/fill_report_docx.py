@@ -29,6 +29,11 @@ AUTHOR_EMAILS = "Gustav Tamkivi: gustav@taltech.ee; Tristan Aik Sild: trists@tal
 SYSTEM_NAME = "Jõusaali infosüsteem"
 SUBSYSTEM_NAME = "Treeningute funktsionaalne allsüsteem"
 REGISTER_NAME = "Treeningute register"
+UNIVERSITY = "TALLINNA TEHNIKAÜLIKOOL"
+FACULTY = "Infotehnoloogia teaduskond"
+INSTITUTE = "Tarkvarateaduse instituut"
+COURSE = "Andmebaasid I, ITI0206"
+SUPERVISOR = "Erki Eessaar"
 
 
 ACTORS = [
@@ -612,7 +617,11 @@ def setup_document() -> Document:
 
 
 def add_title_page(doc: Document) -> None:
-    for _ in range(4):
+    for value in [UNIVERSITY, FACULTY, INSTITUTE]:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.add_run(value)
+    for _ in range(5):
         doc.add_paragraph()
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -620,18 +629,19 @@ def add_title_page(doc: Document) -> None:
     run.bold = True
     run.font.size = Pt(20)
     run.font.color.rgb = RGBColor(31, 78, 121)
-    doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.add_run("Süsteemianalüüsi ja andmebaasi disaini projekt").bold = True
-    doc.add_paragraph()
+    p.add_run(COURSE).bold = True
+    for _ in range(5):
+        doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.add_run(
-        f"Autorid: {AUTHORS}\n"
+        f"Üliõpilased: {AUTHORS}\n"
         f"Õpperühm: {STUDY_GROUP}\n"
         f"Matrikli nr: {MATRICULATION_NUMBERS}\n"
         f"e-posti aadressid: {AUTHOR_EMAILS}\n"
+        f"Juhendaja: {SUPERVISOR}\n"
         "Tallinn 2026"
     )
     doc.add_page_break()
@@ -711,8 +721,8 @@ def add_use_cases(doc: Document, counter: CaptionCounter, diagrams: list[tuple[P
     add_table(doc, "Kõrgtaseme kasutusjuhud", ["Kasutusjuht", "Tegutsejad", "Kirjeldus"], HIGH_LEVEL_USE_CASES, counter)
 
     add_heading(doc, "4.2 Laiendatud kasutusjuhud", 2)
-    for uc in EXTENDED_USE_CASES:
-        add_heading(doc, f"4.2 {uc['name']}", 3)
+    for index, uc in enumerate(EXTENDED_USE_CASES, start=1):
+        add_heading(doc, f"4.2.{index} {uc['name']}", 3)
         add_table(doc, f"Laiendatud kasutusjuht: {uc['name']}", ["Väli", "Sisu"], [
             ("Kasutusjuht", uc["name"]),
             ("Primaarne tegutseja", uc["actor"]),
@@ -779,7 +789,7 @@ def add_data_design(doc: Document, counter: CaptionCounter, diagrams: list[tuple
 
 def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
     add_heading(doc, "8 Reprodutseerimine ja kontroll", 1)
-    doc.add_paragraph("Projekt on taastoodetav jälgitavatest lähtefailidest. Lõppartefaktid genereeritakse skriptiga, mis loob DOCX dokumendi, teisendab EAP malli ja rakendab EAP parandused.")
+    doc.add_paragraph("Projekt on taastoodetav jälgitavatest lähtefailidest. Lõppartefaktid genereeritakse skriptiga, mis loob DOCX dokumendi, teisendab EAP malli, rakendab EAP parandused ning väljastab PostgreSQL DDL skripti.")
     add_table(doc, "Taastootmise sisendid ja väljundid", ["Fail või kataloog", "Roll"], [
         ("instruction_guides/", "Kursuse juhendid, näidisprojekt ja tüüpvigade dokument."),
         ("preset_files/EA_mall_AB_projekt_Eeltaidetud_2026.eap", "EAP lähtebaas, millest lõplik mudel teisendatakse."),
@@ -787,6 +797,8 @@ def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
         ("tools/EapConvert.java", "EAP malli teisendaja kirjutatavasse Access 2000 vormingusse."),
         ("tools/EapRename.java ja tools/EapFixes.java", "EAP mudeli nime- ja sisuparandused."),
         ("tools/sql_ddl.py", "PostgreSQL DDL lähtefail."),
+        ("jousaali_skript.sql", "Esitamiseks mõeldud PostgreSQL tabelite loomise skript."),
+        ("rakendus/", "Treeneri töökoha prototüübi lähtekood ja käivitamisjuhend."),
         ("tools/validate_project.py", "Automaatne kontrollskript."),
         ("build_all.sh või build_all.bat", "Lõppartefaktide taastootmine puhtast kloonist."),
     ], counter)

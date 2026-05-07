@@ -77,6 +77,17 @@ def validate_docx(failures: list[str]) -> None:
         ok(f"DOCX has real heading styles ({heading_count})")
     else:
         fail(f"DOCX heading style count too low ({heading_count})", failures)
+    heading_numbers = []
+    for paragraph in doc.paragraphs:
+        if paragraph.style.name.startswith("Heading"):
+            match = re.match(r"^(\d+(?:\.\d+)*)\b", paragraph.text.strip())
+            if match:
+                heading_numbers.append(match.group(1))
+    duplicate_heading_numbers = sorted({number for number in heading_numbers if heading_numbers.count(number) > 1})
+    if duplicate_heading_numbers:
+        fail(f"DOCX contains duplicate visible heading numbers: {duplicate_heading_numbers}", failures)
+    else:
+        ok("DOCX visible heading numbers are unique")
     if table_count >= 10:
         ok(f"DOCX has real Word tables ({table_count})")
     else:
@@ -112,19 +123,32 @@ def validate_docx(failures: list[str]) -> None:
         ok("DOCX known bad wording is absent")
 
     required_title_info = [
+        "TALLINNA TEHNIKAÜLIKOOL",
+        "Infotehnoloogia teaduskond",
+        "Tarkvarateaduse instituut",
+        "Andmebaasid I, ITI0206",
         "Tristan Aik Sild",
         "Gustav Tamkivi",
+        "Üliõpilased:",
         "Õpperühm: IAIB23",
         "253782IAIB",
         "253787IAIB",
         "gustav@taltech.ee",
         "trists@taltech.ee",
+        "Juhendaja: Erki Eessaar",
     ]
     missing_title_info = [item for item in required_title_info if item not in text]
     if missing_title_info:
         fail(f"DOCX title page is missing author/student information: {missing_title_info}", failures)
     else:
-        ok("DOCX title page contains author names, study group, matriculation numbers, and emails")
+        ok("DOCX title page contains institution, course, author names, study group, matriculation numbers, emails, and supervisor")
+
+    required_repro_info = ["jousaali_skript.sql", "rakendus/"]
+    missing_repro_info = [item for item in required_repro_info if item not in text]
+    if missing_repro_info:
+        fail(f"DOCX reproducibility section is missing submission artifact references: {missing_repro_info}", failures)
+    else:
+        ok("DOCX reproducibility section references the standalone SQL script and application prototype")
 
     op_refs = set(re.findall(r"\bOP\d+(?:\.\d+)?\b", text))
     op_defs = set(re.findall(r"^OP\d+\s+", text, re.M))
