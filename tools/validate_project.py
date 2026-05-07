@@ -8,8 +8,9 @@ import re
 import shutil
 import subprocess
 import sys
-from pathlib import Path
-from zipfile import ZipFile
+import tempfile
+from pathlib import Path, PurePosixPath
+from zipfile import BadZipFile, ZipFile
 
 from docx import Document
 from PIL import Image
@@ -20,6 +21,7 @@ EAP = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap"
 GUIDES = ROOT / "instruction_guides"
 SQL_OUTPUT = ROOT / "jousaali_skript.sql"
 APP_DIR = ROOT / "rakendus"
+SUBMISSION_DIR = ROOT / "submission_files"
 sys.path.insert(0, str(ROOT / "tools"))
 from sql_ddl import SQL_DDL  # noqa: E402
 
@@ -33,6 +35,56 @@ EXPECTED_ACTORS = {
     "Töötajate haldur",
 }
 
+EXPECTED_APP_ZIP_FILES = {
+    ".env.example",
+    "README.md",
+    "SETUP.sh",
+    "app.py",
+    "requirements.txt",
+    "test_data.sql",
+    "templates/base.html",
+    "templates/dashboard.html",
+    "templates/error.html",
+    "templates/login.html",
+    "templates/register_training.html",
+    "templates/report.html",
+    "templates/trainings.html",
+}
+
+EXPECTED_APP_ZIP_TOP_LEVEL = {
+    ".env.example",
+    "README.md",
+    "SETUP.sh",
+    "app.py",
+    "requirements.txt",
+    "test_data.sql",
+    "templates",
+}
+
+FORBIDDEN_ZIP_COMPONENTS = {"__MACOSX", "__pycache__", "venv", ".venv", "flask_session"}
+FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env"}
+FORBIDDEN_ZIP_SUFFIXES = {".pyc", ".pyo", ".class", ".jar"}
+
+PLACEHOLDER_RE = re.compile(
+    r"<täienda|<Siia|TODO\b|FIXME\b|TBD\b|Lorem ipsum|example text|sample text|template leftover",
+    re.I,
+)
+
+SOURCE_PLACEHOLDER_FILES = [
+    "rakendus/README.md",
+    "rakendus/app.py",
+    "rakendus/.env.example",
+    "rakendus/SETUP.sh",
+    "rakendus/test_data.sql",
+    "rakendus/templates/base.html",
+    "rakendus/templates/dashboard.html",
+    "rakendus/templates/error.html",
+    "rakendus/templates/login.html",
+    "rakendus/templates/register_training.html",
+    "rakendus/templates/report.html",
+    "rakendus/templates/trainings.html",
+]
+
 
 def fail(message: str, failures: list[str]) -> None:
     failures.append(message)
@@ -45,6 +97,95 @@ def ok(message: str) -> None:
 
 def warn(message: str) -> None:
     print(f"WARN: {message}")
+
+
+def zip_file_entries(names: list[str]) -> set[str]:
+    return {name.rstrip("/") for name in names if name.rstrip("/") and not name.endswith("/")}
+
+
+def zip_top_level_entries(names: list[str]) -> set[str]:
+    top_level = set()
+    for name in names:
+        stripped = name.rstrip("/")
+        if not stripped:
+            continue
+        parts = PurePosixPath(stripped).parts
+        if parts:
+            top_level.add(parts[0])
+    return top_level
+
+
+def unsafe_zip_entries(names: list[str]) -> list[str]:
+    unsafe = []
+    for name in names:
+        stripped = name.rstrip("/")
+        parts = PurePosixPath(stripped).parts
+        if name.startswith("/") or ".." in parts:
+            unsafe.append(name)
+    return unsafe
+
+
+def forbidden_zip_entries(names: list[str]) -> list[str]:
+    forbidden = []
+    for name in names:
+        stripped = name.rstrip("/")
+        if not stripped:
+            continue
+        parts = PurePosixPath(stripped).parts
+        base_name = parts[-1]
+        if any(part in FORBIDDEN_ZIP_COMPONENTS for part in parts):
+            forbidden.append(name)
+            continue
+        if base_name in FORBIDDEN_ZIP_FILENAMES:
+            forbidden.append(name)
+            continue
+        if PurePosixPath(base_name).suffix.lower() in FORBIDDEN_ZIP_SUFFIXES:
+            forbidden.append(name)
+    return forbidden
+
+
+def image_pixel_data(image: Image.Image):
+    if hasattr(image, "get_flattened_data"):
+        return image.get_flattened_data()
+    return image.getdata()
+
+
+def read_zip_checked(path: Path, failures: list[str]) -> list[str]:
+    if not path.exists():
+        fail(f"submission ZIP is missing: {path.relative_to(ROOT)}", failures)
+        return []
+    try:
+        with ZipFile(path) as archive:
+            bad_entry = archive.testzip()
+            if bad_entry:
+                fail(f"{path.name} has a corrupt ZIP entry: {bad_entry}", failures)
+            else:
+                ok(f"{path.name} passes ZIP integrity check")
+
+            names = archive.namelist()
+            if not names:
+                fail(f"{path.name} is empty", failures)
+
+            unsafe = unsafe_zip_entries(names)
+            if unsafe:
+                fail(f"{path.name} contains unsafe ZIP paths: {unsafe}", failures)
+            else:
+                ok(f"{path.name} contains no unsafe ZIP paths")
+
+            forbidden = forbidden_zip_entries(names)
+            if forbidden:
+                fail(f"{path.name} contains forbidden local/generated files: {forbidden}", failures)
+            else:
+                ok(f"{path.name} contains no forbidden local/generated files")
+
+            if not unsafe:
+                with tempfile.TemporaryDirectory(prefix=f"validate_{path.stem}_") as tmp_dir:
+                    archive.extractall(tmp_dir)
+                ok(f"{path.name} extracts cleanly")
+            return names
+    except BadZipFile as exc:
+        fail(f"{path.name} is not a readable ZIP file: {exc}", failures)
+        return []
 
 
 def docx_text(doc: Document) -> str:
@@ -187,7 +328,7 @@ def validate_docx(failures: list[str]) -> None:
                 "bottom": image.crop((0, height - edge, width, height)),
             }
             for side, crop in edge_crops.items():
-                nonwhite = sum(1 for pixel in crop.getdata() if pixel[0] < 245 or pixel[1] < 245 or pixel[2] < 245)
+                nonwhite = sum(1 for pixel in image_pixel_data(crop) if pixel[0] < 245 or pixel[1] < 245 or pixel[2] < 245)
                 if nonwhite > 0:
                     clipped_images.append(f"{name}:{side}")
     if clipped_images:
@@ -395,7 +536,8 @@ def validate_repo(failures: list[str]) -> None:
 
     if APP_DIR.exists():
         try:
-            py_compile.compile(str(APP_DIR / "app.py"), doraise=True)
+            with tempfile.TemporaryDirectory(prefix="validate_pycompile_") as tmp_dir:
+                py_compile.compile(str(APP_DIR / "app.py"), cfile=str(Path(tmp_dir) / "app.pyc"), doraise=True)
             ok("application prototype Python source compiles")
         except py_compile.PyCompileError as exc:
             fail(f"application prototype Python source does not compile: {exc}", failures)
@@ -423,12 +565,102 @@ def validate_repo(failures: list[str]) -> None:
         fail(f"application contains local-only files that should not be committed: {[str(path.relative_to(ROOT)) for path in local_only]}", failures)
 
 
+def validate_submission_files(failures: list[str]) -> None:
+    script_path = SUBMISSION_DIR / "skript.sql"
+    if not script_path.exists():
+        fail("submission_files/skript.sql is missing", failures)
+    elif script_path.stat().st_size == 0:
+        fail("submission_files/skript.sql is empty", failures)
+    else:
+        ok("submission_files/skript.sql exists and is non-empty")
+        if SQL_OUTPUT.exists() and script_path.read_text(encoding="utf-8").strip() == SQL_OUTPUT.read_text(encoding="utf-8").strip():
+            ok("submission_files/skript.sql matches the standalone SQL script")
+        elif SQL_OUTPUT.exists():
+            fail("submission_files/skript.sql does not match jousaali_skript.sql", failures)
+
+    dokument_names = read_zip_checked(SUBMISSION_DIR / "dokument.zip", failures)
+    mudelid_names = read_zip_checked(SUBMISSION_DIR / "mudelid.zip", failures)
+    app_names = read_zip_checked(SUBMISSION_DIR / "rakendus.zip", failures)
+
+    dokument_files = zip_file_entries(dokument_names)
+    if dokument_files == {"dokument.docx"}:
+        ok("dokument.zip contains the expected top-level DOCX only")
+    else:
+        fail(f"dokument.zip contents are not exactly dokument.docx: {sorted(dokument_files)}", failures)
+
+    mudelid_files = zip_file_entries(mudelid_names)
+    if mudelid_files == {"mudelid.eap"}:
+        ok("mudelid.zip contains the expected top-level EAP only")
+    else:
+        fail(f"mudelid.zip contents are not exactly mudelid.eap: {sorted(mudelid_files)}", failures)
+
+    app_files = zip_file_entries(app_names)
+    missing_app_files = sorted(EXPECTED_APP_ZIP_FILES - app_files)
+    if missing_app_files:
+        fail(f"rakendus.zip is missing expected app files: {missing_app_files}", failures)
+    else:
+        ok("rakendus.zip contains expected application files, including README.md")
+
+    app_top_level = zip_top_level_entries(app_names)
+    missing_top_level = sorted(EXPECTED_APP_ZIP_TOP_LEVEL - app_top_level)
+    extra_top_level = sorted(app_top_level - EXPECTED_APP_ZIP_TOP_LEVEL)
+    if missing_top_level or extra_top_level:
+        fail(f"rakendus.zip top-level contents mismatch. missing={missing_top_level}, extra={extra_top_level}", failures)
+    else:
+        ok("rakendus.zip top-level contents match the expected app package")
+
+    app_zip_path = SUBMISSION_DIR / "rakendus.zip"
+    if app_zip_path.exists() and not missing_app_files:
+        with ZipFile(app_zip_path) as archive:
+            stale_entries = []
+            placeholder_hits = []
+            for entry in sorted(EXPECTED_APP_ZIP_FILES):
+                source_path = APP_DIR / entry
+                if not source_path.is_file():
+                    continue
+                archive_bytes = archive.read(entry)
+                source_bytes = source_path.read_bytes()
+                if archive_bytes != source_bytes:
+                    stale_entries.append(entry)
+                if source_path.suffix in {".md", ".py", ".html", ".sql", ".sh"} or source_path.name == ".env.example":
+                    text = archive_bytes.decode("utf-8", errors="replace")
+                    matches = sorted({match.group(0) for match in PLACEHOLDER_RE.finditer(text)})
+                    if matches:
+                        placeholder_hits.append(f"{entry}: {matches}")
+            if stale_entries:
+                fail(f"rakendus.zip contains stale files that differ from rakendus/: {stale_entries}", failures)
+            else:
+                ok("rakendus.zip app files match the current rakendus/ source files")
+            if placeholder_hits:
+                fail(f"rakendus.zip contains unresolved placeholder/template text: {placeholder_hits}", failures)
+            else:
+                ok("rakendus.zip README/source files have no unresolved placeholder/template text")
+
+
+def validate_source_placeholders(failures: list[str]) -> None:
+    placeholder_hits = []
+    for rel_path in SOURCE_PLACEHOLDER_FILES:
+        path = ROOT / rel_path
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        matches = sorted({match.group(0) for match in PLACEHOLDER_RE.finditer(text)})
+        if matches:
+            placeholder_hits.append(f"{rel_path}: {matches}")
+    if placeholder_hits:
+        fail(f"application README/source files contain unresolved placeholder/template text: {placeholder_hits}", failures)
+    else:
+        ok("application README/source files have no unresolved placeholder/template text")
+
+
 def main() -> int:
     failures: list[str] = []
     validate_docx(failures)
     validate_sql(failures)
     validate_eap(failures)
     validate_repo(failures)
+    validate_submission_files(failures)
+    validate_source_placeholders(failures)
     if failures:
         print(f"\nValidation failed with {len(failures)} issue(s).")
         return 1

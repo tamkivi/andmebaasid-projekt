@@ -9,6 +9,14 @@ Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist,
 - **Autorid:** Tristan Aik Sild, Gustav Tamkivi
 - **Tehnoloogia:** Python Flask + PostgreSQL
 
+## Keskkonna piirid
+
+- Rakendus on lokaalne õppeprojekti prototüüp, mitte tootmiskeskkonna rakendus.
+- PostgreSQL on nõutud; rakendus ei tööta ainult failipõhise või mälus oleva andmebaasiga.
+- Enne käivitamist tuleb `.env.example` kopeerida failiks `.env` ja kohandada PostgreSQL ühenduse väärtused.
+- Rakendus kasutab räsitud paroole, sessiooni, parameeterdatud SQL päringuid ja rollipõhiseid õiguseid. README ei väida tootmiskeskkonna turvameetmeid, näiteks CSRF-kaitset, sest neid ei ole prototüübis eraldi realiseeritud.
+- Kui kursuse töötajad nõuavad TalTech PostgreSQL serverisse laadimist või demoandmebaasi seadistamist, tuleb see teha eraldi kohaliku prototüübi käivitamisest.
+
 ## ✨ Omadused
 
 ### Kasutajate rollid
@@ -108,6 +116,44 @@ python app.py
 ```
 
 Rakendus peaks käivituma: `http://localhost:5000`
+
+## Andmebaasi suitsutest submission_files põhjal
+
+Järgmised käsud eeldavad, et PostgreSQL töötab lokaalselt ja käsud käivitatakse kaustast `rakendus/` pärast virtuaalkeskkonna aktiveerimist. Vajaduse korral asendage kasutaja `postgres` oma kohaliku PostgreSQL kasutajaga.
+
+```bash
+# Looge või lähtestage puhas testandmebaas
+dropdb -U postgres --if-exists jousaali_smoke
+createdb -U postgres jousaali_smoke
+
+# Käivitage lõplik esitatav SQL skript
+psql -U postgres -v ON_ERROR_STOP=1 -d jousaali_smoke -f ../submission_files/skript.sql
+
+# Lisage valikulised testiandmed
+psql -U postgres -v ON_ERROR_STOP=1 -d jousaali_smoke -f test_data.sql
+
+# Kontrollige, et tabelid ja näidisandmed on olemas
+psql -U postgres -d jousaali_smoke -c '\dt'
+psql -U postgres -d jousaali_smoke -c 'SELECT COUNT(*) AS treeninguid FROM treening;'
+
+# Seadistage rakendus sama andmebaasi kasutama
+cp .env.example .env
+```
+
+Muutke `.env` failis vähemalt järgmised väärtused:
+
+```env
+DB_NAME=jousaali_smoke
+DB_USER=postgres
+DB_PASSWORD=postgres
+```
+
+Seejärel käivitage rakendus ja kontrollige ühendust eraldi terminalis:
+
+```bash
+python app.py
+curl -fsS http://127.0.0.1:5000/trainings >/dev/null && echo "App connects"
+```
 
 ## 📊 Andmebaasi skeem
 
