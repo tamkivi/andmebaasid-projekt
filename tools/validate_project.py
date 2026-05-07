@@ -378,6 +378,7 @@ def validate_repo(failures: list[str]) -> None:
         "rakendus/templates/error.html",
         "rakendus/templates/login.html",
         "rakendus/templates/register_training.html",
+        "rakendus/templates/report.html",
         "rakendus/templates/trainings.html",
     ]:
         if not (ROOT / path).exists():

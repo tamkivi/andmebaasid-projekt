@@ -258,6 +258,21 @@ public class EapFixes {
     }
 
     private void fixStateTransitions() throws Exception {
+        updateById("t_object", "Object_ID", 58, Map.of(
+            "Object_Type", "State",
+            "Name", "Lõppenud",
+            "NType", 0,
+            "ModifiedDate", new Date()
+        ));
+        updateById("t_object", "Object_ID", 61, Map.of(
+            "Object_Type", "State",
+            "Name", "Unustatud",
+            "NType", 0,
+            "ModifiedDate", new Date()
+        ));
+        updateDiagramObject(6, 58, 835, -324, 955, -384);
+        updateDiagramObject(6, 61, 835, -166, 955, -226);
+
         updateById("t_connector", "Connector_ID", 49, Map.of(
             "Name", "Treener tahab treeningu aktiveerida, sest treeningu ooteperiood või treeninguga seotud ajutised probleemid on lahenenud",
             "PDATA2", "Treening kuulub vähemalt ühte Treeningu_kategooriasse",
@@ -283,6 +298,26 @@ public class EapFixes {
             "PDATA2", z(),
             "PDATA3", "OP15"
         ));
+    }
+
+    private void updateDiagramObject(int diagramId, int objectId, int left, int top, int right, int bottom) throws Exception {
+        Table table = db.getTable("t_diagramobjects");
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if (row.get("Diagram_ID") instanceof Number
+                && row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Diagram_ID")).intValue() == diagramId
+                && ((Number) row.get("Object_ID")).intValue() == objectId) {
+                row.put("RectLeft", left);
+                row.put("RectTop", top);
+                row.put("RectRight", right);
+                row.put("RectBottom", bottom);
+                cursor.updateCurrentRowFromMap(row);
+                return;
+            }
+        }
+        addDiagramObject(diagramId, objectId, left, top, right, bottom, 1);
     }
 
     private int addObjectFromTemplate(int templateObjectId, int packageId, String type, int nType, String name, String note) throws Exception {

@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Uus treening - Jõusaali Infosüsteem{% endblock %}
+{% block title %}{% if mode == 'edit' %}Muuda treeningut{% else %}Uus treening{% endif %} - Jõusaali Infosüsteem{% endblock %}
 
 {% block content %}
 <div class="container-lg">
     <div class="row">
         <div class="col-lg-8 offset-lg-2">
             <h1 class="mb-4">
-                <i class="bi bi-plus-circle"></i> Registreeri uus treening
+                {% if mode == 'edit' %}
+                    <i class="bi bi-pencil-square"></i> Muuda treeningut
+                {% else %}
+                    <i class="bi bi-plus-circle"></i> Registreeri uus treening
+                {% endif %}
             </h1>
 
             {% if error %}
@@ -18,14 +22,15 @@
 
             <div class="card">
                 <div class="card-body p-4">
-                    <form id="trainingForm" action="/trainer/register-training" method="POST">
+                    <form id="trainingForm" action="{% if mode == 'edit' %}/trainer/edit-training/{{ training.treeningu_kood }}{% else %}/trainer/register-training{% endif %}" method="POST">
                         <!-- Nimetus -->
                         <div class="mb-4">
                             <label for="name" class="form-label">
                                 <i class="bi bi-pencil"></i> Treeningu nimetus *
                             </label>
                             <input type="text" class="form-control form-control-lg" id="name" name="name"
-                                   placeholder="Näiteks: Ühiselt jõutreening, Yoga jne" required>
+                                   value="{{ training.nimetus if training else '' }}"
+                                   placeholder="Näiteks: ühine jõutreening või jooga" required>
                             <small class="form-text text-muted">Unikaalne nimetus treeningu jaoks</small>
                         </div>
 
@@ -35,7 +40,7 @@
                                 <i class="bi bi-file-text"></i> Kirjeldus *
                             </label>
                             <textarea class="form-control" id="description" name="description" rows="4"
-                                      placeholder="Kirjeldage treeningu sisu, eesmärki, vajaliku taseme jne" required></textarea>
+                                      placeholder="Kirjeldage treeningu sisu, eesmärki ja vajalikku taset" required>{{ training.kirjeldus if training else '' }}</textarea>
                         </div>
 
                         <!-- Kestus ja osalised -->
@@ -45,7 +50,7 @@
                                     <i class="bi bi-clock"></i> Kestus (minutites) *
                                 </label>
                                 <input type="number" class="form-control form-control-lg" id="duration" name="duration"
-                                       min="15" max="240" value="60" required>
+                                       min="15" max="240" value="{{ training.kestus_minutites if training else 60 }}" required>
                                 <small class="form-text text-muted">Vahemikus 15-240 minutit</small>
                             </div>
 
@@ -54,7 +59,7 @@
                                     <i class="bi bi-people"></i> Maks. osalised *
                                 </label>
                                 <input type="number" class="form-control form-control-lg" id="max_participants"
-                                       name="max_participants" min="1" value="10" required>
+                                       name="max_participants" min="1" value="{{ training.maksimaalne_osalejate_arv if training else 10 }}" required>
                             </div>
                         </div>
 
@@ -64,7 +69,8 @@
                                 <i class="bi bi-tools"></i> Vajalik varustus *
                             </label>
                             <input type="text" class="form-control form-control-lg" id="equipment" name="equipment"
-                                   placeholder="Näiteks: hantel komplekt, matt, treening pall jne" required>
+                                   value="{{ training.vajalik_varustus if training else '' }}"
+                                   placeholder="Näiteks: hantlid, matid või treeningpallid" required>
                         </div>
 
                         <!-- Hind -->
@@ -73,7 +79,7 @@
                                 <i class="bi bi-euro"></i> Hind (€) *
                             </label>
                             <input type="number" class="form-control form-control-lg" id="price" name="price"
-                                   step="0.01" min="0" value="15.00" required>
+                                   step="0.01" min="0" value="{{ training.hind if training else '15.00' }}" required>
                         </div>
 
                         <!-- Kategooriad -->
@@ -86,7 +92,8 @@
                                     <div class="col-md-6">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="categories"
-                                                   value="{{ category.kood }}" id="cat_{{ category.kood }}">
+                                                   value="{{ category.kood }}" id="cat_{{ category.kood }}"
+                                                   {% if category.kood in selected_categories %}checked{% endif %}>
                                             <label class="form-check-label" for="cat_{{ category.kood }}">
                                                 {{ category.nimetus }}
                                             </label>
@@ -102,7 +109,11 @@
                         <!-- Nupud -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
-                                <i class="bi bi-check-circle"></i> Registreeri
+                                {% if mode == 'edit' %}
+                                    <i class="bi bi-check-circle"></i> Salvesta muudatused
+                                {% else %}
+                                    <i class="bi bi-check-circle"></i> Registreeri
+                                {% endif %}
                             </button>
                             <a href="/trainings" class="btn btn-secondary btn-lg flex-grow-1">
                                 <i class="bi bi-x-circle"></i> Tühista
@@ -115,9 +126,9 @@
             <div class="alert alert-info mt-4" role="alert">
                 <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Märkus</h6>
                 <ul class="mb-0 small">
-                    <li>Peale registreerimist on treening "Ootel" seisundis</li>
-                    <li>Treening saab aktiveerida pärast kategooria lisamisele</li>
-                    <li>Aktiveeritud treeningud on klientidele nähtavad</li>
+                    <li>Pärast registreerimist on treening ootel seisundis.</li>
+                    <li>Aktiveerida saab ainult vähemalt ühe kategooriaga seotud treeningut.</li>
+                    <li>Klientidele ja uudistajatele on nähtavad ainult aktiivsed treeningud.</li>
                 </ul>
             </div>
         </div>
@@ -146,7 +157,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Treening registreeritud edukalt! Treening ID: ' + data.id);
+                alert('{% if mode == "edit" %}Treeningu muudatused salvestati.{% else %}Treening registreeriti edukalt. Treening ID: {% endif %}' + {% if mode == "edit" %}''{% else %}data.id{% endif %});
                 window.location.href = '/trainings';
             } else {
                 alert('Viga: ' + data.error);

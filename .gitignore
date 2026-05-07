@@ -1,6 +1,7 @@
 work/AB_projekt_taidetav.doc
 work/AB_projekt_taidetav.docx
 work/generated_diagrams/
+work/docx_render_quality/
 work/docx_unpacked/
 work/eap_edit/
 work/lib/
@@ -17,5 +18,6 @@ rakendus/.env
 rakendus/venv/
 rakendus/__pycache__/
 rakendus/flask_session/
+flask_session/
 submission_files/
 rakendus.zip

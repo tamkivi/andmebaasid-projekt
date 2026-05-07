@@ -471,7 +471,7 @@ ATTRIBUTES = [
     ("Kasutajakonto", "on_aktiivne", "Tunnus, mis näitab, kas kontoga saab süsteemi sisse logida {Kohustuslik. Lubatud väärtused on tõene ja väär.}. Näiteväärtus: tõene"),
     ("Töötaja_roll", "kirjeldus", "Töötaja rollist tulenevate õiguste ja kohustuste kirjeldus töötajate haldurile {Võib puududa. Kui väärtus registreeritakse, siis ei tohi see olla tühi string.}. Näiteväärtus: Saab registreerida ja muuta treeninguid."),
     ("Töötaja_rolli_omamine", "alguse_aeg", "Kuupäev ja kellaaeg, millest alates töötaja roll kehtib {Kohustuslik. Lubatud vahemik on 01.01.2020 00:00 kuni 31.12.2100 23:59.}. Näiteväärtus: 01.02.2026 09:00"),
-    ("Töötaja_rolli_omamine", "lõpu_aeg", "Kuupäev ja kellaaeg, milleni töötaja roll kehtib {Võib puududa. Kui väärtus registreeritakse, siis peab see olema hilisem kui alguse_aeg ja lubatud vahemikus 01.01.2020 00:00 kuni 31.12.2100 23:59.}. Näiteväärtus: 31.12.2026 17:00"),
+    ("Töötaja_rolli_omamine", "lopu_aeg", "Kuupäev ja kellaaeg, milleni töötaja roll kehtib {Võib puududa. Kui väärtus registreeritakse, siis peab see olema hilisem kui alguse_aeg ja lubatud vahemikus 01.01.2020 00:00 kuni 31.12.2100 23:59.}. Näiteväärtus: 31.12.2026 17:00"),
     ("Treening", "treeningu_kood", "Treeningu arvuline kood, mille järgi töötaja saab treeningut üheselt eristada {Kohustuslik. Positiivne täisarv. Unikaalne.}. Näiteväärtus: 1001"),
     ("Treening", "nimetus", "Treeningu ametlik nimetus {Kohustuslik. Ei tohi olla tühi string. Unikaalne.}. Näiteväärtus: Hommikune jooga"),
     ("Treening", "kirjeldus", "Klientidele ja töötajatele mõeldud treeningu sisu kirjeldus {Kohustuslik. Ei tohi olla tühi string.}. Näiteväärtus: Rahulik liikuvust ja hingamist arendav treening."),
@@ -605,7 +605,7 @@ def make_diagrams() -> list[tuple[Path, str]]:
         ("04_activity_activate.png", "Treeningu aktiveerimise tegevusvoog", ["Algus", "Vali treening", "Kontrolli kategooriat", "Muuda aktiivseks", "Lõpp"], "flow"),
         ("05_conceptual.png", "Treeningute registri kontseptuaalne eskiismudel", ["Treening", "Treeningu_seisundi_liik", "Treeningu_kategooria", "Treeningu_kategooria_tüüp", "Töötaja"], "model"),
         ("06_state.png", "Treeningu seisundidiagramm", ["Ootel", "Aktiivne", "Mitteaktiivne", "Lõppenud", "Unustatud"], "state"),
-        ("07_physical.png", "Treeningute registri füüsiline andmemudel", ["treening", "treeningu_seisundi_liik", "treeningu_kategooria", "treeningu_kategooria_omamine", "kasutajakonto"], "model"),
+        ("07_physical.png", "Treeningute registri füüsiline andmemudel", ["treening", "treeningu_seisundi_liik", "kasutajakonto", "treeningu_kategooria_omamine", "treeningu_kategooria", "treeningu_kategooria_tyyp"], "model"),
     ]
 
     for filename, title, items, kind in specs:
@@ -641,14 +641,15 @@ def make_diagrams() -> list[tuple[Path, str]]:
                 draw_arrow(draw, (290, 475), end)
             draw_arrow(draw, (290, 655), (440, 650))
         elif kind == "state":
-            coords = [(105, 330), (390, 190), (390, 480), (735, 330), (1035, 330)]
+            coords = [(105, 340), (430, 180), (430, 500), (830, 180), (830, 500)]
             for (x, y), item in zip(coords, items):
                 draw_box(draw, (x, y, x + 230, y + 105), item, "#f2f7ed", "#3d6b2f")
-            draw_arrow(draw, (335, 382), (390, 245))
-            draw_arrow(draw, (335, 382), (390, 535))
-            draw_arrow(draw, (620, 245), (735, 382))
-            draw_arrow(draw, (620, 535), (735, 382))
-            draw_arrow(draw, (965, 382), (1035, 382))
+            draw_arrow(draw, (335, 392), (430, 232))
+            draw_arrow(draw, (335, 392), (830, 552))
+            draw_arrow(draw, (545, 285), (545, 500))
+            draw_arrow(draw, (615, 500), (615, 285))
+            draw_arrow(draw, (660, 232), (830, 232))
+            draw_arrow(draw, (660, 552), (830, 232))
         elif kind == "flow":
             x = 70
             box_width = 170
@@ -662,13 +663,36 @@ def make_diagrams() -> list[tuple[Path, str]]:
             for first, second in zip(boxes, boxes[1:]):
                 draw_arrow(draw, (first[2], 375), (second[0], 375))
         else:
-            coords = [(90, 160), (495, 160), (900, 160), (290, 470), (710, 470)]
-            for (x, y), item in zip(coords, items):
-                draw_box(draw, (x, y, x + 310, y + 120), item)
-            draw_arrow(draw, (400, 220), (495, 220))
-            draw_arrow(draw, (805, 220), (900, 220))
-            draw_arrow(draw, (245, 280), (445, 470))
-            draw_arrow(draw, (650, 280), (865, 470))
+            if "treeningu_kategooria_omamine" in items:
+                boxes = {
+                    "treening": (70, 335, 330, 455),
+                    "treeningu_seisundi_liik": (430, 160, 740, 280),
+                    "kasutajakonto": (430, 520, 740, 640),
+                    "treeningu_kategooria_omamine": (790, 335, 1100, 455),
+                    "treeningu_kategooria": (1050, 160, 1360, 280),
+                    "treeningu_kategooria_tyyp": (1050, 520, 1360, 640),
+                }
+                for item in items:
+                    draw_box(draw, boxes[item], item)
+                draw_arrow(draw, (330, 365), (430, 220))
+                draw_arrow(draw, (330, 425), (430, 580))
+                draw_arrow(draw, (330, 395), (790, 395))
+                draw_arrow(draw, (1100, 395), (1205, 280))
+                draw_arrow(draw, (1205, 280), (1205, 520))
+            else:
+                boxes = {
+                    "Treening": (90, 335, 380, 455),
+                    "Treeningu_seisundi_liik": (500, 160, 850, 280),
+                    "Töötaja": (930, 335, 1220, 455),
+                    "Treeningu_kategooria": (500, 520, 850, 640),
+                    "Treeningu_kategooria_tüüp": (930, 520, 1220, 640),
+                }
+                for item in items:
+                    draw_box(draw, boxes[item], item)
+                draw_arrow(draw, (380, 365), (500, 220))
+                draw_arrow(draw, (380, 395), (930, 395))
+                draw_arrow(draw, (380, 425), (500, 580))
+                draw_arrow(draw, (850, 580), (930, 580))
         img.save(path)
         diagrams.append((path, title))
     return diagrams
@@ -976,7 +1000,7 @@ def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
         ("tools/EapRename.java ja tools/EapFixes.java", "EAP mudeli nime- ja sisuparandused."),
         ("tools/sql_ddl.py", "PostgreSQL DDL lähtefail."),
         ("jousaali_skript.sql", "Esitamiseks mõeldud PostgreSQL tabelite loomise skript."),
-        ("rakendus/", "Treeneri töökoha prototüübi lähtekood ja käivitamisjuhend."),
+        ("rakendus/", "Treeneri ja juhataja töökoha prototüübi lähtekood ja käivitamisjuhend."),
         ("tools/validate_project.py", "Automaatne kontrollskript."),
         ("build_all.sh või build_all.bat", "Lõppartefaktide taastootmine puhtast kloonist."),
     ], counter)

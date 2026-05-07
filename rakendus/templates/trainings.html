@@ -9,12 +9,23 @@
             <h1 class="mb-1">
                 <i class="bi bi-list-check"></i> Treeningud
             </h1>
-            <p class="text-muted">Saadaolevate treeningu nimekiri</p>
+            <p class="text-muted">
+                {% if user.role == 'tootaja' %}
+                    Treeningute tööalane nimekiri
+                {% else %}
+                    Aktiivsete treeningute nimekiri
+                {% endif %}
+            </p>
         </div>
         <div class="col-md-4 text-md-end">
-            {% if user.role == 'tootaja' %}
+            {% if 'TREENER' in user.roles %}
                 <a href="/trainer/register-training" class="btn btn-success">
                     <i class="bi bi-plus-circle"></i> Uus treening
+                </a>
+            {% endif %}
+            {% if 'JUHATAJA' in user.roles %}
+                <a href="/manager/report" class="btn btn-info">
+                    <i class="bi bi-graph-up"></i> Koondaruanne
                 </a>
             {% endif %}
         </div>
@@ -50,7 +61,7 @@
                         <td>{{ training.maksimaalne_osalejate_arv }}</td>
                         <td>{{ "%.2f"|format(training.hind) }} €</td>
                         <td>
-                            <span class="badge badge-{{ training.seisund|lower }}">
+                            <span class="badge badge-{{ training.seisundi_kood|lower }}">
                                 {{ training.seisund }}
                             </span>
                         </td>
@@ -58,10 +69,30 @@
                             <button class="btn btn-sm btn-info" onclick="viewDetails({{ training.treeningu_kood }})">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            {% if user.role == 'tootaja' %}
-                                {% if training.seisund == 'Ootel' or training.seisund == 'Mitteaktiivne' %}
+                            {% if 'TREENER' in user.roles %}
+                                {% if training.seisundi_kood == 'OOTEL' or training.seisundi_kood == 'MITTEAKT' %}
+                                    <a class="btn btn-sm btn-outline-primary" href="/trainer/edit-training/{{ training.treeningu_kood }}">
+                                        <i class="bi bi-pencil-square"></i> Muuda
+                                    </a>
                                     <button class="btn btn-sm btn-success" onclick="activateTraining({{ training.treeningu_kood }})">
                                         <i class="bi bi-play-circle"></i> Aktiveeri
+                                    </button>
+                                {% endif %}
+                                {% if training.seisundi_kood == 'AKTIIVNE' %}
+                                    <button class="btn btn-sm btn-warning" onclick="deactivateTraining({{ training.treeningu_kood }})">
+                                        <i class="bi bi-pause-circle"></i> Mitteaktiivne
+                                    </button>
+                                {% endif %}
+                                {% if training.seisundi_kood == 'OOTEL' %}
+                                    <button class="btn btn-sm btn-outline-danger" onclick="forgetTraining({{ training.treeningu_kood }})">
+                                        <i class="bi bi-trash3"></i> Unusta
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                            {% if 'JUHATAJA' in user.roles %}
+                                {% if training.seisundi_kood == 'AKTIIVNE' or training.seisundi_kood == 'MITTEAKT' %}
+                                    <button class="btn btn-sm btn-danger" onclick="finishTraining({{ training.treeningu_kood }})">
+                                        <i class="bi bi-stop-circle"></i> Lõpeta
                                     </button>
                                 {% endif %}
                             {% endif %}
@@ -99,9 +130,43 @@
 
 {% block extra_js %}
 <script>
-    const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    const detailsElement = document.getElementById('detailsModal');
+    const detailsModal = detailsElement ? new bootstrap.Modal(detailsElement) : null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function postAction(url, confirmText) {
+        if (!confirm(confirmText)) {
+            return;
+        }
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(result => {
+            if (result.ok && result.data.success) {
+                location.reload();
+            } else {
+                alert('Viga: ' + (result.data.error || 'toiming ebaõnnestus'));
+            }
+        })
+        .catch(error => alert('Viga: ' + error));
+    }
 
     function viewDetails(trainingId) {
+        if (!detailsModal) {
+            return;
+        }
         const body = document.getElementById('detailsBody');
         body.innerHTML = '<div class="spinner-border spinner-custom" role="status"><span class="visually-hidden">Laadimist...</span></div>';
         detailsModal.show();
@@ -109,21 +174,26 @@
         fetch(`/training/${trainingId}`)
             .then(response => response.json())
             .then(data => {
+                if (data.error) {
+                    body.innerHTML = `<div class="alert alert-danger">${escapeHtml(data.error)}</div>`;
+                    return;
+                }
+                const price = Number.parseFloat(data.hind);
                 let html = `
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Nimetus</h6>
-                            <p><strong>${data.nimetus}</strong></p>
+                            <p><strong>${escapeHtml(data.nimetus)}</strong></p>
 
                             <h6>Kirjeldus</h6>
-                            <p>${data.kirjeldus}</p>
+                            <p>${escapeHtml(data.kirjeldus)}</p>
                         </div>
                         <div class="col-md-6">
                             <h6>Kestus</h6>
-                            <p>${data.kestus_minutites} minutit</p>
+                            <p>${escapeHtml(data.kestus_minutites)} minutit</p>
 
                             <h6>Maksimaalne osaliste arv</h6>
-                            <p>${data.maksimaalne_osalejate_arv}</p>
+                            <p>${escapeHtml(data.maksimaalne_osalejate_arv)}</p>
                         </div>
                     </div>
 
@@ -132,23 +202,23 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Varustus</h6>
-                            <p>${data.vajalik_varustus}</p>
+                            <p>${escapeHtml(data.vajalik_varustus)}</p>
                         </div>
                         <div class="col-md-6">
                             <h6>Hind</h6>
-                            <p><strong>${data.hind.toFixed(2)} €</strong></p>
+                            <p><strong>${Number.isFinite(price) ? price.toFixed(2) : escapeHtml(data.hind)} €</strong></p>
                         </div>
                     </div>
 
                     <hr>
 
                     <h6>Seisund</h6>
-                    <p><span class="badge badge-${data.seisund.toLowerCase()}">${data.seisund}</span></p>
+                    <p><span class="badge bg-secondary">${escapeHtml(data.seisund)}</span></p>
 
                     ${data.categories && data.categories.length > 0 ? `
                         <h6>Kategooriad</h6>
                         <p>
-                            ${data.categories.map(cat => `<span class="badge bg-secondary">${cat.nimetus}</span>`).join(' ')}
+                            ${data.categories.map(cat => `<span class="badge bg-secondary">${escapeHtml(cat.nimetus)}</span>`).join(' ')}
                         </p>
                     ` : ''}
                 `;
@@ -160,23 +230,19 @@
     }
 
     function activateTraining(trainingId) {
-        if (confirm('Kas soovite selle treeningu aktiveerida?')) {
-            fetch(`/trainer/activate-training/${trainingId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Viga: ' + data.error);
-                }
-            })
-            .catch(error => alert('Viga: ' + error));
-        }
+        postAction(`/trainer/activate-training/${trainingId}`, 'Kas soovite selle treeningu aktiveerida?');
+    }
+
+    function deactivateTraining(trainingId) {
+        postAction(`/trainer/deactivate-training/${trainingId}`, 'Kas soovite selle treeningu mitteaktiivseks muuta?');
+    }
+
+    function forgetTraining(trainingId) {
+        postAction(`/trainer/forget-training/${trainingId}`, 'Kas soovite selle ootel treeningu unustada?');
+    }
+
+    function finishTraining(trainingId) {
+        postAction(`/manager/finish-training/${trainingId}`, 'Kas soovite selle treeningu lõpetada?');
     }
 </script>
 {% endblock %}

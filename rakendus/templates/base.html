@@ -146,11 +146,13 @@
             color: #333;
         }
 
+        .badge-mitteakt,
         .badge-mitteaktiivne {
             background-color: #6c757d;
         }
 
-        .badge-loppenud {
+        .badge-loppenud,
+        .badge-unustatud {
             background-color: #dc3545;
         }
 
@@ -219,7 +221,7 @@
                                 <i class="bi bi-list"></i> Treeningud
                             </a>
                         </li>
-                        {% if session.role == 'tootaja' %}
+                        {% if session.roles and 'TREENER' in session.roles %}
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-tools"></i> Treener
@@ -227,7 +229,18 @@
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                     <li><a class="dropdown-item" href="/trainer/register-training">Registreeri treening</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/trainings">Minu treeningud</a></li>
+                                    <li><a class="dropdown-item" href="/trainings">Treeningute töölaud</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        {% if session.roles and 'JUHATAJA' in session.roles %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-graph-up"></i> Juhataja
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="managerDropdown">
+                                    <li><a class="dropdown-item" href="/manager/report">Koondaruanne</a></li>
+                                    <li><a class="dropdown-item" href="/trainings">Kõik treeningud</a></li>
                                 </ul>
                             </li>
                         {% endif %}
@@ -242,6 +255,11 @@
                             </a>
                         </li>
                     {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/trainings">
+                                <i class="bi bi-list"></i> Treeningud
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/login">
                                 <i class="bi bi-box-arrow-in-right"></i> Sisselogimine

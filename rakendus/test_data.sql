@@ -30,7 +30,8 @@ INSERT INTO treeningu_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
 ('OOTEL', 'Ootel', TRUE),
 ('AKTIIVNE', 'Aktiivne', TRUE),
 ('MITTEAKT', 'Mitteaktiivne', TRUE),
-('LOPPENUD', 'Lõppenud', FALSE)
+('LOPPENUD', 'Lõppenud', FALSE),
+('UNUSTATUD', 'Unustatud', FALSE)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO treeningu_kategooria_tyyp (kood, nimetus, on_aktiivne) VALUES
@@ -84,7 +85,7 @@ VALUES
 ('juhataja@jousaal.ee', 'KL_HALDUR', NOW())
 ON CONFLICT DO NOTHING;
 
--- Testkasutusjuhid - Kolm näidis-treeningut
+-- Näidistreeningud
 INSERT INTO treening (
     treeningu_kood, treeningu_seisundi_liik_kood, registreerija_e_meil,
     viimase_muutja_e_meil, nimetus, kirjeldus, kestus_minutites,
@@ -106,8 +107,8 @@ VALUES
 (
     3, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
     'HIIT treening',
-    'Intensiivne intervall-treening, mis parandab kardiovascular fiitust ja kulutab palju kaloreid.',
-    45, 10, 'Dumbbells, kettlebells, matid', 18.00
+    'Intensiivne intervalltreening, mis parandab kardiovaskulaarset vormi ja kulutab palju kaloreid.',
+    45, 10, 'Hantlid, sangpommid, matid', 18.00
 )
 ON CONFLICT DO NOTHING;
 
@@ -119,9 +120,9 @@ VALUES
 (3, 'KARDIO')
 ON CONFLICT DO NOTHING;
 
--- Näita testimandmeid
-SELECT '✅ Testimandmed on lisatud edukalt!';
-SELECT '📊 Kasutajad:';
+-- Näita testandmeid
+SELECT 'Testandmed on lisatud edukalt.';
+SELECT 'Kasutajad:';
 SELECT e_meil, COUNT(*) FROM kasutajakonto GROUP BY e_meil;
-SELECT '🏋️ Treeningud:';
+SELECT 'Treeningud:';
 SELECT treeningu_kood, nimetus, hind FROM treening;

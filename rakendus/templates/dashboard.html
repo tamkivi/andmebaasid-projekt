@@ -9,16 +9,12 @@
             <h1 class="mb-1">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </h1>
-            <p class="text-muted">Teretulemast, <strong>{{ user.name }}</strong>!</p>
+            <p class="text-muted">Tere tulemast, <strong>{{ user.name }}</strong>!</p>
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-primary p-2">
                 <i class="bi bi-tag"></i>
-                {% if user.role == 'tootaja' %}
-                    Treener
-                {% else %}
-                    Klient
-                {% endif %}
+                {{ user.display_role }}
             </span>
         </div>
     </div>
@@ -79,11 +75,17 @@
                             <a href="/trainings" class="btn btn-outline-primary">
                                 <i class="bi bi-search"></i> Vaata treeninguid
                             </a>
-                            {% if user.role == 'tootaja' %}
+                            {% if 'TREENER' in user.roles %}
                                 <a href="/trainer/register-training" class="btn btn-outline-success">
                                     <i class="bi bi-plus-circle"></i> Registreeri uus treening
                                 </a>
-                            {% else %}
+                            {% endif %}
+                            {% if 'JUHATAJA' in user.roles %}
+                                <a href="/manager/report" class="btn btn-outline-info">
+                                    <i class="bi bi-graph-up"></i> Vaata koondaruannet
+                                </a>
+                            {% endif %}
+                            {% if user.role != 'tootaja' %}
                                 <a href="/trainings" class="btn btn-outline-success">
                                     <i class="bi bi-calendar-check"></i> Vaata aktiivseid treeninguid
                                 </a>
@@ -104,10 +106,10 @@
                             Treeningu funktsionaalne allsüsteem, mis võimaldab:
                         </p>
                         <ul class="small text-muted">
-                            <li>Treeningu informatsiooni käsitamist</li>
-                            <li>Kasutajate ja rollide haldust</li>
-                            <li>Treeningu broneemist</li>
-                            <li>Aruannete kuvamist</li>
+                            <li>Treeningu tööandmete registreerimist ja muutmist</li>
+                            <li>Treeningu seisundite juhtimist</li>
+                            <li>Aktiivsete treeningute avalikku vaatamist</li>
+                            <li>Juhtimise koondaruande kuvamist</li>
                         </ul>
                         <small class="text-muted">
                             <strong>Projekt:</strong> ITI0206 - Andmebaaside projektid<br>
@@ -129,7 +131,7 @@
                         <li><strong>Andmebaas:</strong> PostgreSQL</li>
                         <li><strong>Frontend:</strong> Bootstrap 5, HTML/CSS/JavaScript</li>
                         <li><strong>Autentimine:</strong> Sessioon ja paroolide räsimine</li>
-                        <li><strong>Rollid:</strong> Treener, Klient, Uudistaja</li>
+                        <li><strong>Rollid:</strong> Treener, Juhataja, Klient, Uudistaja</li>
                     </ul>
                 </div>
             </div>

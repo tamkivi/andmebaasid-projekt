@@ -1,6 +1,6 @@
 # Jõusaali Infosüsteemi - Treeningu Funktsionaalne Allsüsteem
 
-Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist, vaatamist ja seisundite muutmist.
+Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist, muutmist, vaatamist ja seisundite juhtimist.
 
 ## 📋 Projekt info
 
@@ -12,18 +12,20 @@ Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist,
 ## ✨ Omadused
 
 ### Kasutajate rollid
-- **Treener** - Registreerib, muudab ja aktiveerib treeninguid
+- **Treener** - Registreerib, muudab, aktiveerib, muudab mitteaktiivseks ja unustab ootel treeninguid
+- **Juhataja** - Vaatab kõiki treeninguid, lõpetab treeninguid ja vaatab koondaruannet
 - **Klient** - Vaatab aktiivseid treeninguid
-- **Uudistaja** - Vaatab avalikult nähtavat infot
+- **Uudistaja** - Vaatab avalikult nähtavaid aktiivseid treeninguid
 
 ### Funktsionaalsus
 - ✅ Kasutaja autentimine ja sessioon
 - ✅ Treeningu registreerimine
-- ✅ Treeningu aktiveerimise ja seisundite muutmine
-- ✅ Kategooriate haldus
+- ✅ Treeningu muutmine
+- ✅ Treeningu aktiveerimine, mitteaktiivseks muutmine, unustamine ja lõpetamine
+- ✅ Treeningu kategooriatega sidumine
 - ✅ Treeningu vaatamine detailidega
 - ✅ Rollipõhised õigused
-- ✅ Dashboard statistikaga
+- ✅ Dashboard statistikaga ja juhataja koondaruanne
 
 ## 🔧 Paigaldus
 
@@ -132,7 +134,6 @@ Rakendus peaks käivituma: `http://localhost:5000`
 
 - Paroolid on räsitud (werkzeug.security)
 - Sessioon-põhine autentimine
-- CSRF kaitse (Flask)
 - SQL injection kaitse (parameeterdatud päringud)
 - Rollipõhised õigused
 
@@ -144,6 +145,8 @@ Rakendus peaks käivituma: `http://localhost:5000`
 - **Dashboard** (`/dashboard`) - Statistika ja kiired tegevused
 - **Trainings** (`/trainings`) - Treeningu nimekirja vaatamine
 - **Register Training** (`/trainer/register-training`) - Uue treeningu registreerimine
+- **Edit Training** (`/trainer/edit-training/<id>`) - Ootel või mitteaktiivse treeningu muutmine
+- **Manager Report** (`/manager/report`) - Treeningute koondaruanne seisundite ja kategooriate kaupa
 
 ### API lõpp-punktid
 
@@ -157,11 +160,19 @@ Rakendus peaks käivituma: `http://localhost:5000`
 2. Minge "Treener" → "Registreeri treening"
 3. Sisestage treeningu detailid
 4. Valige kategooriad
-5. Saate aktiveerida treeningu listist
+5. Salvestatud treening ilmub ootel seisundis treeningute töölauda
+6. Vajaduse korral muutke, aktiveerige, muutke mitteaktiivseks või unustage treening
 
-### Klientina
+### Juhatajana
 
 1. Logige sisse
+2. Vaadake kõiki treeninguid
+3. Lõpetage aktiivne või mitteaktiivne treening, mida enam ei pakuta
+4. Avage koondaruanne seisundite ja kategooriate kaupa
+
+### Kliendi või uudistajana
+
+1. Avage `/trainings` või logige sisse kliendina
 2. Vaatage aktiivseid treeninguid
 3. Vaadake treeningu detaile
 4. Kontrollige treeningu kirjelduse, hinna, kestuse ja osalejate arvu andmeid
@@ -218,8 +229,8 @@ rakendus/
 │   ├── dashboard.html    # Dashboard
 │   ├── trainings.html    # Treeningu nimekiri
 │   ├── register_training.html  # Uue treeningu vorm
+│   ├── report.html       # Juhataja koondaruanne
 │   └── error.html        # Vealeht
-└── static/               # CSS, JavaScript, pildid (tulevikus)
 ```
 
 ## 📝 Märkused
