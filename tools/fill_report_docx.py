@@ -23,7 +23,9 @@ DIAGRAM_DIR = ROOT / "work" / "generated_diagrams"
 
 
 AUTHORS = "Tristan Aik Sild, Gustav Tamkivi"
-AUTHOR_EMAIL = "gustavpaul@tamkivi.com"
+STUDY_GROUP = "IAIB23"
+MATRICULATION_NUMBERS = "Tristan Aik Sild: 253782IAIB; Gustav Tamkivi: 253787IAIB"
+AUTHOR_EMAILS = "Gustav Tamkivi: gustav@taltech.ee; Tristan Aik Sild: trists@taltech.ee"
 SYSTEM_NAME = "Jõusaali infosüsteem"
 SUBSYSTEM_NAME = "Treeningute funktsionaalne allsüsteem"
 REGISTER_NAME = "Treeningute register"
@@ -625,7 +627,13 @@ def add_title_page(doc: Document) -> None:
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.add_run(f"Autorid: {AUTHORS}\nE-post: {AUTHOR_EMAIL}\nTallinn 2026")
+    p.add_run(
+        f"Autorid: {AUTHORS}\n"
+        f"Õpperühm: {STUDY_GROUP}\n"
+        f"Matrikli nr: {MATRICULATION_NUMBERS}\n"
+        f"e-posti aadressid: {AUTHOR_EMAILS}\n"
+        "Tallinn 2026"
+    )
     doc.add_page_break()
 
 

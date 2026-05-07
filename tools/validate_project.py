@@ -111,6 +111,21 @@ def validate_docx(failures: list[str]) -> None:
     else:
         ok("DOCX known bad wording is absent")
 
+    required_title_info = [
+        "Tristan Aik Sild",
+        "Gustav Tamkivi",
+        "Õpperühm: IAIB23",
+        "253782IAIB",
+        "253787IAIB",
+        "gustav@taltech.ee",
+        "trists@taltech.ee",
+    ]
+    missing_title_info = [item for item in required_title_info if item not in text]
+    if missing_title_info:
+        fail(f"DOCX title page is missing author/student information: {missing_title_info}", failures)
+    else:
+        ok("DOCX title page contains author names, study group, matriculation numbers, and emails")
+
     op_refs = set(re.findall(r"\bOP\d+(?:\.\d+)?\b", text))
     op_defs = set(re.findall(r"^OP\d+\s+", text, re.M))
     op_defs = {value.strip() for value in op_defs}
