@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jõusaali Infosüsteem{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* Navigatsioon */
+        .navbar {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            transition: color 0.3s;
+            margin-left: 0.5rem;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .nav-link.active {
+            color: white !important;
+            border-bottom: 3px solid white;
+        }
+
+        /* Peakonteneri stiil */
+        .container-main {
+            padding: 2rem 0;
+        }
+
+        /* Kaardi stiil */
+        .card {
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            border: none;
+            font-weight: 600;
+        }
+
+        /* Vorm */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Nupud */
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+        }
+
+        /* Tabel */
+        .table {
+            background: white;
+        }
+
+        .table thead {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tbody tr {
+            transition: background-color 0.3s;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Staatused */
+        .badge-aktiivne {
+            background-color: #198754;
+        }
+
+        .badge-ootel {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .badge-mitteaktiivne {
+            background-color: #6c757d;
+        }
+
+        .badge-loppenud {
+            background-color: #dc3545;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #343a40;
+            color: #adb5bd;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+
+        footer a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsiivsus */
+        @media (max-width: 768px) {
+            .container-main {
+                padding: 1rem 0;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Alert stilidid */
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        /* Spinner */
+        .spinner-custom {
+            color: #0d6efd;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigatsioon -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-lg">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-dumbbell"></i> Jõusaali Süsteem
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if session.user_id %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-house"></i> Avaleht
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/trainings">
+                                <i class="bi bi-list"></i> Treeningud
+                            </a>
+                        </li>
+                        {% if session.role == 'tootaja' %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-tools"></i> Treener
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <li><a class="dropdown-item" href="/trainer/register-training">Registreeri treening</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/trainings">Minu treeningud</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <span class="nav-link">
+                                <i class="bi bi-person"></i> {{ session.name }}
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">
+                                <i class="bi bi-box-arrow-right"></i> Väljalogimine
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login">
+                                <i class="bi bi-box-arrow-in-right"></i> Sisselogimine
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Peakontenr -->
+    <div class="container-lg container-main">
+        {% if error %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+
+        {% if success %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> {{ success }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 border-top">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Jõusaali Infosüsteem</h5>
+                    <p class="text-muted">Treeningu funktsionaalne allsüsteem<br>ITI0206 Andmebaaside projektid</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted">
+                        © 2026 Tristan Aik Sild, Gustav Tamkivi<br>
+                        <small>Flask + PostgreSQL</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

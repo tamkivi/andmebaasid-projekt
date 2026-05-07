@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Jõusaali Infosüsteem{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-1">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </h1>
+            <p class="text-muted">Teretulemast, <strong>{{ user.name }}</strong>!</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <span class="badge bg-primary p-2">
+                <i class="bi bi-tag"></i>
+                {% if user.role == 'tootaja' %}
+                    Treener
+                {% else %}
+                    Klient
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> {{ error }}
+        </div>
+    {% else %}
+        <!-- Statistika -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body py-4">
+                        <div class="display-5 text-primary mb-3">
+                            <i class="bi bi-lightning-fill"></i>
+                        </div>
+                        <h6 class="card-title text-muted">Aktiivsed treeningud</h6>
+                        <h2 class="display-6 text-primary">{{ stats.active_trainings }}</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body py-4">
+                        <div class="display-5 text-success mb-3">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h6 class="card-title text-muted">Kokku kasutajaid</h6>
+                        <h2 class="display-6 text-success">{{ stats.total_users }}</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body py-4">
+                        <div class="display-5 text-info mb-3">
+                            <i class="bi bi-bookmark-fill"></i>
+                        </div>
+                        <h6 class="card-title text-muted">Kokku treeninguid</h6>
+                        <h2 class="display-6 text-info">{{ stats.total_trainings }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tegevused -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-lightning"></i> Kiired tegevused
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/trainings" class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i> Vaata treeninguid
+                            </a>
+                            {% if user.role == 'tootaja' %}
+                                <a href="/trainer/register-training" class="btn btn-outline-success">
+                                    <i class="bi bi-plus-circle"></i> Registreeri uus treening
+                                </a>
+                            {% else %}
+                                <a href="/trainings" class="btn btn-outline-success">
+                                    <i class="bi bi-calendar-check"></i> Broneeri treening
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle"></i> Teave
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Jõusaali Infosüsteem</h6>
+                        <p class="card-text small text-muted mb-3">
+                            Treeningu funktsionaalne allsüsteem, mis võimaldab:
+                        </p>
+                        <ul class="small text-muted">
+                            <li>Treeningu informatsiooni käsitamist</li>
+                            <li>Kasutajate ja rollide haldust</li>
+                            <li>Treeningu broneemist</li>
+                            <li>Aruannete kuvamist</li>
+                        </ul>
+                        <small class="text-muted">
+                            <strong>Projekt:</strong> ITI0206 - Andmebaaside projektid<br>
+                            <strong>Autorid:</strong> Tristan Aik Sild, Gustav Tamkivi<br>
+                            <strong>Semester:</strong> 2026 kevad
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rakenduse info -->
+        <div class="row mt-4">
+            <div class="col">
+                <div class="alert alert-info" role="alert">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Rakenduse omadused</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>Backend:</strong> Python Flask</li>
+                        <li><strong>Andmebaas:</strong> PostgreSQL</li>
+                        <li><strong>Frontend:</strong> Bootstrap 5, HTML/CSS/JavaScript</li>
+                        <li><strong>Autentimine:</strong> Sessioon ja paroolide räsimine</li>
+                        <li><strong>Rollid:</strong> Treener, Klient, Uudistaja</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Laadige statistika AJAX-iga
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Statistika:', data);
+                // Saate värskendada statistikat kui vaja
+            })
+            .catch(error => console.error('Viga:', error));
+    });
+</script>
+{% endblock %}

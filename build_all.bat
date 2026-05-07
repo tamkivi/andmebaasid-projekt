@@ -7,6 +7,7 @@ set EAP_BASE=work\eap_edit\EA_converted.eap
 set EAP_CLEAN=work\eap_edit\EA_cleaned.eap
 set EAP_OUTPUT=Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap
 set EAP_SOURCE=preset_files\EA_converted_source.eap
+set SQL_OUTPUT=jousaali_skript.sql
 
 echo === ITI0206 Build Pipeline ===
 
@@ -24,21 +25,21 @@ if errorlevel 1 (
 )
 if not exist work\eap_edit mkdir work\eap_edit
 
-echo [1/5] Compiling Java tools...
+echo [1/6] Compiling Java tools...
 javac -cp "%CP%" tools\EapConvert.java tools\EapRename.java tools\EapFixes.java tools\EapDedupe.java
 if errorlevel 1 goto :error
 
-echo [2/5] Copying tracked EAP source...
+echo [2/6] Copying tracked EAP source...
 if not exist "%EAP_SOURCE%" (
     echo Missing %EAP_SOURCE%. The original EA template is kept for reference, but the build requires the tracked Jackcess-compatible EAP source.
     goto :error
 )
 copy /Y "%EAP_SOURCE%" "%EAP_BASE%" >nul
 
-echo [3/5] Preparing EAP from converted base...
+echo [3/6] Preparing EAP from converted base...
 copy /Y "%EAP_BASE%" "%EAP_OUTPUT%" >nul
 
-echo [4/5] Running EAP rename + fixes...
+echo [4/6] Running EAP rename + fixes...
 java -cp "tools;%CP%" EapRename "%EAP_OUTPUT%"
 if errorlevel 1 goto :error
 java -cp "tools;%CP%" EapFixes "%EAP_OUTPUT%"
@@ -47,8 +48,12 @@ java -cp "tools;%CP%" EapDedupe "%EAP_OUTPUT%" "%EAP_CLEAN%"
 if errorlevel 1 goto :error
 copy /Y "%EAP_CLEAN%" "%EAP_OUTPUT%" >nul
 
-echo [5/5] Generating structured DOCX...
+echo [5/6] Generating structured DOCX...
 %PYTHON% tools\fill_report_docx.py
+if errorlevel 1 goto :error
+
+echo [6/6] Generating SQL script...
+%PYTHON% -c "from tools.sql_ddl import SQL_DDL; print(SQL_DDL.strip())" > "%SQL_OUTPUT%"
 if errorlevel 1 goto :error
 
 echo.
@@ -56,6 +61,7 @@ echo === Build complete ===
 echo Output files:
 echo   - Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx
 echo   - Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap
+echo   - %SQL_OUTPUT%
 goto :eof
 
 :error

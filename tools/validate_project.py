@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import io
+import py_compile
 import re
 import shutil
 import subprocess
@@ -17,6 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCX = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx"
 EAP = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap"
 GUIDES = ROOT / "instruction_guides"
+SQL_OUTPUT = ROOT / "jousaali_skript.sql"
+APP_DIR = ROOT / "rakendus"
 sys.path.insert(0, str(ROOT / "tools"))
 from sql_ddl import SQL_DDL  # noqa: E402
 
@@ -318,10 +321,63 @@ def validate_repo(failures: list[str]) -> None:
         fail(f"instruction_guides is missing PDFs: {missing}", failures)
     else:
         ok("instruction_guides contains required PDFs")
-    for path in ["build_all.sh", "build_all.bat", "requirements.txt", "preset_files/EA_converted_source.eap", "tools/fill_report_docx.py", "tools/EapFixes.java"]:
+    for path in [
+        "build_all.sh",
+        "build_all.bat",
+        "requirements.txt",
+        "preset_files/EA_converted_source.eap",
+        "tools/fill_report_docx.py",
+        "tools/EapFixes.java",
+        "jousaali_skript.sql",
+        "rakendus/app.py",
+        "rakendus/requirements.txt",
+        "rakendus/.env.example",
+        "rakendus/README.md",
+        "rakendus/SETUP.sh",
+        "rakendus/test_data.sql",
+        "rakendus/templates/base.html",
+        "rakendus/templates/dashboard.html",
+        "rakendus/templates/error.html",
+        "rakendus/templates/login.html",
+        "rakendus/templates/register_training.html",
+        "rakendus/templates/trainings.html",
+    ]:
         if not (ROOT / path).exists():
             fail(f"required reproducibility file is missing: {path}", failures)
     ok("required reproducibility files are present")
+
+    if SQL_OUTPUT.exists():
+        generated_sql = SQL_DDL.strip()
+        file_sql = SQL_OUTPUT.read_text(encoding="utf-8").strip()
+        if file_sql == generated_sql:
+            ok("standalone SQL script matches tools/sql_ddl.py")
+        else:
+            fail("standalone SQL script does not match tools/sql_ddl.py output", failures)
+
+    if APP_DIR.exists():
+        try:
+            py_compile.compile(str(APP_DIR / "app.py"), doraise=True)
+            ok("application prototype Python source compiles")
+        except py_compile.PyCompileError as exc:
+            fail(f"application prototype Python source does not compile: {exc}", failures)
+
+        test_data_path = APP_DIR / "test_data.sql"
+        test_data = test_data_path.read_text(encoding="utf-8") if test_data_path.exists() else ""
+        if re.search(r"[\u0400-\u04FF]", test_data):
+            fail("application test_data.sql contains Cyrillic-looking corrupted characters", failures)
+        else:
+            ok("application test_data.sql has no Cyrillic-looking corrupted characters")
+
+        required_seed_terms = ["treeningu_seisundi_liik", "treeningu_kategooria_tyyp", "treeningu_kategooria"]
+        missing_seed_terms = [term for term in required_seed_terms if term not in test_data]
+        if missing_seed_terms:
+            fail(f"application test_data.sql is missing required seed data terms: {missing_seed_terms}", failures)
+        else:
+            ok("application test_data.sql contains required classifier seed data")
+
+    local_only = [path for path in [APP_DIR / ".env", APP_DIR / "venv"] if path.exists()]
+    if local_only:
+        fail(f"application contains local-only files that should not be committed: {[str(path.relative_to(ROOT)) for path in local_only]}", failures)
 
 
 def main() -> int:

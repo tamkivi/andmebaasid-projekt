@@ -12,3 +12,10 @@ tools/*.class
 tools/*.jar
 __pycache__/
 .venv/
+*.pyc
+rakendus/.env
+rakendus/venv/
+rakendus/__pycache__/
+rakendus/flask_session/
+submission_files/
+rakendus.zip

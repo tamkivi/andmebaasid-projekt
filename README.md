@@ -6,7 +6,8 @@ See hoidla sisaldab ITI0206 andmebaaside projekti lõppartefakte ja nende taasto
 
 - `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx`
 - `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap`
-- PostgreSQL DDL lähtefailis `tools/sql_ddl.py`
+- PostgreSQL DDL skript `jousaali_skript.sql`, mis genereeritakse lähtefailist `tools/sql_ddl.py`
+- rakenduse/prototüübi failid kataloogis `rakendus/`
 
 ## Juhendmaterjalid
 
@@ -39,6 +40,16 @@ Build teeb järgmised sammud:
 3. Kopeerib jälgitava Jackcessiga kirjutatava EAP lähtefaili `preset_files/EA_converted_source.eap` tööfailiks. Algne kursuse EA mall `preset_files/EA_mall_AB_projekt_Eeltaidetud_2026.eap` on jäetud võrdlusmaterjaliks.
 4. Rakendab EAP mudelile nime-, sisu- ja kvaliteediparandused.
 5. Genereerib DOCX dokumendi päris Wordi pealkirjade, tabelite, piltide ja pealdistega.
+6. Genereerib PostgreSQL DDL skripti `jousaali_skript.sql`.
+
+## Esitamiseks vajalikud failid
+
+Maurus/e-õppe keskkonna esitusvormi jaoks vasta failinimedele järgmiselt:
+
+- dokument: `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx`
+- mudelid: `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap`
+- rakendus: paki kataloog `rakendus/` ZIP-failiks, jättes välja lokaalsed failid nagu `rakendus/.env`, `rakendus/venv/`, `__pycache__/` ja `*.pyc`
+- skript: `jousaali_skript.sql`
 
 ## Kontroll
 
