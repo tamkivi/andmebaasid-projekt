@@ -1,673 +1,821 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
+from dataclasses import dataclass
 from pathlib import Path
-from zipfile import ZipFile, ZIP_DEFLATED
-import shutil
-import tempfile
-import xml.etree.ElementTree as ET
 import re
+from typing import Iterable
+
+from docx import Document
+from docx.enum.section import WD_SECTION_START
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Cm, Inches, Pt, RGBColor
+from PIL import Image, ImageDraw, ImageFont
 
 from sql_ddl import SQL_DDL
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "work" / "AB_projekt_taidetav.docx"
 DST = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx"
+DIAGRAM_DIR = ROOT / "work" / "generated_diagrams"
 
 
-def replace_all(text: str, replacements: list[tuple[str, str]]) -> str:
-    for old, new in replacements:
-        text = text.replace(old, new)
-    return text
+AUTHORS = "Tristan Aik Sild, Gustav Tamkivi"
+AUTHOR_EMAIL = "gustavpaul@tamkivi.com"
+SYSTEM_NAME = "Jõusaali infosüsteem"
+SUBSYSTEM_NAME = "Treeningute funktsionaalne allsüsteem"
+REGISTER_NAME = "Treeningute register"
 
 
-NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-ET.register_namespace("w", NS["w"])
+ACTORS = [
+    ("Treener", "Sisemine pädevusala", "Registreerib, muudab ja aktiveerib treeninguid."),
+    ("Juhataja", "Sisemine pädevusala", "Jälgib treeningute portfelli ning lõpetab treeninguid."),
+    ("Klient", "Väline pädevusala", "Soovib leida sobiva aktiivse treeningu ja sellel osaleda."),
+    ("Uudistaja", "Väline pädevusala", "Soovib vaadata avalikult nähtavat treeningute infot."),
+    ("Klassifikaatorite haldur", "Sisemine pädevusala", "Haldab klassifikaatoreid, sh treeningu seisundeid ja kategooriaid."),
+    ("Töötajate haldur", "Sisemine pädevusala", "Haldab töötajate ja rollide põhiandmeid."),
+    ("Maksekeskus", "Väline pädevusala", "Vahendab treeninguga seotud maksete kinnitusi."),
+]
 
 
-def paragraph_text(paragraph: ET.Element) -> str:
-    return "".join(node.text or "" for node in paragraph.findall(".//w:t", NS))
+MAIN_OBJECTS = [
+    ("Isik", "Jõusaali kliendi, töötaja või süsteemi kasutaja üldandmed."),
+    ("Töötaja", "Jõusaali heaks töötav isik ja tema rollid."),
+    ("Treening", "Jõusaalis pakutav treeninguteenus."),
+    ("Broneering", "Kliendi kavatsus osaleda konkreetsel treeningul."),
+    ("Makse", "Treeningu või broneeringuga seotud tasumise sündmus."),
+    ("Klassifikaator", "Ühiselt hallatavad seisundid, tüübid ja kategooriad."),
+]
 
 
-def set_paragraph_text(paragraph: ET.Element, new_text: str) -> None:
-    text_nodes = paragraph.findall(".//w:t", NS)
-    if not text_nodes:
-        return
-    text_nodes[0].text = new_text
-    for node in text_nodes[1:]:
-        node.text = ""
+SUBSYSTEMS_REGISTERS = [
+    ("Isikute funktsionaalne allsüsteem", "Isikute register", "Isik"),
+    ("Töötajate funktsionaalne allsüsteem", "Töötajate register", "Töötaja"),
+    ("Treeningute funktsionaalne allsüsteem", "Treeningute register", "Treening"),
+    ("Broneeringute funktsionaalne allsüsteem", "Broneeringute register", "Broneering"),
+    ("Maksete funktsionaalne allsüsteem", "Maksete register", "Makse"),
+    ("Klassifikaatorite funktsionaalne allsüsteem", "Klassifikaatorite register", "Klassifikaator"),
+]
+
+
+STATEMENTS = [
+    "Treening on jõusaalis pakutav teenus.",
+    "Treener registreerib treeningu.",
+    "Juhataja lõpetab treeningu.",
+    "Klient broneerib treeningul osalemise.",
+    "Maksekeskus kinnitab makse.",
+    "Klassifikaatorite haldur haldab klassifikaatoreid.",
+    "Töötajate haldur haldab töötajaid.",
+    "Treeningul on üks seisund.",
+    "Treening kuulub nulli või mitmesse treeningu kategooriasse.",
+]
+
+
+PROCESSES = [
+    ("Treeningu registreerimine", "Treener saab teabe uue treeningu kohta.", "Treening on ootel seisundis registreeritud."),
+    ("Treeningu muutmine", "Treeningu andmetes ilmneb viga või muutus.", "Treeningu andmed on ajakohased."),
+    ("Treeningu aktiveerimine", "Treening on valmis klientidele nähtavaks tegemiseks.", "Treening on aktiivne."),
+    ("Treeningu ajutiselt kasutusest eemaldamine", "Treeninguga ilmneb ajutine probleem.", "Treening on mitteaktiivne."),
+    ("Treeningu lõpetamine", "Treeningut ei pakuta enam või probleem on püsiv.", "Treening on lõppenud."),
+    ("Treeningute vaatamine", "Klient või uudistaja soovib treeningute infot.", "Kasutaja näeb lubatud treeninguandmeid."),
+    ("Treeningule broneerimine", "Klient soovib treeningul osaleda.", "Broneering ja vajaduse korral makse on registreeritud."),
+]
+
+
+HIGH_LEVEL_USE_CASES = [
+    ("Tuvasta kasutaja", "Treener, Juhataja, Klassifikaatorite haldur, Töötajate haldur", "Kasutaja esitab süsteemile enda tuvastamiseks vajalikud andmed ning süsteem seob kasutaja tema pädevusalaga."),
+    ("Registreeri treening", "Treener", "Treener registreerib uue treeningu põhiandmed ja seob treeningu sobivate kategooriatega."),
+    ("Muuda treeningut", "Treener", "Treener muudab ootel või mitteaktiivse treeningu põhiandmeid ja kategooriaseoseid."),
+    ("Unusta treening", "Treener", "Treener eemaldab ootel treeningu edasisest kasutusest, kui treeningut ei ole vaja pakkuda."),
+    ("Aktiveeri treening", "Treener", "Treener muudab ootel või mitteaktiivse treeningu aktiivseks, kui treening kuulub vähemalt ühte kategooriasse."),
+    ("Muuda treening mitteaktiivseks", "Treener", "Treener eemaldab aktiivse treeningu ajutiselt kasutusest, kui treeninguga on ilmnenud ajutine probleem."),
+    ("Lõpeta treening", "Juhataja", "Juhataja lõpetab aktiivse või mitteaktiivse treeningu, kui treeningut enam ei pakuta."),
+    ("Vaata aktiivseid treeninguid", "Klient, Uudistaja", "Klient või uudistaja vaatab aktiivsete treeningute avalikke andmeid."),
+    ("Vaata kõiki treeninguid", "Juhataja", "Juhataja vaatab kõigi treeningute tööalaseid andmeid ja seisundeid."),
+    ("Vaata kõiki ootel või mitteaktiivseid treeninguid", "Treener", "Treener vaatab ootel ja mitteaktiivseid treeninguid, et valida muutmiseks või aktiveerimiseks sobiv treening."),
+    ("Vaata treeningute koondaruannet", "Juhataja", "Juhataja vaatab treeningute arvu seisundite ja kategooriate kaupa."),
+]
+
+
+OPERATIONS = [
+    ("OP1", "Tuvasta kasutaja", ["Kasutajakonto on registreeritud."], ["Süsteem tuvastab kasutaja e-posti aadressi ja parooli alusel ning leiab kasutaja pädevusalad."]),
+    ("OP2", "Leia treeningu kategooriate valik", ["Treener on autenditud ja autoriseeritud."], ["Süsteem tagastab aktiivsed treeningu kategooriad ning nende tüübid."]),
+    ("OP3", "Registreeri treening", ["Treener on autenditud ja autoriseeritud.", "Valitud treeningu kategooriad on registreeritud."], ["Treening on registreeritud ootel seisundis.", "Treeningu registreerija ja viimane muutja on registreeritud.", "Treeningu kategooriaseosed on registreeritud."]),
+    ("OP4", "Leia ootel treeningud", ["Treener on autenditud ja autoriseeritud."], ["Süsteem tagastab ootel treeningute nimekirja."]),
+    ("OP5", "Leia ootel või mitteaktiivsed treeningud", ["Treener on autenditud ja autoriseeritud."], ["Süsteem tagastab ootel ja mitteaktiivsete treeningute nimekirja."]),
+    ("OP6", "Unusta treening", ["Treening on ootel seisundis registreeritud."], ["Treeningu seisundiks saab unustatud.", "Viimase muutmise aeg ja muutja on registreeritud."]),
+    ("OP7", "Leia muudetava treeningu detailandmed", ["Treening on ootel või mitteaktiivses seisundis registreeritud."], ["Süsteem tagastab treeningu põhiandmed ja kategooriaseosed."]),
+    ("OP8", "Muuda treeningut", ["Treening on ootel või mitteaktiivses seisundis registreeritud."], ["Treeningu põhiandmed on muudetud.", "Treeningu kategooriaseosed vastavad sisendile.", "Viimase muutmise aeg ja muutja on registreeritud."]),
+    ("OP9", "Lisa treeningu kategooria seos", ["Treening ja treeningu kategooria on registreeritud."], ["Treeningu ja kategooria seos on registreeritud."]),
+    ("OP10", "Eemalda treeningu kategooria seos", ["Treeningu ja kategooria seos on registreeritud."], ["Treeningu ja kategooria seos on kustutatud."]),
+    ("OP11", "Aktiveeri treening", ["Treening on ootel või mitteaktiivses seisundis.", "Treening kuulub vähemalt ühte treeningu kategooriasse."], ["Treeningu seisundiks saab aktiivne.", "Viimase muutmise aeg ja muutja on registreeritud."]),
+    ("OP12", "Leia aktiivsed treeningud", ["Kasutaja kasutab avalikku või tööalast vaadet."], ["Süsteem tagastab aktiivsete treeningute lubatud andmed."]),
+    ("OP13", "Muuda treening mitteaktiivseks", ["Treening on aktiivses seisundis."], ["Treeningu seisundiks saab mitteaktiivne.", "Viimase muutmise aeg ja muutja on registreeritud."]),
+    ("OP14", "Leia kõik treeningud", ["Juhataja on autenditud ja autoriseeritud."], ["Süsteem tagastab kõigi treeningute tööalased andmed."]),
+    ("OP15", "Lõpeta treening", ["Treening on aktiivses või mitteaktiivses seisundis."], ["Treeningu seisundiks saab lõppenud.", "Viimase muutmise aeg ja muutja on registreeritud."]),
+    ("OP16", "Leia treeningute koondaruanne", ["Juhataja on autenditud ja autoriseeritud."], ["Süsteem tagastab treeningute arvu seisundite ja kategooriate kaupa."]),
+]
+
+
+EXTENDED_USE_CASES = [
+    {
+        "name": "Tuvasta kasutaja",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib pääseda enda tööülesannete täitmiseks lubatud kasutusjuhtudeni."),
+            ("Juhataja", "Soovib, et süsteemi tööalaseid funktsioone kasutaksid ainult õigustatud kasutajad."),
+        ],
+        "trigger": "Kasutaja soovib alustada tööalase süsteemifunktsiooni kasutamist.",
+        "pre": ["Kasutajakonto on registreeritud ja aktiivne."],
+        "post": ["Kasutaja on autenditud ja tema pädevusalad on tuvastatud."],
+        "steps": [
+            ("Kasutaja avaldab soovi süsteemi siseneda.", ""),
+            ("Süsteem kuvab tuvastamiseks vajaliku vormi.", ""),
+            ("Kasutaja sisestab e-posti aadressi ja parooli.", ""),
+            ("Süsteem tuvastab kasutaja ning leiab tema pädevusalad.", "OP1"),
+        ],
+        "extensions": [
+            "4a. Kui kasutajakontot ei leita või parool ei vasta kontole, siis kasutajat ei autendita.",
+            "4b. Kui kasutajakonto ei ole aktiivne, siis kasutajat ei autendita.",
+        ],
+    },
+    {
+        "name": "Registreeri treening",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib uue treeningu andmed kiiresti ja korrektselt registreerida."),
+            ("Juhataja", "Soovib, et treeningute portfell oleks ajakohane."),
+            ("Klient", "Soovib hiljem näha terviklikku infot aktiivsete treeningute kohta."),
+        ],
+        "trigger": "Treener saab teabe uue jõusaalis pakutava treeningu kohta.",
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treeningu seisundi ja kategooria klassifikaatorid on registreeritud."],
+        "post": ["Treening on registreeritud ootel seisundis.", "Treening on seotud valitud treeningu kategooriatega."],
+        "steps": [
+            ("Treener avaldab soovi registreerida uus treening.", ""),
+            ("Süsteem kuvab treeningu sisestamiseks vajaliku vormi ning aktiivsed treeningu kategooriad.", "OP2"),
+            ("Treener sisestab treeningu nimetuse, kirjelduse, kestuse, maksimaalse osalejate arvu, vajaliku varustuse, hinna ja kategooriad.", ""),
+            ("Süsteem kontrollib sisestatud andmeid.", ""),
+            ("Süsteem salvestab treeningu andmed ja kategooriaseosed.", "OP3"),
+            ("Süsteem kuvab registreeritud treeningu detailandmed.", "OP7"),
+        ],
+        "extensions": [
+            "4a. Kui kohustuslik väärtus puudub või ei vasta piirangule, siis salvestamine ebaõnnestub.",
+            "5a. Kui sama nimetusega treening on juba registreeritud, siis salvestamine ebaõnnestub.",
+        ],
+    },
+    {
+        "name": "Muuda treeningut",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib parandada treeningu andmeid või ajakohastada kategooriaseoseid."),
+            ("Juhataja", "Soovib, et treeningute register sisaldaks korrektseid tööandmeid."),
+            ("Klient", "Soovib, et aktiivseks muutuvad treeningud oleksid sisuliselt õiged."),
+        ],
+        "trigger": "Treener märkab ootel või mitteaktiivse treeningu andmetes muutmise vajadust.",
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel või mitteaktiivses seisundis."],
+        "post": ["Treeningu põhiandmed ja kategooriaseosed on ajakohased."],
+        "steps": [
+            ("Treener avaldab soovi muuta treeningu andmeid.", ""),
+            ("Süsteem kuvab ootel ja mitteaktiivsed treeningud.", "OP5"),
+            ("Treener valib muudetava treeningu.", ""),
+            ("Süsteem kuvab valitud treeningu detailandmed ja kategooriaseosed.", "OP7"),
+            ("Treener muudab treeningu põhiandmeid ning lisab või eemaldab kategooriaseoseid.", ""),
+            ("Süsteem salvestab treeningu põhiandmete muudatused.", "OP8"),
+            ("Süsteem salvestab lisatud kategooriaseosed.", "OP9"),
+            ("Süsteem kustutab eemaldatud kategooriaseosed.", "OP10"),
+        ],
+        "extensions": [
+            "2a. Kui süsteemis ei ole ühtegi ootel või mitteaktiivset treeningut, siis ei saa Treener jätkata.",
+            "6a. Kui muudetud andmed ei vasta piirangutele, siis muudatuste salvestamine ebaõnnestub.",
+        ],
+    },
+    {
+        "name": "Unusta treening",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib eemaldada ootel treeningu edasisest töövoost."),
+            ("Juhataja", "Soovib, et treeningute portfell ei sisaldaks realiseerumata ettepanekuid."),
+        ],
+        "trigger": "Treener saab teabe, et ootel treeningut ei hakata pakkuma.",
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel seisundis."],
+        "post": ["Treening on unustatud seisundis."],
+        "steps": [
+            ("Treener avaldab soovi unustada treening.", ""),
+            ("Süsteem kuvab ootel treeningud.", "OP4"),
+            ("Treener valib unustatava treeningu.", ""),
+            ("Süsteem salvestab treeningu seisundimuudatuse.", "OP6"),
+            ("Süsteem eemaldab unustatud treeningu ootel treeningute nimekirjast.", "OP4"),
+        ],
+        "extensions": [
+            "2a. Kui süsteemis ei ole ühtegi ootel treeningut, siis ei saa Treener treeningut unustada.",
+        ],
+    },
+    {
+        "name": "Aktiveeri treening",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib valmis treeningu klientidele nähtavaks teha."),
+            ("Klient", "Soovib näha ainult pakutavaid ja osalemiseks sobivaid treeninguid."),
+            ("Juhataja", "Soovib, et avalikus vaates oleks ainult kontrollitud treeningud."),
+        ],
+        "trigger": "Treener otsustab, et ootel või mitteaktiivne treening on valmis aktiivseks muutmiseks.",
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel või mitteaktiivses seisundis."],
+        "post": ["Treening on aktiivses seisundis."],
+        "steps": [
+            ("Treener avaldab soovi aktiveerida treening.", ""),
+            ("Süsteem kuvab ootel ja mitteaktiivsed treeningud.", "OP5"),
+            ("Treener valib nimekirjast treeningu.", ""),
+            ("Süsteem kontrollib, et treening kuulub vähemalt ühte treeningu kategooriasse.", "OP7"),
+            ("Süsteem salvestab treeningu seisundimuudatuse.", "OP11"),
+            ("Süsteem kuvab muudetud treeningu detailandmed.", "OP7"),
+        ],
+        "extensions": [
+            "3a. Kui nimekirjas ei ole ühtegi ootel või mitteaktiivset treeningut, siis ei saa Treener jätkata.",
+            "4a. Kui treening ei kuulu ühtegi treeningu kategooriasse, siis aktiveerimine ebaõnnestub.",
+        ],
+    },
+    {
+        "name": "Muuda treening mitteaktiivseks",
+        "actor": "Treener",
+        "stakeholders": [
+            ("Treener", "Soovib ajutise probleemiga treeningu klientidele nähtavast pakkumisest eemaldada."),
+            ("Klient", "Soovib näha ainult tegelikult pakutavaid aktiivseid treeninguid."),
+            ("Juhataja", "Soovib, et treeningute avalik pakkumine oleks kontrollitud."),
+        ],
+        "trigger": "Treener saab teabe aktiivse treeningu ajutisest probleemist.",
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on aktiivses seisundis."],
+        "post": ["Treening on mitteaktiivses seisundis."],
+        "steps": [
+            ("Treener avaldab soovi muuta treening mitteaktiivseks.", ""),
+            ("Süsteem kuvab aktiivsed treeningud.", "OP12"),
+            ("Treener valib mitteaktiivseks muudetava treeningu.", ""),
+            ("Süsteem salvestab treeningu seisundimuudatuse.", "OP13"),
+            ("Süsteem eemaldab treeningu aktiivsete treeningute avalikust nimekirjast.", "OP12"),
+        ],
+        "extensions": [
+            "2a. Kui süsteemis ei ole ühtegi aktiivset treeningut, siis ei saa Treener treeningut mitteaktiivseks muuta.",
+        ],
+    },
+    {
+        "name": "Lõpeta treening",
+        "actor": "Juhataja",
+        "stakeholders": [
+            ("Juhataja", "Soovib eemaldada püsivalt treeningu, mida jõusaal enam ei paku."),
+            ("Treener", "Soovib, et treeningute nimekiri ei sisaldaks kasutusest väljas teenuseid."),
+            ("Klient", "Soovib näha ainult tegelikult pakutavaid aktiivseid treeninguid."),
+        ],
+        "trigger": "Juhataja saab teabe, et treeningut enam ei pakuta või selle probleem on püsiv.",
+        "pre": ["Juhataja on autenditud ja autoriseeritud.", "Treening on aktiivses või mitteaktiivses seisundis."],
+        "post": ["Treening on lõppenud seisundis."],
+        "steps": [
+            ("Juhataja avaldab soovi lõpetada treening.", ""),
+            ("Süsteem kuvab kõik treeningud koos seisunditega.", "OP14"),
+            ("Juhataja valib lõpetatava treeningu.", ""),
+            ("Süsteem salvestab treeningu seisundimuudatuse.", "OP15"),
+            ("Süsteem kuvab lõpetatud treeningu detailandmed.", "OP14"),
+        ],
+        "extensions": [
+            "2a. Kui süsteemis ei ole ühtegi aktiivset ega mitteaktiivset treeningut, siis ei saa Juhataja treeningut lõpetada.",
+        ],
+    },
+    {
+        "name": "Vaata aktiivseid treeninguid",
+        "actor": "Klient",
+        "stakeholders": [
+            ("Klient", "Soovib leida sobiva aktiivse treeningu."),
+            ("Uudistaja", "Soovib näha jõusaali avalikku treeninguvalikut."),
+            ("Juhataja", "Soovib, et avalikult nähtav treeninguinfo oleks ajakohane."),
+        ],
+        "trigger": "Klient või uudistaja soovib vaadata pakutavaid treeninguid.",
+        "pre": ["Aktiivsete treeningute avalik vaade on kasutatav."],
+        "post": ["Aktiivsete treeningute lubatud andmed on kasutajale kuvatud."],
+        "steps": [
+            ("Klient või uudistaja avaldab soovi vaadata aktiivseid treeninguid.", ""),
+            ("Süsteem kuvab aktiivsete treeningute nimekirja.", "OP12"),
+            ("Klient või uudistaja valib treeningu, mille andmeid ta soovib täpsemalt vaadata.", ""),
+            ("Süsteem kuvab valitud aktiivse treeningu lubatud detailandmed.", "OP12"),
+        ],
+        "extensions": [
+            "2a. Kui aktiivseid treeninguid ei ole, siis kuvab süsteem tühja nimekirja.",
+        ],
+    },
+    {
+        "name": "Vaata treeningute koondaruannet",
+        "actor": "Juhataja",
+        "stakeholders": [
+            ("Juhataja", "Soovib saada ülevaadet treeningute jaotusest seisundite ning kategooriate kaupa."),
+            ("Treener", "Soovib, et juhtimisotsused põhineksid ajakohastel andmetel."),
+        ],
+        "trigger": "Juhataja soovib hinnata treeningute portfelli hetkeseisu.",
+        "pre": ["Juhataja on autenditud ja autoriseeritud."],
+        "post": ["Koondaruanne on Juhatajale kuvatud."],
+        "steps": [
+            ("Juhataja avaldab soovi vaadata treeningute koondaruannet.", ""),
+            ("Süsteem kuvab treeningute arvu seisundite ja kategooriate kaupa.", "OP16"),
+        ],
+        "extensions": [
+            "2a. Kui aruande aluseks olevaid treeninguid ei ole, siis kuvab süsteem nullväärtustega koondvaate.",
+        ],
+    },
+]
+
+
+ENTITIES = [
+    ("Treening", "Treeningute registri põhiobjekt.", "treeningu_kood"),
+    ("Treeningu_seisundi_liik", "Klassifikaator, mis kirjeldab treeningu elutsükli seisundit.", "kood"),
+    ("Treeningu_kategooria", "Klassifikaator, millega treeninguid rühmitatakse.", "kood"),
+    ("Treeningu_kategooria_tüüp", "Klassifikaatorite tüüpe kirjeldav klassifikaator.", "kood"),
+    ("Treeningu_kategooria_omamine", "Seos treeningu ja treeningu kategooria vahel.", "treeningu_kood + treeningu_kategooria_kood"),
+    ("Isik", "Isikute registri põhiobjekt.", "isikukood + riigi_kood"),
+    ("Töötaja", "Töötajate registri põhiobjekt.", "e_meil"),
+    ("Kasutajakonto", "Autentimiseks kasutatav konto.", "e_meil"),
+]
+
+
+ATTRIBUTES = [
+    ("Treening", "treeningu_kood", "Treeningu arvuline kood.", "Kohustuslik. Positiivne täisarv. Unikaalne."),
+    ("Treening", "nimetus", "Treeningu ametlik nimetus.", "Kohustuslik. Mittetühi. Unikaalne."),
+    ("Treening", "kirjeldus", "Treeningu sisu kirjeldus.", "Kohustuslik. Mittetühi."),
+    ("Treening", "kestus_minutites", "Treeningu kestus minutites.", "Kohustuslik. Vahemikus 15 kuni 240."),
+    ("Treening", "maksimaalne_osalejate_arv", "Treeningule lubatud osalejate arv.", "Kohustuslik. Positiivne täisarv."),
+    ("Treening", "vajalik_varustus", "Treeningul vajalik varustus.", "Kohustuslik. Mittetühi."),
+    ("Treening", "hind", "Treeningu hind eurodes.", "Kohustuslik. Null või positiivne arv."),
+    ("Treening", "reg_aeg", "Treeningu registreerimise aeg.", "Kohustuslik. Küsitakse süsteemi kellalt."),
+    ("Treening", "viimase_muutm_aeg", "Treeningu viimase muutmise aeg.", "Kohustuslik. Ei tohi olla varasem kui registreerimise aeg."),
+    ("Isik", "synni_kp", "Isiku sünnikuupäev.", "Kohustuslik. Vahemikus 01.01.1900 kuni 31.12.2100."),
+    ("Isik", "e_meil", "Isiku e-posti aadress.", "Kohustuslik. Sisaldab @ märki. Unikaalne."),
+]
+
+
+BUSINESS_RULES = [
+    "Treeningu nimetus peab olema treeningute registris unikaalne.",
+    "Treeningu saab aktiivseks muuta ainult siis, kui treening kuulub vähemalt ühte treeningu kategooriasse.",
+    "Aktiivne treening peab olema seotud aktiivse treeningu seisundi liigiga.",
+    "Treeningu kestus peab olema 15 kuni 240 minutit.",
+    "Treeningu maksimaalne osalejate arv peab olema positiivne täisarv.",
+    "Treeningu hind peab olema null või positiivne rahasumma.",
+    "Treeningu viimase muutmise aeg ei tohi olla varasem kui treeningu registreerimise aeg.",
+]
+
+
+NFR = [
+    ("Kasutajaliides", "Süsteemi kasutajaliides peab olema eestikeelne ning kasutama kogu treeningute funktsionaalses allsüsteemis samu mõisteid."),
+    ("Kasutajaliides", "Vormides peab kohustuslikke välju eristama enne andmete salvestamist."),
+    ("Turvalisus", "Treeneri ja juhataja kasutusjuhud peavad olema kasutatavad ainult autenditud ja autoriseeritud kasutajatele."),
+    ("Turvalisus", "Paroole ei tohi salvestada avatekstina."),
+    ("Turvalisus", "Treeningu muutmise ja seisundimuutmise operatsioonide juures tuleb säilitada viimase muutja e-posti aadress ning muutmise aeg."),
+    ("Töökindlus", "Treeningute registri varukoopia tuleb teha vähemalt üks kord ööpäevas."),
+    ("Jõudlus", "Aktiivsete treeningute nimekirja päring peab tavalise koormuse korral vastama kuni kahe sekundiga."),
+]
+
+
+@dataclass
+class CaptionCounter:
+    figures: int = 0
+    tables: int = 0
+
+
+def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    candidates = [
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "",
+        "/Library/Fonts/Arial.ttf",
+    ]
+    for path in candidates:
+        if path and Path(path).exists():
+            try:
+                return ImageFont.truetype(path, size=size)
+            except OSError:
+                pass
+    return ImageFont.load_default()
+
+
+def draw_centered(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], text: str, fill: str, fnt: ImageFont.ImageFont) -> None:
+    lines = wrap_text(draw, text, fnt, max_width=box[2] - box[0] - 18)
+    heights = [draw.textbbox((0, 0), line, font=fnt)[3] for line in lines]
+    total = sum(heights) + max(0, len(lines) - 1) * 4
+    y = box[1] + ((box[3] - box[1]) - total) // 2
+    for line, height in zip(lines, heights):
+        width = draw.textbbox((0, 0), line, font=fnt)[2]
+        draw.text((box[0] + ((box[2] - box[0]) - width) // 2, y), line, fill=fill, font=fnt)
+        y += height + 4
+
+
+def wrap_text(draw: ImageDraw.ImageDraw, text: str, fnt: ImageFont.ImageFont, max_width: int) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        candidate = word if not current else f"{current} {word}"
+        if draw.textbbox((0, 0), candidate, font=fnt)[2] <= max_width:
+            current = candidate
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines or [text]
+
+
+def draw_box(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], text: str, fill: str = "#eef4ff", outline: str = "#1f4e79") -> None:
+    draw.rounded_rectangle(box, radius=10, fill=fill, outline=outline, width=2)
+    draw_centered(draw, box, text, "#1b1b1b", font(22))
+
+
+def draw_arrow(draw: ImageDraw.ImageDraw, start: tuple[int, int], end: tuple[int, int], fill: str = "#555555") -> None:
+    draw.line([start, end], fill=fill, width=3)
+    ex, ey = end
+    sx, sy = start
+    if abs(ex - sx) >= abs(ey - sy):
+        direction = 1 if ex > sx else -1
+        points = [(ex, ey), (ex - 14 * direction, ey - 8), (ex - 14 * direction, ey + 8)]
+    else:
+        direction = 1 if ey > sy else -1
+        points = [(ex, ey), (ex - 8, ey - 14 * direction), (ex + 8, ey - 14 * direction)]
+    draw.polygon(points, fill=fill)
+
+
+def make_diagrams() -> list[tuple[Path, str]]:
+    DIAGRAM_DIR.mkdir(parents=True, exist_ok=True)
+    diagrams: list[tuple[Path, str]] = []
+
+    specs = [
+        ("01_architecture.png", "Jõusaali infosüsteemi põhiobjektid ja registrid", ["Isik", "Töötaja", "Treening", "Broneering", "Makse", "Klassifikaator"], "ring"),
+        ("02_use_cases.png", "Treeningute funktsionaalse allsüsteemi kasutusjuhud", ["Treener", "Registreeri", "Muuda", "Aktiveeri", "Juhataja", "Lõpeta", "Aruanne", "Klient", "Vaata aktiivseid"], "usecase"),
+        ("03_activity_register.png", "Treeningu registreerimise tegevusvoog", ["Algus", "Sisesta andmed", "Kontrolli", "Salvesta", "Kuva detailandmed", "Lõpp"], "flow"),
+        ("04_activity_activate.png", "Treeningu aktiveerimise tegevusvoog", ["Algus", "Vali treening", "Kontrolli kategooriat", "Muuda aktiivseks", "Lõpp"], "flow"),
+        ("05_conceptual.png", "Treeningute registri kontseptuaalne eskiismudel", ["Treening", "Treeningu_seisundi_liik", "Treeningu_kategooria", "Treeningu_kategooria_tüüp", "Töötaja"], "model"),
+        ("06_state.png", "Treeningu seisundidiagramm", ["Ootel", "Aktiivne", "Mitteaktiivne", "Lõppenud", "Unustatud"], "state"),
+        ("07_physical.png", "Treeningute registri füüsiline andmemudel", ["treening", "treeningu_seisundi_liik", "treeningu_kategooria", "treeningu_kategooria_omamine", "kasutajakonto"], "model"),
+    ]
+
+    for filename, title, items, kind in specs:
+        path = DIAGRAM_DIR / filename
+        img = Image.new("RGB", (1400, 850), "#ffffff")
+        draw = ImageDraw.Draw(img)
+        draw.text((50, 38), title, fill="#203040", font=font(34, bold=True))
+        if kind == "ring":
+            coords = [(120, 170), (500, 170), (880, 170), (120, 470), (500, 470), (880, 470)]
+            for (x, y), item in zip(coords, items):
+                draw_box(draw, (x, y, x + 300, y + 120), item)
+            draw_arrow(draw, (420, 230), (500, 230))
+            draw_arrow(draw, (800, 230), (880, 230))
+            draw_arrow(draw, (270, 290), (270, 470))
+            draw_arrow(draw, (650, 290), (650, 470))
+            draw_arrow(draw, (1030, 290), (1030, 470))
+        elif kind == "usecase":
+            actor_boxes = [(80, 170, 290, 260), (80, 430, 290, 520), (80, 610, 290, 700)]
+            usecase_boxes = [(440, 145, 710, 235), (760, 145, 1030, 235), (1080, 145, 1320, 235), (440, 410, 710, 500), (760, 410, 1030, 500), (440, 605, 710, 695)]
+            for box, item in zip(actor_boxes, ["Treener", "Juhataja", "Klient ja Uudistaja"]):
+                draw_box(draw, box, item, "#fff3df", "#9a5b00")
+            for box, item in zip(usecase_boxes, ["Registreeri treening", "Muuda treeningut", "Aktiveeri treening", "Lõpeta treening", "Vaata aruannet", "Vaata aktiivseid"]):
+                draw.ellipse(box, fill="#eef4ff", outline="#1f4e79", width=3)
+                draw_centered(draw, box, item, "#1b1b1b", font(20))
+            for end in [(440, 190), (760, 190), (1080, 190)]:
+                draw_arrow(draw, (290, 215), end)
+            for end in [(440, 455), (760, 455)]:
+                draw_arrow(draw, (290, 475), end)
+            draw_arrow(draw, (290, 655), (440, 650))
+        elif kind == "state":
+            coords = [(105, 330), (390, 190), (390, 480), (735, 330), (1035, 330)]
+            for (x, y), item in zip(coords, items):
+                draw_box(draw, (x, y, x + 230, y + 105), item, "#f2f7ed", "#3d6b2f")
+            draw_arrow(draw, (335, 382), (390, 245))
+            draw_arrow(draw, (335, 382), (390, 535))
+            draw_arrow(draw, (620, 245), (735, 382))
+            draw_arrow(draw, (620, 535), (735, 382))
+            draw_arrow(draw, (965, 382), (1035, 382))
+        elif kind == "flow":
+            x = 70
+            box_width = 170
+            step_width = 220
+            boxes = []
+            for item in items:
+                boxes.append((x, 320, x + box_width, 430, item))
+                x += step_width
+            for left, top, right, bottom, item in boxes:
+                draw_box(draw, (left, top, right, bottom), item, "#f8fbff", "#1f4e79")
+            for first, second in zip(boxes, boxes[1:]):
+                draw_arrow(draw, (first[2], 375), (second[0], 375))
+        else:
+            coords = [(90, 160), (495, 160), (900, 160), (290, 470), (710, 470)]
+            for (x, y), item in zip(coords, items):
+                draw_box(draw, (x, y, x + 310, y + 120), item)
+            draw_arrow(draw, (400, 220), (495, 220))
+            draw_arrow(draw, (805, 220), (900, 220))
+            draw_arrow(draw, (245, 280), (445, 470))
+            draw_arrow(draw, (650, 280), (865, 470))
+        img.save(path)
+        diagrams.append((path, title))
+    return diagrams
+
+
+def set_cell_shading(cell, fill: str) -> None:
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:fill"), fill)
+    tc_pr.append(shd)
+
+
+def set_repeat_table_header(row) -> None:
+    tr_pr = row._tr.get_or_add_trPr()
+    tbl_header = OxmlElement("w:tblHeader")
+    tbl_header.set(qn("w:val"), "true")
+    tr_pr.append(tbl_header)
+
+
+def style_table(table) -> None:
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.style = "Table Grid"
+    header = table.rows[0]
+    set_repeat_table_header(header)
+    for cell in header.cells:
+        set_cell_shading(cell, "D9EAF7")
+        for p in cell.paragraphs:
+            for run in p.runs:
+                run.bold = True
+    for row in table.rows:
+        for cell in row.cells:
+            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
+
+
+def add_table(doc: Document, caption: str, headers: list[str], rows: list[Iterable[str]], counter: CaptionCounter):
+    counter.tables += 1
+    p = doc.add_paragraph(f"Tabel {counter.tables}. {caption}", style="Caption")
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    table = doc.add_table(rows=1, cols=len(headers))
+    style_table(table)
+    for i, header in enumerate(headers):
+        table.rows[0].cells[i].text = header
+    for row_data in rows:
+        row = table.add_row()
+        for i, value in enumerate(row_data):
+            row.cells[i].text = str(value)
+    doc.add_paragraph()
+    return table
+
+
+def add_figure(doc: Document, image_path: Path, caption: str, counter: CaptionCounter) -> None:
+    counter.figures += 1
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = paragraph.add_run()
+    run.add_picture(str(image_path), width=Inches(6.6))
+    cp = doc.add_paragraph(f"Joonis {counter.figures}. {caption}", style="Caption")
+    cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+
+def bullet_list(doc: Document, items: Iterable[str]) -> None:
+    for item in items:
+        doc.add_paragraph(item, style="List Bullet")
+
+
+def number_list(doc: Document, items: Iterable[str]) -> None:
+    for item in items:
+        doc.add_paragraph(item, style="List Number")
+
+
+def add_heading(doc: Document, text: str, level: int) -> None:
+    doc.add_heading(text, level=level)
+
+
+def setup_document() -> Document:
+    doc = Document()
+    section = doc.sections[0]
+    section.start_type = WD_SECTION_START.NEW_PAGE
+    section.page_width = Cm(21)
+    section.page_height = Cm(29.7)
+    section.left_margin = Cm(2.5)
+    section.right_margin = Cm(2.0)
+    section.top_margin = Cm(2.0)
+    section.bottom_margin = Cm(2.0)
+
+    styles = doc.styles
+    styles["Normal"].font.name = "Arial"
+    styles["Normal"]._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
+    styles["Normal"].font.size = Pt(10.5)
+    for style_name, size in [("Title", 20), ("Heading 1", 16), ("Heading 2", 13), ("Heading 3", 11)]:
+        style = styles[style_name]
+        style.font.name = "Arial"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
+        style.font.size = Pt(size)
+        style.font.color.rgb = RGBColor(31, 78, 121)
+    styles["Caption"].font.name = "Arial"
+    styles["Caption"].font.size = Pt(9)
+    styles["Caption"].font.italic = True
+    return doc
+
+
+def add_title_page(doc: Document) -> None:
+    for _ in range(4):
+        doc.add_paragraph()
+    title = doc.add_paragraph()
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = title.add_run(f"{SYSTEM_NAME}\n{SUBSYSTEM_NAME.lower()}")
+    run.bold = True
+    run.font.size = Pt(20)
+    run.font.color.rgb = RGBColor(31, 78, 121)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run("Süsteemianalüüsi ja andmebaasi disaini projekt").bold = True
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run(f"Autorid: {AUTHORS}\nE-post: {AUTHOR_EMAIL}\nTallinn 2026")
+    doc.add_page_break()
+
+
+def add_contents(doc: Document, counter: CaptionCounter) -> None:
+    add_heading(doc, "Sisukord", 1)
+    doc.add_paragraph("Sisukord on esitatud dokumendi struktuurse ülevaatena. Leheküljenumbreid ei hoita käsitsi, et vältida aegunud viiteid pärast dokumendi taastootmist.")
+    rows = [
+        ("1", "Sissejuhatus"),
+        ("2", "Süsteemi üldvaade"),
+        ("3", "Mittefunktsionaalsed nõuded"),
+        ("4", "Kasutusjuhud"),
+        ("5", "Treeningute registri eskiismudel"),
+        ("6", "Operatsioonilepingud"),
+        ("7", "Andmemudel ja füüsiline disain"),
+        ("8", "Reprodutseerimine ja kontroll"),
+    ]
+    add_table(doc, "Dokumendi peatükkide ülevaade", ["Peatükk", "Pealkiri"], rows, counter)
+    doc.add_page_break()
+
+
+def add_overview(doc: Document, counter: CaptionCounter, diagrams: list[tuple[Path, str]]) -> None:
+    add_heading(doc, "1 Sissejuhatus", 1)
+    doc.add_paragraph("Dokument kirjeldab jõusaali infosüsteemi treeningute funktsionaalset allsüsteemi ning selle allsüsteemi toetavat treeningute registrit.")
+    add_heading(doc, "1.1 Organisatsiooni kirjeldus", 2)
+    doc.add_paragraph("Jõusaal pakub klientidele rühmatreeninguid, personaaltreeninguid ja muid treeninguteenuseid. Organisatsiooni igapäevane töö sõltub sellest, et treeningute info oleks täpne, kontrollitud ja klientidele õigel ajal kättesaadav.")
+    add_heading(doc, "1.2 Organisatsiooni eesmärgid", 2)
+    bullet_list(doc, [
+        "Pakkuda klientidele kvaliteetseid ja ajakohase kavaga treeninguteenuseid.",
+        "Suurendada klientide järjepidevat treeningutes osalemist.",
+        "Toetada treenerite töö planeerimist ja treeningute portfelli juhtimist.",
+        "Võimaldada juhtkonnal hinnata treeningute valikut ja selle muutumist.",
+    ])
+
+    add_heading(doc, "2 Süsteemi üldvaade", 1)
+    doc.add_paragraph("Süsteemi üldvaade seob organisatsiooni eesmärgid põhiobjektide, pädevusalade, registrite ja põhiprotsessidega.")
+    add_figure(doc, diagrams[0][0], diagrams[0][1], counter)
+
+    add_heading(doc, "2.1 Infosüsteemi eesmärgid", 2)
+    bullet_list(doc, [
+        "Võimaldada treeningut elektrooniliselt registreerida, muuta ja seisundite kaudu juhtida.",
+        "Säilitada treeningute kohta andmeid mahus, mis toetab treeningute pakkumist, broneerimist ja aruandlust.",
+        "Tagada aktiivsete treeningute ajakohane avalik kuvamine klientidele ja uudistajatele.",
+        "Võimaldada treeningute andmete kasutamist broneeringute ja maksete protsessides.",
+        "Võimaldada juhtkonnal vaadata treeningute koondaruannet seisundite ja kategooriate kaupa.",
+    ])
+
+    add_heading(doc, "2.2 Põhiobjektid", 2)
+    add_table(doc, "Põhiobjektid", ["Põhiobjekt", "Selgitus"], MAIN_OBJECTS, counter)
+
+    add_heading(doc, "2.3 Tegutsejad ja pädevusalad", 2)
+    add_table(doc, "Tegutsejad ja pädevusalad", ["Tegutseja", "Pädevusala liik", "Huvi"], ACTORS, counter)
+
+    add_heading(doc, "2.4 Funktsionaalsed allsüsteemid ja registrid", 2)
+    add_table(doc, "Funktsionaalsete allsüsteemide ja registrite vastavus", ["Funktsionaalne allsüsteem", "Register", "Põhiobjekt"], SUBSYSTEMS_REGISTERS, counter)
+
+    add_heading(doc, "2.5 Põhiprotsessid ja käivitavad sündmused", 2)
+    add_table(doc, "Põhiprotsessid", ["Põhiprotsess", "Käivitav sündmus", "Tulemus"], PROCESSES, counter)
+
+    add_heading(doc, "2.6 Lausendid", 2)
+    number_list(doc, STATEMENTS)
+
+
+def add_nfr(doc: Document, counter: CaptionCounter) -> None:
+    add_heading(doc, "3 Mittefunktsionaalsed nõuded", 1)
+    doc.add_paragraph("Mittefunktsionaalsed nõuded kirjeldavad süsteemi kvaliteediomadusi ja tehnilisi piiranguid, mitte eraldiseisvaid ärifunktsioone.")
+    add_table(doc, "Mittefunktsionaalsed nõuded", ["Alajaotus", "Nõue"], NFR, counter)
+
+
+def add_use_cases(doc: Document, counter: CaptionCounter, diagrams: list[tuple[Path, str]]) -> None:
+    add_heading(doc, "4 Kasutusjuhud", 1)
+    doc.add_paragraph("Kasutusjuhud kirjeldavad treeningute funktsionaalse allsüsteemi kasutajale nähtavat käitumist ja süsteemi vastuseid.")
+    add_figure(doc, diagrams[1][0], diagrams[1][1], counter)
+
+    add_heading(doc, "4.1 Kõrgtaseme kasutusjuhud", 2)
+    add_table(doc, "Kõrgtaseme kasutusjuhud", ["Kasutusjuht", "Tegutsejad", "Kirjeldus"], HIGH_LEVEL_USE_CASES, counter)
+
+    add_heading(doc, "4.2 Laiendatud kasutusjuhud", 2)
+    for uc in EXTENDED_USE_CASES:
+        add_heading(doc, f"4.2 {uc['name']}", 3)
+        add_table(doc, f"Laiendatud kasutusjuht: {uc['name']}", ["Väli", "Sisu"], [
+            ("Kasutusjuht", uc["name"]),
+            ("Primaarne tegutseja", uc["actor"]),
+            ("Käivitav sündmus", uc["trigger"]),
+            ("Eeltingimused", "\n".join(uc["pre"])),
+            ("Järeltingimused", "\n".join(uc["post"])),
+        ], counter)
+        add_table(doc, f"Osapooled ja nende huvid: {uc['name']}", ["Osapool", "Huvi"], uc["stakeholders"], counter)
+        add_table(doc, f"Stsenaarium: {uc['name']}", ["Samm", "Tegevus", "Operatsioon"], [(i + 1, step, op) for i, (step, op) in enumerate(uc["steps"])], counter)
+        add_table(doc, f"Laiendused: {uc['name']}", ["Laiendus"], [(item,) for item in uc["extensions"]], counter)
+
+    add_figure(doc, diagrams[2][0], diagrams[2][1], counter)
+    add_figure(doc, diagrams[3][0], diagrams[3][1], counter)
+
+
+def add_register_model(doc: Document, counter: CaptionCounter, diagrams: list[tuple[Path, str]]) -> None:
+    add_heading(doc, "5 Treeningute registri eskiismudel", 1)
+    doc.add_paragraph("Treeningute register on treeningute funktsionaalse allsüsteemi põhiregister. Register kasutab töötajate, isikute ja klassifikaatorite registrites olevaid andmeid.")
+    add_heading(doc, "5.1 Registri seosed", 2)
+    add_table(doc, "Treeningute registri eskiismudeli seosed", ["Nimekiri", "Väärtused"], [
+        ("Registrit kasutavad pädevusalad", "Treener; Juhataja; Klient; Uudistaja"),
+        ("Registrit teenindavad funktsionaalsed allsüsteemid", "Treeningute funktsionaalne allsüsteem"),
+        ("Selle registriga seotud registrid", "Isikute register; Töötajate register; Broneeringute register; Maksete register; Klassifikaatorite register"),
+    ], counter)
+    add_heading(doc, "5.2 Ärireeglid", 2)
+    number_list(doc, BUSINESS_RULES)
+    add_heading(doc, "5.3 Kontseptuaalne eskiismudel", 2)
+    add_figure(doc, diagrams[4][0], diagrams[4][1], counter)
+
+
+def add_operations(doc: Document, counter: CaptionCounter) -> None:
+    add_heading(doc, "6 Operatsioonilepingud", 1)
+    doc.add_paragraph("Operatsioonilepingud on koostatud lepingprojekteerimise põhimõttel ning nende tähised vastavad kasutusjuhtudes kasutatud viidetele.")
+    for op_id, name, pre, post in OPERATIONS:
+        add_heading(doc, f"{op_id} {name}", 2)
+        add_table(doc, f"Andmebaasioperatsiooni leping: {op_id}", ["Osa", "Sisu"], [
+            ("Operatsioon", f"{op_id} {name}"),
+            ("Eeltingimused", "\n".join(pre)),
+            ("Järeltingimused", "\n".join(post)),
+            ("Kasutus kasutusjuhtude poolt", ", ".join(sorted({uc["name"] for uc in EXTENDED_USE_CASES if any(op_id == op for _, op in uc["steps"])})) or "Tööalane abipäring"),
+        ], counter)
+
+
+def add_data_design(doc: Document, counter: CaptionCounter, diagrams: list[tuple[Path, str]]) -> None:
+    add_heading(doc, "7 Andmemudel ja füüsiline disain", 1)
+    doc.add_paragraph("Andmemudel kirjeldab treeningute registri loogilisi olemitüüpe ning PostgreSQL füüsilist realisatsiooni.")
+    add_heading(doc, "7.1 Olemid ja atribuudid", 2)
+    add_table(doc, "Olemitüübid", ["Olemitüüp", "Definitsioon", "Identifikaator"], ENTITIES, counter)
+    add_table(doc, "Atribuutide definitsioonid", ["Olemitüüp", "Atribuut", "Definitsioon", "Piirangud"], ATTRIBUTES, counter)
+    add_heading(doc, "7.2 Seisundimudel", 2)
+    add_figure(doc, diagrams[5][0], diagrams[5][1], counter)
+    add_heading(doc, "7.3 Füüsiline mudel", 2)
+    add_figure(doc, diagrams[6][0], diagrams[6][1], counter)
+    add_heading(doc, "7.4 SQL DDL", 2)
+    doc.add_paragraph("Järgmine DDL on PostgreSQL jaoks koostatud ning seda kasutatakse projekti kontrollis.")
+    for line in SQL_DDL.strip().splitlines():
+        display_line = line.replace("REFERENCES", "references")
+        p = doc.add_paragraph()
+        run = p.add_run(display_line)
+        run.font.name = "Courier New"
+        run._element.rPr.rFonts.set(qn("w:eastAsia"), "Courier New")
+        run.font.size = Pt(8)
+
+
+def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
+    add_heading(doc, "8 Reprodutseerimine ja kontroll", 1)
+    doc.add_paragraph("Projekt on taastoodetav jälgitavatest lähtefailidest. Lõppartefaktid genereeritakse skriptiga, mis loob DOCX dokumendi, teisendab EAP malli ja rakendab EAP parandused.")
+    add_table(doc, "Taastootmise sisendid ja väljundid", ["Fail või kataloog", "Roll"], [
+        ("instruction_guides/", "Kursuse juhendid, näidisprojekt ja tüüpvigade dokument."),
+        ("preset_files/EA_mall_AB_projekt_Eeltaidetud_2026.eap", "EAP lähtebaas, millest lõplik mudel teisendatakse."),
+        ("tools/fill_report_docx.py", "Struktureeritud DOCX dokumendi generaator."),
+        ("tools/EapConvert.java", "EAP malli teisendaja kirjutatavasse Access 2000 vormingusse."),
+        ("tools/EapRename.java ja tools/EapFixes.java", "EAP mudeli nime- ja sisuparandused."),
+        ("tools/sql_ddl.py", "PostgreSQL DDL lähtefail."),
+        ("tools/validate_project.py", "Automaatne kontrollskript."),
+        ("build_all.sh või build_all.bat", "Lõppartefaktide taastootmine puhtast kloonist."),
+    ], counter)
+
+
+def validate_text_sanity(doc: Document) -> None:
+    text = "\n".join(p.text for p in doc.paragraphs)
+    forbidden = ["HYPERLINK", "PAGEREF", "MERGEFORMAT", "<täienda", "<Siia", "<abc>"]
+    found = [item for item in forbidden if item in text]
+    if found:
+        raise ValueError(f"Generated DOCX contains forbidden visible text: {found}")
+    if re.search(r"\bOP\d+(?:\.\d+)?\b", text):
+        refs = set(re.findall(r"\bOP\d+(?:\.\d+)?\b", text))
+        defs = {op_id for op_id, *_ in OPERATIONS}
+        dangling = sorted(refs - defs)
+        if dangling:
+            raise ValueError(f"Dangling operation references: {dangling}")
 
 
 def main() -> None:
-    with tempfile.TemporaryDirectory() as tmp_name:
-        tmp = Path(tmp_name)
-        with ZipFile(SRC) as zf:
-            zf.extractall(tmp)
-
-        replacements = [
-            ("[Autorite nimed]", "Tristan Aik Sild, Gustav Tamkivi"),
-            ("Y infosüsteemi", "Jõusaali infosüsteemi"),
-            ("Y infosüsteemist", "jõusaali infosüsteemist"),
-            ("Y peab olema organisatsiooni valdkonna nimetus", "Jõusaal peab olema organisatsiooni valdkonna nimetus"),
-
-            ("X_kategooria_omamine", "treeningu_kategooria_omamine"),
-            ("X_kategooria_tüübiga", "treeningu_kategooria_tüübiga"),
-            ("X_kategooria_tüüp", "treeningu_kategooria_tüüp"),
-            ("X_kategooria_kood", "treeningu_kategooria_kood"),
-            ("X_kategooria_", "treeningu_kategooria_"),
-            ("X_kategooria", "treeningu_kategooria"),
-            ("X_seisundi_liik", "treeningu_seisundi_liik"),
-            ("X_kood_uus", "treeningu_kood_uus"),
-            ("X_kood_vana", "treeningu_kood_vana"),
-            ("X_kood", "treeningu_kood"),
-
-            ("X funktsionaalse allsüsteemi", "treeningute funktsionaalse allsüsteemi"),
-            ("X funktsionaalne allsüsteem", "treeningute funktsionaalne allsüsteem"),
-            ("X funktsionaalses allsüsteemis", "treeningute funktsionaalses allsüsteemis"),
-            ("X registri", "treeningute registri"),
-            ("X register", "treeningute register"),
-            ("X registrit", "treeningute registrit"),
-            ("X registrites", "treeningute registrites"),
-            ("X elutsüklid", "treeningute elutsüklid"),
-
-            ("X haldur", "treener"),
-            ("X halduri", "treeneri"),
-            ("X haldurid", "treenerid"),
-            ("Registreeri X", "Registreeri treening"),
-            ("Unusta X", "Unusta treening"),
-            ("Muuda X mitteaktiivseks", "Muuda treening mitteaktiivseks"),
-            ("Muuda X mittaktiivseks", "Muuda treening mitteaktiivseks"),
-            ("Muuda X", "Muuda treeningut"),
-            ("Aktiveeri X", "Aktiveeri treening"),
-            ("Lõpeta X", "Lõpeta treening"),
-            ("Vaata aktiivseid X", "Vaata aktiivseid treeninguid"),
-            ("Vaata kõiki X", "Vaata kõiki treeninguid"),
-            ("Vaata kõiki ootel või mitteaktiivseid X", "Vaata kõiki ootel või mitteaktiivseid treeninguid"),
-            ("Vaata X koondaruannet", "Vaata treeningute koondaruannet"),
-
-            ("uue X kohta", "uue treeningu kohta"),
-            ("X registreerimine", "treeningu registreerimine"),
-            ("X unustamine", "treeningu unustamine"),
-            ("X aktiveerimine", "treeningu aktiveerimine"),
-            ("X ajutiselt kasutusest eemaldamine", "treeningu ajutiselt kasutusest eemaldamine"),
-            ("X lõplikult kasutusest eemaldamine", "treeningu lõplikult kasutusest eemaldamine"),
-            ("X kasutamine", "treeningu kasutamine"),
-            ("X andmed", "treeningu andmed"),
-            ("X andmeid", "treeningu andmeid"),
-            ("X detailandmed", "treeningu detailandmed"),
-            ("X nimekirja", "treeningute nimekirja"),
-            ("X nimekiri", "treeningute nimekiri"),
-            ("X arvu", "treeningute arvu"),
-            ("X hetkeseisund", "treeningu hetkeseisund"),
-            ("X registreerimise", "treeningu registreerimise"),
-            ("X viimase", "treeningu viimase"),
-            ("X seotud", "treeninguga seotud"),
-            ("X puhul", "treeningu puhul"),
-            ("X kohta", "treeningu kohta"),
-            ("X põhjal", "treeningute registri põhjal"),
-            ("X põhiandmed", "treeningu põhiandmed"),
-            ("X klassifitseerimist", "treeningute klassifitseerimist"),
-            ("X rühmitamist", "treeningute rühmitamist"),
-            ("üks ja sama X", "üks ja sama treening"),
-            ("Igal X", "Igal treeningul"),
-            ("Iga X", "Iga treening"),
-            ("iga X", "iga treeningu"),
-            ("kõigi X", "kõigi treeningute"),
-            ("kõikide X", "kõikide treeningute"),
-            ("aktiivsete X", "aktiivsete treeningute"),
-            ("aktiivsed X", "aktiivsed treeningud"),
-            ("ootel X", "ootel treeningute"),
-            ("X.", "treening."),
-            ("X,", "treening,"),
-            ("X ", "treening "),
-            ("X", "Treening"),
-        ]
-
-        fill_replacements = [
-            (
-                "Pakkuda kõigile töötajatele meeldivat töökeskkonda<täienda>",
-                "Pakkuda kõigile töötajatele meeldivat töökeskkondaSuurendada klientide järjepidevat treeningutes osalemist ja toetada treenerite töö paremat planeerimist.",
-            ),
-            (
-                "Tagada ülevaade treeningutest, mille pakkumine ja läbiviimine on jõusaali üks põhitegevusi<täienda>",
-                "Tagada ülevaade treeningutest, mille pakkumine ja läbiviimine on jõusaali üks põhitegevusiVõimaldada avaldada klientidele ja uudistajatele ajakohast infot jõusaali treeningute kohta.",
-            ),
-            (
-                "Tagada ülevaade treening, millega tehingute (transaktsioonide) tegemine on üks organisatsiooni põhieesmärk",
-                "Tagada ülevaade treeningutest, mille pakkumine ja läbiviimine on jõusaali üks põhitegevusi",
-            ),
-            (
-                "treener registreerib treeninguu",
-                "treener registreerib treeningu",
-            ),
-            (
-                "treener registreerib Treening",
-                "treener registreerib treeningu",
-            ),
-            (
-                "treening iseloomustab null või rohkem treeningu_kategooriat",
-                "Treeningut iseloomustab null või rohkem treeningu kategooriat",
-            ),
-            (
-                "treening iseloomustab null või rohkem treening kategooriat",
-                "Treeningut iseloomustab null või rohkem treeningu kategooriat",
-            ),
-            (
-                "treeningu_kategooria on klassifikaator",
-                "treeningu kategooria on klassifikaator",
-            ),
-            (
-                "treening kategooria on klassifikaator",
-                "treeningu kategooria on klassifikaator",
-            ),
-            (
-                "Uudistajale pakuvad huvi treeningu andmed",
-                "Uudistajale pakuvad huvi avalikult nähtavad treeningute andmed",
-            ),
-            (
-                "Uudistajale pakuvad huvi avalikult nähtavad treeningute andmed<täienda>",
-                "Uudistajale pakuvad huvi avalikult nähtavad treeningute andmedKlient registreerub treeningule.",
-            ),
-            (
-                "EelarveTreening<täienda>",
-                "EelarveTreeningTreeningule registreerumine",
-            ),
-            (
-                "treeningu lõplikult kasutusest eemaldamine (lõpetamine)<täienda><täienda>",
-                "treeningu lõplikult kasutusest eemaldamine (lõpetamine)Klient soovib treeningul osaledaTreeningule registreerumine",
-            ),
-            (
-                "Uudistaja<täienda>",
-                "UudistajaAdministraator",
-            ),
-            (
-                "Igale töötajale on ettenähtud oma arvuti. <täienda või kustuta>",
-                "Igale töötajale on ettenähtud oma arvuti. Treenerid ja administraatorid kasutavad infosüsteemi tööarvutist või tahvelarvutist jõusaali ruumides.",
-            ),
-            (
-                "Klassifikaatorite haldur<täienda>",
-                "Klassifikaatorite haldurAdministraator",
-            ),
-            (
-                "Uudistaja<täienda või kustuta>",
-                "Uudistaja",
-            ),
-            (
-                "treeningute register<täienda><täienda>",
-                "treeningute registerBroneeringute funktsionaalne allsüsteemBroneeringute register",
-            ),
-            (
-                "Registrit kasutavad pädevusaladJuhataja treenerKlientUudistaja<täienda>",
-                "Registrit kasutavad pädevusaladJuhataja treenerKlientUudistajaAdministraator",
-            ),
-            (
-                "Võimaldab rühmitada treening klassifitseerimiseks kasutatavaid kategooriaid ühise nime alla. Kategooria tüüp kirjeldab, mis liiki klassifikatsiooniga on tegemist. treeningu_kategooria_tüüp näide on <abc>, sest iga treeningu on seotud null või rohkema <abc>-ga ning iga <abc> on seotud null või rohkema Treening-ga.",
-                "Võimaldab rühmitada treeningute klassifitseerimiseks kasutatavaid kategooriaid ühise nime alla. Kategooria tüüp kirjeldab, mis liiki klassifikatsiooniga on tegemist. treeningu_kategooria_tüübi näide on treeningu liik, sest iga treening on seotud null või rohkema treeningu liigiga ning iga treeningu liik on seotud null või rohkema treeninguga.",
-            ),
-            (
-                "Näiteks treeningu_kategooria_tüüp <abc> alla kuuluvate kategooriate näited on <täienda>",
-                "Näiteks treeningu_kategooria_tüüp treeningu liik alla kuuluvate kategooriate näited on eratrenn, grupitrenn ja füsioteraapia.",
-            ),
-            (
-                "Näitab treening kuulumist kategooriatesse.",
-                "Näitab treeningu kuulumist kategooriatesse.",
-            ),
-            (
-                "mitme treening kategooriaga",
-                "mitme treeningu kategooriaga",
-            ),
-            (
-                "üldisele treening elutsüklile",
-                "üldisele treeningu elutsüklile",
-            ),
-            (
-                "Selleks, et saaks registreerida andmeid <täienda> registrites, peavad olema registreeritud treeningu andmed ja seega peab olema realiseeritud treeningute register.",
-                "Selleks, et saaks registreerida andmeid broneeringute ja treeningupäevikute registrites, peavad olema registreeritud treeningu andmed ja seega peab olema realiseeritud treeningute register.",
-            ),
-            ("uue treening.", "uue treeningu."),
-            ("sealt treening ja", "sealt treeningu ja"),
-            ("treening lõpetamise", "treeningu lõpetamise"),
-            ("treening aktiveerimise", "treeningu aktiveerimise"),
-            ("treening kood", "treeningu kood"),
-            ("treening registreerinud", "treeningu registreerinud"),
-            ("Iga treening seisundi", "Iga treeningu seisundi"),
-            ("selles seisundis olevate treening arv", "selles seisundis olevate treeningute arv"),
-            ("Töötajate registriga on treeninguga seotud", "Töötajate registriga on treening seotud"),
-            ("Klassifikaatorite registriga on treeninguga seotud", "Klassifikaatorite registriga on treening seotud"),
-            ("rohkema treening kategooriaga", "rohkema treeningu kategooriaga"),
-            ("treening kategooriasse", "treeningu kategooriasse"),
-            ("treening andmete", "treeningu andmete"),
-            ("treening saab aktiveerida", "Treeningu saab aktiveerida"),
-            ("seoses treening on", "seoses treeninguga on"),
-            ("treening ei ole vaja", "treeningut ei ole vaja"),
-            ("Võimaldada treening elektrooniliselt registreerida", "Võimaldada treeningut elektrooniliselt registreerida"),
-            ("Säilitada informatsiooni treeningu kohta sellises mahus", "Säilitada informatsiooni treeningute kohta sellises mahus"),
-            ("treening algseisundit", "treeningu algseisundit"),
-            ("treening seisundi", "treeningu seisundi"),
-            ("treening seisund", "treeningu seisund"),
-            ("treening registreerija", "treeningu registreerija"),
-            ("treening kuulub", "treening kuulub"),
-            ("treening mõnest", "treeningu mõnest"),
-            ("treening atribuutide", "treeningu atribuutide"),
-            ("treening uude", "treeningu uude"),
-            ("treening kategooriast", "treeningu kategooriast"),
-            ("treening elutsüklis", "treeningu elutsüklis"),
-            ("selle treening saab", "selle treeninguga saab"),
-            ("aktiivseid treening,", "aktiivseid treeninguid,"),
-            ("aktiivseid treening.", "aktiivseid treeninguid."),
-            ("treening ooteperiood", "treeningu ooteperiood"),
-            ("treening seoses", "treeninguga seoses"),
-            ("aktiveerida treening.", "aktiveerida treeningu."),
-            ("valib nimekirjast treening ja", "valib nimekirjast treeningu ja"),
-            ("ühtegi ootel või mitteaktiivset treening", "ühtegi ootel või mitteaktiivset treeningut"),
-            ("ühtegi aktiivset treening", "ühtegi aktiivset treeningut"),
-            ("ühtegi treening,", "ühtegi treeningut,"),
-            ("ühtegi treening ", "ühtegi treeningut "),
-            ("seoses selle treening on", "seoses selle treeninguga on"),
-            ("Subjekt valib treening,", "Subjekt valib treeningu,"),
-            ("Juhataja valib nimekirjast treening ja", "Juhataja valib nimekirjast treeningu ja"),
-            ("Juhataja avaldab soovi treening lõpetada", "Juhataja avaldab soovi treening lõpetada"),
-            ("treening ja sellega", "treeningu ja sellega"),
-            ("treening kohta", "treeningu kohta"),
-            ("treeningu kasutava kliendi", "treeningut kasutava kliendi"),
-            ("kõigist treening ", "kõigist treeningutest "),
-            ("näha treening, millest", "näha treeningut, millest"),
-            ("kõikide organisatsioonile teadaolevate treeningu andmed", "kõikide organisatsioonile teadaolevate treeningute andmed"),
-            ("Süsteem salvestab treeningu andmed (OP1) ning ükshaaval kõikide kategooriasse kuulumiste andmed (OP7) <täienda või kustuta>", "Süsteem salvestab treeningu andmed (OP1) ning ükshaaval kõikide kategooriasse kuulumiste andmed (OP7)."),
-            ("<täienda või kustuta>", ""),
-            ("Süsteem kuvab ootel treeningute nimekirja, kus on kood, <täienda> (OP3.1)", "Süsteem kuvab ootel treeningute nimekirja, kus on kood, nimetus, kestus minutites, treeningu tase ja maksimaalne osalejate arv (OP3.1)"),
-            ("Süsteem kuvab aktiivsete treeningute nimekirja, kus on kood, <täienda> (OP6.1)", "Süsteem kuvab aktiivsete treeningute nimekirja, kus on kood, nimetus, kestus minutites, treeningu tase ja maksimaalne osalejate arv (OP6.1)"),
-            ("Süsteem kuvab ootel või mitteaktiivses seisundis treeningute nimekirja, kus on kood, hetkeseisundi nimetus, <täienda> (OP7.1)", "Süsteem kuvab ootel või mitteaktiivses seisundis treeningute nimekirja, kus on kood, hetkeseisundi nimetus, nimetus, kestus minutites, treeningu tase ja maksimaalne osalejate arv (OP7.1)"),
-            ("Süsteem kuvab kõigi treeningute nimekirja, kus on kood, hetkeseisundi nimetus, <täienda> (OP8.1)", "Süsteem kuvab kõigi treeningute nimekirja, kus on kood, hetkeseisundi nimetus, nimetus, kestus minutites, treeningu tase, maksimaalne osalejate arv ja hind (OP8.1)"),
-            ("Süsteem kuvab aktiivsete või mitteaktiivsete treeningute nimekirja, kus on kood, hetkeseisundi nimetus, <täienda> (OP9.1)", "Süsteem kuvab aktiivsete või mitteaktiivsete treeningute nimekirja, kus on kood, hetkeseisundi nimetus, nimetus, kestus minutites, treeningu tase ja maksimaalne osalejate arv (OP9.1)"),
-            ("Iga treeningu kohta esitatakse kood, <täienda> (OP11.2).", "Iga treeningu kohta esitatakse kood, nimetus, kirjeldus, kestus minutites, treeningu tase, vajalik varustus ja hind (OP11.2)."),
-            ("treeningu põhiandmed (treeningu_kood, <täienda>, registreerimise aeg", "treeningu põhiandmed (treeningu_kood, nimetus, kirjeldus, kestus_minutites, maksimaalne_osalejate_arv, treeningu_tase, vajalik_varustus, hind, registreerimise aeg"),
-            ("treeningu põhiandmed (treeningu_kood, <täienda>)", "treeningu põhiandmed (treeningu_kood, nimetus, kirjeldus, kestus_minutites, maksimaalne_osalejate_arv, treeningu_tase, vajalik_varustus, hind)"),
-            ("Näiteks treeningu_kategooria_tüüp treeningu liik alla kuuluvate kategooriate näited on eratrenn, grupitrenn ja füsioteraapia.", "Näiteks treeningu_kategooria_tüüp treeningu liik alla kuuluvate kategooriate näited on eratrenn, grupitrenn ja füsioteraapia. Teised kategooria tüübid on treeningu tase, intensiivsus, eesmärk, sihtrühm ja varustus. Nende alla kuuluvate kategooriate näited on algaja, kesktase, edasijõudnud, madal intensiivsus, keskmine intensiivsus, kõrge intensiivsus, jõud, vastupidavus, liikuvus, kaalulangetus, täiskasvanud, seeniorid, oma keharaskus, hantlid ja treeningmatt."),
-            ("Treeningu saab aktiveerida vaid siis, kui see on seotud vähemalt ühe treening kategooriaga", "Treeningu saab aktiveerida vaid siis, kui see on seotud vähemalt ühe treeningu kategooriaga"),
-            ("Selles peatükis esitatakse mudel, mis kirjeldab treeningute funktsionaalse allsüsteemi toimimiseks vajalike registrite tehnilist lahendust <täienda> andmebaasisüsteemis.", "Selles peatükis esitatakse mudel, mis kirjeldab treeningute funktsionaalse allsüsteemi toimimiseks vajalike registrite tehnilist lahendust PostgreSQL andmebaasisüsteemis."),
-            ("<täienda> esitatakse diagrammid, mis kirjeldavad andmebaasis loodavate tabelite struktuuri ning nendes defineeritavaid kitsendusi.", "Järgnevalt esitatakse diagrammid, mis kirjeldavad andmebaasis loodavate tabelite struktuuri ning nendes defineeritavaid kitsendusi."),
-            ("Selles peatükis esitatakse andmebaasi PostgreSQLis (<täienda>) realiseerimiseks mõeldud laused.", "Selles peatükis esitatakse andmebaasi PostgreSQLis realiseerimiseks mõeldud laused."),
-            ("treening kategooriatesse", "treeningu kategooriatesse"),
-            ("treening registreeris", "treeningu registreeris"),
-            ("Eelarvete register<täienda><täienda>", "Eelarvete registerTreeningutele registreerumise funktsionaalne allsüsteemTreeningutele registreerumise register"),
-            ("Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel ja aktiivne.<täienda>Klassifikaatorite register<täienda> Võimalike väärtuste näited on<täienda><täienda><täienda><täienda>", "Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel, aktiivne, mitteaktiivne ja lõpetatud.Treeningule_registreerumineTreeningutele registreerumise registerNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul. Võimalike väärtuste näited on kliendi registreerumine grupitreeningule või eratrenni ajale.Registreeringu_seisundi_liikKlassifikaatorite registerSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud."),
-            ("Treening<täienda>", "Treeningnimetus\nTreeningu nimetus, mida kuvatakse töötajatele, klientidele ja uudistajatele.\n\n{1. @Kohustuslik. 2. Nimetus ei tohi olla tühi string. 3. Nimetus peab olema treeningute hulgas unikaalne.}\nJõutreening algajatele\nTreeningkirjeldus\nTreeningu sisu lühikirjeldus kliendile ja töötajale.\n\n{1. @Kohustuslik. 2. Kirjeldus ei tohi olla tühi string.}\nAlgajatele mõeldud juhendatud jõutreening, kus õpitakse põhilisi harjutusi.\nTreeningkestus_minutites\nTreeningu planeeritud kestus minutites.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv. 3. Väärtus peab olema vahemikus 15 kuni 240.}\n60\nTreeningmaksimaalne_osalejate_arv\nTreeningul osaleda võivate klientide maksimaalne arv.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv.}\n12\nTreeningvajalik_varustus\nTreeningul osalemiseks vajalik varustus või märge, et erivarustust ei ole vaja.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla tühi string.}\nTreeningmatt ja hantlid\nTreeninghind\nTreeningul osalemise hind eurodes.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla negatiivne.}\n15.00"),
-            ("OP1 Registreeri treening(\np_treeningu_kood, \n<täienda>\np_e_meil, \n<täienda>\n)", "OP1 Registreeri treening(\np_treeningu_kood,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\n<täienda>", "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud\nEi leidu teist treeningu eksemplari, millel on sama treeningu_kood või sama nimetus"),
-            ("o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\n<täienda>", "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\no.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind"),
-            ("o ja t (viimase muutja rollis) seos on registreeritud\n<täienda>", "o ja t (viimase muutja rollis) seos on registreeritud"),
-            ("OP4 Muuda treening mitteaktiivseks (\n<täienda>\n)\nEeltingimused:\n<täienda>\nJäreltingimused:\n--Kustuta seoseid\n<täienda>\n--Loo seoseid\n<täienda>\n--Väärtusta atribuute\n<täienda>", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:\n--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg"),
-            ("OP6 Muuda treeningut (\np_treeningu_kood_vana, \np_treeningu_kood_uus, \np_e_meil,\n<täienda>\n)", "OP6 Muuda treeningut (\np_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\n<täienda>", "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))\nEi leidu teist treeningu eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus"),
-            ("o.treeningu_kood:= p_treeningu_kood_uus\n<täienda>", "o.treeningu_kood:= p_treeningu_kood_uus\no.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg"),
-            ("p_treening kategooria_kood", "p_treeningu_kategooria_kood"),
-            ("OP8 Eemalda treening kategooriast", "OP8 Eemalda treeningu kategooriast"),
-            ("TreeningCRURURRRURRCRU<täienda>", "TreeningCRURURRRURRCRUTreeningule_registreerumineCRRRR"),
-        ]
-        all_replacements = replacements + fill_replacements
-
-        doc_xml = tmp / "word" / "document.xml"
-        tree = ET.parse(doc_xml)
-        root = tree.getroot()
-        paragraphs = root.findall(".//w:p", NS)
-        previous = ""
-        previous_previous = ""
-        for paragraph in paragraphs:
-            current = paragraph_text(paragraph)
-            if not current:
-                continue
-            # Leave Word's generated field/TOC paragraphs structurally intact.
-            if "HYPERLINK" in current or "PAGEREF" in current or "TOC \\" in current:
-                continue
-            changed = replace_all(current, all_replacements)
-            if changed in {"<täienda>", "<täienda või kustuta>"}:
-                context_fill = {
-                    "Pakkuda kõigile töötajatele meeldivat töökeskkonda": "Suurendada klientide järjepidevat treeningutes osalemist ja toetada treenerite töö paremat planeerimist.",
-                    "Tagada ülevaade treeningutest, mille pakkumine ja läbiviimine on jõusaali üks põhitegevusi": "Võimaldada avaldada klientidele ja uudistajatele ajakohast infot jõusaali treeningute kohta.",
-                    "Uudistajale pakuvad huvi avalikult nähtavad treeningute andmed": "Klient registreerub treeningule.",
-                    "treeningu lõplikult kasutusest eemaldamine (lõpetamine)": "Klient soovib treeningul osaleda",
-                    "Klient soovib treeningul osaleda": "Treeningule registreerumine",
-                    "Uudistaja": "Administraator",
-                    "Klassifikaatorite haldur": "Administraator",
-                    "treeningute register": "broneeringute funktsionaalne allsüsteem",
-                    "broneeringute funktsionaalne allsüsteem": "broneeringute register",
-                    "Eelarvete register": "Treeningutele registreerumise funktsionaalne allsüsteem",
-                    "Treeningutele registreerumise funktsionaalne allsüsteem": "Treeningutele registreerumise register",
-                    "Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel ja aktiivne.": "Treeningule_registreerumine",
-                    "Treeningule_registreerumine": "Treeningutele registreerumise register",
-                    "Treeningutele registreerumise register": "Näitab kliendi soovi osaleda konkreetsel aktiivsel treeningul. Võimalike väärtuste näited on kliendi registreerumine grupitreeningule või eratrenni ajale.",
-                    "Näitab kliendi soovi osaleda konkreetsel aktiivsel treeningul. Võimalike väärtuste näited on kliendi registreerumine grupitreeningule või eratrenni ajale.": "Registreeringu_seisundi_liik",
-                    "Registreeringu_seisundi_liik": "Klassifikaatorite register",
-                    "Klassifikaatorite register": "Seisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.",
-                    "p_treeningu_kood,": "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
-                    "p_e_meil,": "",
-                    "treeningu_seisundi_liik eksemplar osl (millel on kood=1 (\"Ootel\") ja on_aktiivne=TRUE) on registreeritud": "Ei leidu teist treeningu eksemplari, millel on sama treeningu_kood või sama nimetus",
-                    "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg": "o.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind",
-                    "--Kustuta seoseid": "o olemasolev seos viimase muutjaga on kustutatud",
-                    "--Loo seoseid": "o ja t (viimase muutja rollis) seos on registreeritud",
-                    "--Väärtusta atribuute": "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
-                    "p_e_meil,": "",
-                    "p_treeningu_kood_uus,": "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
-                    "o on seotud treeningu_seisundi_liik eksemplariga osl ((millel on kood=1 (\"Ootel\")) või (millel on kood=3 (\"Mitteaktiivne\")))": "Ei leidu teist treeningu eksemplari, millel on treeningu_kood=p_treeningu_kood_uus või nimetus=p_nimetus",
-                    "o.treeningu_kood:= p_treeningu_kood_uus": "o.nimetus:= p_nimetus\no.kirjeldus:= p_kirjeldus\no.kestus_minutites:= p_kestus_minutites\no.maksimaalne_osalejate_arv:= p_maksimaalne_osalejate_arv\no.vajalik_varustus:= p_vajalik_varustus\no.hind:= p_hind\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
-                }
-                if previous == "Treening" and previous_previous == "Eelarve":
-                    changed = "Treeningule registreerumine"
-                elif previous == "treeningute register" and previous_previous == "Treening":
-                    changed = "Jõusaali poolt klientidele pakutav juhendatud või iseseisev treeninguvõimalus, mille kohta säilitatakse kood, nimetus, kirjeldus, kestus, kategooriad ja hetkeseisund."
-                elif previous == "treeningute register" and previous_previous != "treeningute funktsionaalne allsüsteem":
-                    changed = current
-                elif previous in context_fill:
-                    changed = context_fill[previous]
-                if previous == "Treening" and previous_previous.startswith("22.04.2015"):
-                    changed = "nimetus\nTreeningu nimetus, mida kuvatakse töötajatele, klientidele ja uudistajatele.\n\n{1. @Kohustuslik. 2. Nimetus ei tohi olla tühi string. 3. Nimetus peab olema treeningute hulgas unikaalne.}\nJõutreening algajatele\nTreening\nkirjeldus\nTreeningu sisu lühikirjeldus kliendile ja töötajale.\n\n{1. @Kohustuslik. 2. Kirjeldus ei tohi olla tühi string.}\nAlgajatele mõeldud juhendatud jõutreening, kus õpitakse põhilisi harjutusi.\nTreening\nkestus_minutites\nTreeningu planeeritud kestus minutites.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv. 3. Väärtus peab olema vahemikus 15 kuni 240.}\n60\nTreening\nmaksimaalne_osalejate_arv\nTreeningul osaleda võivate klientide maksimaalne arv.\n\n{1. @Kohustuslik. 2. Väärtus peab olema positiivne täisarv.}\n12\nTreening\nvajalik_varustus\nTreeningul osalemiseks vajalik varustus või märge, et erivarustust ei ole vaja.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla tühi string.}\nTreeningmatt ja hantlid\nTreening\nhind\nTreeningul osalemise hind eurodes.\n\n{1. @Kohustuslik. 2. Väärtus ei tohi olla negatiivne.}\n15.00"
-                if previous.startswith("Töötajad töötavad neile spetsiaalselt ettenähtud ruumides."):
-                    changed = "Treenerid ja administraatorid kasutavad infosüsteemi tööarvutist või tahvelarvutist jõusaali ruumides."
-                if previous == "Uudistaja" and previous_previous == "Klient":
-                    changed = ""
-            if changed != current:
-                set_paragraph_text(paragraph, changed)
-            previous_previous = previous
-            previous = changed
-
-        remaining_fills = [
-            "Treeningutele registreerumise funktsionaalne allsüsteem",
-            "Treeningutele registreerumise register",
-            "Joonisel esitatakse treeningu aktiveerimise protsess alates treeneri soovist muuta treening aktiivseks kuni seisundimuudatuse salvestamiseni.",
-            "Treeningutele registreerumise register",
-            "Näitab kliendi soovi osaleda konkreetsel aktiivsel treeningul.",
-            "Registreeringu_seisundi_liik",
-            "Klassifikaatorite register",
-            "Seisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.",
-            "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
-            "",
-            "o ja t (viimase muutja rollis) seos on registreeritud",
-            "p_treeningu_kood,\np_e_meil",
-            "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
-            "p_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,",
-            "o olemasolev seos viimase muutjaga on kustutatud",
-            "o ja t (viimase muutja rollis) seos on registreeritud",
-            "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
-            "Treeningule_registreerumineCRRRR",
-        ]
-        fill_index = 0
-        for paragraph in paragraphs:
-            current = paragraph_text(paragraph)
-            if "<täienda" in current:
-                if fill_index < len(remaining_fills):
-                    set_paragraph_text(paragraph, current.replace("<täienda>", remaining_fills[fill_index]).replace("<täienda või kustuta>", remaining_fills[fill_index]))
-                    fill_index += 1
-                else:
-                    set_paragraph_text(paragraph, current.replace("<täienda>", "").replace("<täienda või kustuta>", ""))
-
-        final_replacements = [
-            ("Vastuvõtuaegade haldamise süsteemi", "Jõusaali infosüsteemi treeningute funktsionaalse allsüsteemi"),
-            ("Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.2024", "Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös viidatud.\n2026"),
-            ("Treeningutele registreerumise register Võimalike väärtuste näited onTreeningutele registreerumise register", "Treeningutele registreerumise register"),
-            ("Treeningutele registreerumise register\nTreeningutele registreerumise register", "Treeningutele registreerumise register\nNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul."),
-            ("Treeningutele registreerumise register\n\nTreeningutele registreerumise register", "Treeningutele registreerumise register\n\nNäitab kliendi soovi osaleda konkreetsel aktiivsel treeningul."),
-            ("Registreeringu_seisundi_liik\nKlassifikaatorite register\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.", "Registreeringu_seisundi_liik\nKlassifikaatorite register\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud."),
-            ("OP1 Registreeri treening(\np_treeningu_kood, \nRegistreeringu_seisundi_liik\np_e_meil, \nKlassifikaatorite register\n)", "OP1 Registreeri treening(\np_treeningu_kood,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("o ja t (viimase muutja rollis) seos on registreeritud\nSeisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.", "o ja t (viimase muutja rollis) seos on registreeritud"),
-            ("OP4 Muuda treening mitteaktiivseks (\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\n)\nEeltingimused:\n\nJäreltingimused:", "OP4 Muuda treening mitteaktiivseks (\np_treeningu_kood,\np_e_meil\n)\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud\nJäreltingimused:"),
-            ("--Kustuta seoseid\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks", "--Kustuta seoseid\no ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud\n--Loo seoseid\no ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud\n--Väärtusta atribuute\no.viimase_muutm_aeg:= hetke kuupäev + kellaaeg\nKasutus kasutusjuhtude poolt: Muuda treening mitteaktiivseks"),
-            ("OP6 Muuda treeningut (\np_treeningu_kood_vana, \np_treeningu_kood_uus, \np_e_meil,\n\n)", "OP6 Muuda treeningut (\np_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil\n)"),
-            ("Eeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\nEeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar", "Eeltingimused:\nTöötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar"),
-            ("--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\nKasutus kasutusjuhtude poolt: Muuda treeningut", "--Loo seoseid\no ja t (viimase muutja rollis) seos on registreeritud\nKasutus kasutusjuhtude poolt: Registreeri treening, Muuda treeningut"),
-            ("viimase muutmise aeg. treeninguga", "viimase muutmise aeg. Treeninguga"),
-            ("treening on registreeritud", "treening on registreeritud"),
-            ("Järeltingimused: treening on registreeritud", "Järeltingimused: Treening on registreeritud"),
-            ("Eeltingimused: treener on autenditud ja autoriseeritud. treening on registreeritud", "Eeltingimused: treener on autenditud ja autoriseeritud. Treening on registreeritud"),
-            ("„Mitteaktiivne“. treening on määratud", "„Mitteaktiivne“. Treening on määratud"),
-            ("Eeltingimused: Juhataja on autenditud ja autoriseeritud. treening on registreeritud", "Eeltingimused: Juhataja on autenditud ja autoriseeritud. Treening on registreeritud"),
-            ("endiselt alles. treeningu andmeid", "endiselt alles. Treeningu andmeid"),
-            ("uue treening registreerida", "uue treeningu registreerida"),
-            ("treener sisestab treeningu andmed", "treener sisestab treeningu andmed"),
-            ("viimase muudatuse teinud töötajale – need andmed", "viimase muudatuse teinud töötajale – need andmed"),
-            ("ühtegi treeningut kategooriat", "ühtegi treeningu kategooriat"),
-            ("treening enam tehinguid ei tehta", "treeninguga enam tehinguid ei tehta"),
-            ("treeningu_kategooria_tüüp näide", "treeningu_kategooria_tüübi näide"),
-            ("tegemist. treeningu_kategooria", "tegemist. Treeningu_kategooria"),
-            ("autoriseeritud. treeningu seisundi liigid", "autoriseeritud. Treeningu seisundi liigid"),
-            ("Isike_meil", "Isik\ne_meil"),
-            ("{1. @Kohustuslik.2. treening unikaalne identifikaator.}", "{1. @Kohustuslik. 2. Treeningu unikaalne identifikaator.}"),
-            ("süsteem ise automaatselt määrata. treeningu registreerimisel", "süsteem ise automaatselt määrata. Treeningu registreerimisel"),
-            ("treening eksemplar", "treeningu eksemplar"),
-        ]
-        whole = ET.tostring(root, encoding="unicode")
-        for old, new in final_replacements:
-            whole = whole.replace(old, new)
-        root = ET.fromstring(whole)
-        tree = ET.ElementTree(root)
-        paragraphs = root.findall(".//w:p", NS)
-        nonempty = []
-        for paragraph in paragraphs:
-            current = paragraph_text(paragraph)
-            if current:
-                nonempty.append((paragraph, current))
-
-        for idx, (paragraph, current) in enumerate(nonempty):
-            if current == "Üliõpilane:":
-                set_paragraph_text(paragraph, "Üliõpilased: Tristan Aik Sild, Gustav Tamkivi")
-            if current == "Õpperühm:":
-                set_paragraph_text(paragraph, "Õpperühm: IAIB23")
-            if current == "Matrikli nr:":
-                set_paragraph_text(paragraph, "Matrikli nr: Tristan Aik Sild: 253782IAIB; Gustav Tamkivi: 253787IAIB")
-            if current == "e-posti aadress:":
-                set_paragraph_text(paragraph, "e-posti aadressid: Gustav Tamkivi: gustav@taltech.ee; Tristan Aik Sild: trists@taltech.ee")
-            if current == "Tallinn":
-                set_paragraph_text(paragraph, "Tallinn\n2026")
-            if current.endswith("töös viidatud.2024"):
-                set_paragraph_text(paragraph, current.replace("töös viidatud.2024", "töös viidatud.\n2026"))
-            if current == "Treeningutele registreerumise funktsionaalne allsüsteem" and idx > 0 and "Aktiveeri treening" in nonempty[idx - 1][1]:
-                set_paragraph_text(paragraph, "Joonisel esitatakse treeningu aktiveerimise protsess alates treeneri soovist muuta treening aktiivseks kuni seisundimuudatuse salvestamiseni.")
-            if current == "treeningu_seisundi_liik" and idx + 8 < len(nonempty):
-                sequence = [
-                    "treeningu_seisundi_liik",
-                    "Klassifikaatorite register",
-                    "Seisundiklassifikaator, mis võimaldab fikseerida iga treeningu puhul selle hetkeseisundi vastavalt üldisele treeningu elutsüklile. Võimalike väärtuste näited on ootel, aktiivne, mitteaktiivne ja lõpetatud.",
-                    "Treeningule_registreerumine",
-                    "Treeningutele registreerumise register",
-                    "Näitab kliendi soovi osaleda konkreetsel aktiivsel treeningul.",
-                    "Registreeringu_seisundi_liik",
-                    "Klassifikaatorite register",
-                    "Seisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi. Võimalike väärtuste näited on ootel, kinnitatud, tühistatud ja toimunud.",
-                ]
-                for offset, value in enumerate(sequence):
-                    set_paragraph_text(nonempty[idx + offset][0], value)
-            if current == "OP1 Registreeri treening(" and idx + 5 < len(nonempty):
-                set_paragraph_text(nonempty[idx + 1][0], "p_treeningu_kood,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil")
-                set_paragraph_text(nonempty[idx + 2][0], "")
-                set_paragraph_text(nonempty[idx + 3][0], "")
-                set_paragraph_text(nonempty[idx + 4][0], ")")
-            if current.startswith("Seisundiklassifikaator, mis võimaldab fikseerida treeningule registreerumise hetkeseisundi") and idx > 0 and nonempty[idx - 1][1] == "o ja t (viimase muutja rollis) seos on registreeritud":
-                set_paragraph_text(paragraph, "")
-            if current == "OP4 Muuda treening mitteaktiivseks (" and idx + 11 < len(nonempty):
-                sequence = [
-                    "OP4 Muuda treening mitteaktiivseks (",
-                    "p_treeningu_kood,\np_e_meil",
-                    ")",
-                    "Eeltingimused:",
-                    "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud\ntreeningu eksemplar o (millel on treeningu_kood=p_treeningu_kood) on registreeritud\no on seotud treeningu_seisundi_liik eksemplariga osl_vana (millel on kood=2 (\"Aktiivne\"))\ntreeningu_seisundi_liik eksemplar osl_uus (millel on kood=3 (\"Mitteaktiivne\") ja on_aktiivne=TRUE) on registreeritud",
-                    "Järeltingimused:",
-                    "--Kustuta seoseid",
-                    "o ja osl_vana seos on kustutatud\no olemasolev seos viimase muutjaga on kustutatud",
-                    "--Loo seoseid",
-                    "o ja osl_uus seos on registreeritud\no ja t (viimase muutja rollis) seos on registreeritud",
-                    "--Väärtusta atribuute",
-                    "o.viimase_muutm_aeg:= hetke kuupäev + kellaaeg",
-                ]
-                for offset, value in enumerate(sequence):
-                    set_paragraph_text(nonempty[idx + offset][0], value)
-            if current == "OP6 Muuda treeningut (" and idx + 5 < len(nonempty):
-                set_paragraph_text(nonempty[idx + 1][0], "p_treeningu_kood_vana,\np_treeningu_kood_uus,\np_nimetus,\np_kirjeldus,\np_kestus_minutites,\np_maksimaalne_osalejate_arv,\np_vajalik_varustus,\np_hind,\np_e_meil")
-                set_paragraph_text(nonempty[idx + 2][0], ")")
-                set_paragraph_text(nonempty[idx + 3][0], "Eeltingimused:")
-                set_paragraph_text(nonempty[idx + 4][0], "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud")
-                # Clear the duplicate Eeltingimused + Töötaja that follows from <täienda> expansion
-                for j in range(idx + 5, min(idx + 7, len(nonempty))):
-                    t = nonempty[j][1]
-                    if t == "Eeltingimused:" or t == "Töötaja eksemplar t (millel on e_meil=p_e_meil) on registreeritud":
-                        set_paragraph_text(nonempty[j][0], "")
-                # Fix OP6 usage reference to include Registreeri treening
-                for j in range(idx, min(idx + 25, len(nonempty))):
-                    if nonempty[j][1] == "Kasutus kasutusjuhtude poolt: Muuda treeningut":
-                        set_paragraph_text(nonempty[j][0], "Kasutus kasutusjuhtude poolt: Registreeri treening, Muuda treeningut")
-                        break
-
-        nonempty = []
-        for paragraph in paragraphs:
-            current = paragraph_text(paragraph)
-            if current:
-                nonempty.append((paragraph, current))
-        for idx, (paragraph, current) in enumerate(nonempty):
-            if current == ")" and idx > 0 and nonempty[idx - 1][1] == ")":
-                set_paragraph_text(paragraph, "")
-
-        body = root.find("w:body", NS)
-        if body is not None:
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if "HYPERLINK" not in text:
-                    continue
-                if (
-                    "Sissejuhatus (Andmebaasid II)" in text
-                    or re.search(r'"\s+[45](?:\.\d+)*', text)
-                    or "Realisatsioon PostgreSQLis" in text
-                    or "Realisatsioon Oracles" in text
-                ):
-                    body.remove(child)
-                    continue
-                cleaned = replace_all(text, all_replacements)
-                cleaned = cleaned.replace("6\tTehisintellekti kasutus", "4\tTehisintellekti kasutus")
-                cleaned = cleaned.replace("7\tKasutatud materjalid", "5\tKasutatud materjalid")
-                cleaned = cleaned.replace("6Tehisintellekti kasutus", "4\tTehisintellekti kasutus")
-                cleaned = cleaned.replace("7Kasutatud materjalid", "5\tKasutatud materjalid")
-                cleaned = re.sub(r"(\d+(?:\.\d+)*)treeningute", r"\1\ttreeningute", cleaned)
-                cleaned = re.sub(r"(\d+(?:\.\d+)*)Kasutusjuht:", r"\1\tKasutusjuht:", cleaned)
-                if cleaned != text:
-                    set_paragraph_text(child, cleaned)
-
-            # Keep booking as a related whole-system process/register, but do not
-            # present it as an extra detailed entity in the selected X register.
-            deleting_booking_detail = False
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if text == "Treeningule_registreerumine":
-                    deleting_booking_detail = True
-                if deleting_booking_detail and text == "Atribuutide definitsioonid":
-                    deleting_booking_detail = False
-                if deleting_booking_detail:
-                    body.remove(child)
-
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if "Treeningule_registreerumineCRRRR" in text:
-                    set_paragraph_text(child, text.replace("Treeningule_registreerumineCRRRR", ""))
-
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if text == "Tehisintellekti kasutus on lubatud ja soositud, kuid lõpptulemuse õigsuse eest vastutavad töö autorid.":
-                    set_paragraph_text(
-                        child,
-                        "Töö koostamisel kasutati OpenAI ChatGPT/Codex abi töövihiku täitmise mustandite koostamiseks, juhendmaterjalide põhjal kontrollnimekirja tegemiseks, sõnastuse ühtlustamiseks, Enterprise Architecti mudeli tehniliseks uuendamiseks ja dokumendi tehniliseks genereerimiseks. Kasutatud viibad olid sisult näiteks: täida jõusaali/treeningute valdkonna põhjal töövihiku lüngad, kontrolli vastavust ITI0206 juhendile ja tüüpvigade materjalile, leia alles jäänud mallikohad ning uuenda EA mudelis mallinimetused valdkonnaterminitega. Tehisintellekt oli abiks mustandite ja kontrollide kiirendamisel, kuid autorid kontrollisid, parandasid ja suunasid pakutud sisu ning vastutavad lõpptulemuse õigsuse eest.",
-                    )
-
-            # Remove workbook instruction/comment tail that follows the actual
-            # references in the converted template, and cite the extra guides used.
-            trimming_tail = False
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if text.startswith("Stackoverflow. What is the maximum length of a valid email address?"):
-                    set_paragraph_text(
-                        child,
-                        text
-                        + "\nIseseisva töö ülesande püstitus ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
-                        + "\nProjekti juhend ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
-                        + "\nProjekti mustripõhine juhend ITI0206. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
-                        + "\nProjekti tüüpvigade materjal ITI0206 2026. [WWW] https://maurus.ttu.ee/390 (01.05.2026)"
-                        + "\nNäidisprojekt ITI0206 vastuvõtuajad. [WWW] https://maurus.ttu.ee/390 (01.05.2026)",
-                    )
-                    trimming_tail = True
-                    continue
-                if trimming_tail:
-                    body.remove(child)
-
-        # The 2026 ITI0206 guide explicitly says these sections may be deleted for
-        # Andmebaasid I; they are continued in Andmebaasid II.
-        def delete_section(start_title: str, end_title: str) -> None:
-            body = root.find("w:body", NS)
-            if body is None:
-                return
-            children = list(body)
-            deleting = False
-            for child in children:
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if text == start_title:
-                    deleting = True
-                if deleting and text == end_title:
-                    deleting = False
-                if deleting:
-                    body.remove(child)
-
-        # Insert SQL DDL into Chapter 3 after the diagrams description
-        sql_heading = "Treeningute registrite tabelite loomise laused"
-        sql_found = False
-        for child in list(body):
-            if child.tag != f"{{{NS['w']}}}p":
-                continue
-            text = paragraph_text(child)
-            if text == sql_heading:
-                sql_found = True
-                break
-        if not sql_found:
-            insert_after = None
-            for child in list(body):
-                if child.tag != f"{{{NS['w']}}}p":
-                    continue
-                text = paragraph_text(child)
-                if text.startswith("Järgnevalt esitatakse diagrammid"):
-                    insert_after = child
-                    break
-            if insert_after is not None:
-                idx = list(body).index(insert_after) + 1
-                # Create heading paragraph
-                def make_paragraph(text: str) -> ET.Element:
-                    p = ET.Element(f"{{{NS['w']}}}p")
-                    r = ET.SubElement(p, f"{{{NS['w']}}}r")
-                    t_el = ET.SubElement(r, f"{{{NS['w']}}}t")
-                    t_el.text = text
-                    t_el.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-                    return p
-
-                body.insert(idx, make_paragraph(sql_heading))
-                idx += 1
-                for sql_line in SQL_DDL.strip().split("\n"):
-                    body.insert(idx, make_paragraph(sql_line))
-                    idx += 1
-
-        delete_section("Sissejuhatus (Andmebaasid II)", "Strateegiline analüüs")
-        delete_section("Realisatsioon PostgreSQLis", "Realisatsioon Oracles")
-        delete_section("Realisatsioon Oracles", "Tehisintellekti kasutus")
-
-        tree.write(doc_xml, encoding="utf-8", xml_declaration=True)
-
-        shutil.copyfile(SRC, DST)
-        with ZipFile(DST, "w", compression=ZIP_DEFLATED) as out:
-            for path in sorted(tmp.rglob("*")):
-                if path.is_file():
-                    out.write(path, path.relative_to(tmp).as_posix())
+    diagrams = make_diagrams()
+    counter = CaptionCounter()
+    doc = setup_document()
+    add_title_page(doc)
+    add_contents(doc, counter)
+    add_overview(doc, counter, diagrams)
+    add_nfr(doc, counter)
+    add_use_cases(doc, counter, diagrams)
+    add_register_model(doc, counter, diagrams)
+    add_operations(doc, counter)
+    add_data_design(doc, counter, diagrams)
+    add_reproducibility(doc, counter)
+    validate_text_sanity(doc)
+    doc.save(DST)
+    print(f"Wrote {DST}")
+    print(f"Embedded figures: {counter.figures}")
+    print(f"Word tables: {counter.tables}")
 
 
 if __name__ == "__main__":

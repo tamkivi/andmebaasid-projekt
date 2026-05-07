@@ -1,5 +1,6 @@
 work/AB_projekt_taidetav.doc
 work/AB_projekt_taidetav.docx
+work/generated_diagrams/
 work/docx_unpacked/
 work/eap_edit/
 work/lib/
@@ -10,3 +11,4 @@ work/report_filled.txt
 tools/*.class
 tools/*.jar
 __pycache__/
+.venv/

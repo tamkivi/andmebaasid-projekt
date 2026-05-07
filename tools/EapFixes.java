@@ -9,8 +9,10 @@ import java.io.File;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class EapFixes {
@@ -41,14 +43,18 @@ public class EapFixes {
     }
 
     private void apply() throws Exception {
+        removeStaleDuplicateRows();
         renameModelItems();
+        ensureActorSet();
         fixStateTransitions();
         populateActivationScenario();
         addCompetencyDiagram();
         addRegisterDiagrams();
         populateDesignRegisterPackage();
         addUseCaseExtendsAndScenarioText();
+        addUseCaseNotes();
         addAttributeNotesAndConstraints();
+        removeResidualDuplicateIds();
     }
 
     private static String guid() {
@@ -91,23 +97,95 @@ public class EapFixes {
 
     private void updateById(String tableName, String idColumn, int id, Map<String, Object> values) throws Exception {
         Table table = db.getTable(tableName);
-        Row row = findRow(table, idColumn, id);
-        if (row == null) {
-            throw new IllegalStateException("Missing " + tableName + "." + idColumn + "=" + id);
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            Object actual = row.get(idColumn);
+            if (actual instanceof Number && ((Number) actual).intValue() == id) {
+                row.putAll(values);
+                cursor.updateCurrentRowFromMap(row);
+                return;
+            }
         }
-        row.putAll(values);
-        table.updateRow(row);
+        throw new IllegalStateException("Missing " + tableName + "." + idColumn + "=" + id);
+    }
+
+    private void removeStaleDuplicateRows() throws Exception {
+        Table connectors = db.getTable("t_connector");
+        Cursor connectorCursor = CursorBuilder.createCursor(connectors);
+        Row connectorRow;
+        while ((connectorRow = connectorCursor.getNextRow()) != null) {
+            Object idValue = connectorRow.get("Connector_ID");
+            if (!(idValue instanceof Number)) {
+                continue;
+            }
+            int id = ((Number) idValue).intValue();
+            if ((id == 43 || id == 45 || id == 49 || id == 50 || id == 51 || id == 52)
+                && isStaleConnector(connectorRow)) {
+                connectorCursor.deleteCurrentRow();
+            }
+        }
+
+        Table attributes = db.getTable("t_attribute");
+        Cursor attributeCursor = CursorBuilder.createCursor(attributes);
+        Row attributeRow;
+        while ((attributeRow = attributeCursor.getNextRow()) != null) {
+            Object idValue = attributeRow.get("ID");
+            Object objectValue = attributeRow.get("Object_ID");
+            if (idValue instanceof Number
+                && objectValue instanceof Number
+                && ((Number) idValue).intValue() == 4
+                && ((Number) objectValue).intValue() == 53
+                && s(attributeRow.get("Notes")).isBlank()) {
+                attributeCursor.deleteCurrentRow();
+            }
+        }
+    }
+
+    private boolean isStaleConnector(Row row) {
+        String name = s(row.get("Name"));
+        String operation = s(row.get("PDATA3"));
+        return name.contains("<Siia")
+            || name.startsWith("treener ")
+            || name.startsWith("juhataja ")
+            || operation.contains("OP..")
+            || operation.contains("OP ...")
+            || operation.contains("OP  ");
+    }
+
+    private void removeResidualDuplicateIds() throws Exception {
+        removeResidualDuplicateIds("t_connector", "Connector_ID");
+        removeResidualDuplicateIds("t_attribute", "ID");
+    }
+
+    private void removeResidualDuplicateIds(String tableName, String idColumn) throws Exception {
+        Table table = db.getTable(tableName);
+        Set<String> seen = new HashSet<>();
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            String key = s(row.get(idColumn));
+            if (key.isBlank()) {
+                continue;
+            }
+            if (seen.contains(key)) {
+                cursor.deleteCurrentRow();
+            } else {
+                seen.add(key);
+            }
+        }
     }
 
     private void renamePackage(int packageId, String name) throws Exception {
         updateById("t_package", "Package_ID", packageId, Map.of("Name", name, "ModifiedDate", new Date()));
         Table objects = db.getTable("t_object");
         Cursor cursor = CursorBuilder.createCursor(objects);
-        for (Row row : cursor) {
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
             if ("Package".equals(row.get("Object_Type")) && String.valueOf(packageId).equals(s(row.get("PDATA1")))) {
                 row.put("Name", name);
                 row.put("ModifiedDate", new Date());
-                objects.updateRow(row);
+                cursor.updateCurrentRowFromMap(row);
                 return;
             }
         }
@@ -132,47 +210,75 @@ public class EapFixes {
 
         updateById("t_connector", "Connector_ID", 43, Map.of(
             "Name", "Treener tahab registreerida uue treeningu, sest organisatsiooni jõuab teave uue treeningu kohta, millega kliendid saavad hakata tulevikus tehinguid tegema.",
-            "PDATA3", "OP1, OP7, OP8"
+            "PDATA3", "OP3"
         ));
         updateById("t_connector", "Connector_ID", 50, Map.of(
-            "Name", "Treener tahab treeningu unustada, sest organisatsiooni jõuab teave, et treening sellisel kujul ei realiseeru ning seda ei saa hakata klientidele tehinguteks pakkuma",
-            "PDATA3", "OP2"
+            "Name", "Treener tahab treeningu unustada, sest organisatsiooni jõuab teave, et treening sellisel kujul ei realiseeru ning seda ei saa hakata klientidele tehinguteks pakkuma.",
+            "PDATA3", "OP6"
         ));
         updateById("t_connector", "Connector_ID", 51, Map.of(
-            "Name", "Treener tahab muuta treeningu andmeid, sest ilmneb, et nende registreerimisel on tehtud viga või treeningu atribuutide väärtuste ja seoste hulgas on toimunud muudatus",
-            "PDATA3", "OP6, OP7, OP8"
+            "Name", "Treener tahab muuta treeningu andmeid, sest ilmneb, et nende registreerimisel on tehtud viga või treeningu atribuutide väärtuste ja seoste hulgas on toimunud muudatus.",
+            "PDATA3", "OP8"
         ));
         updateById("t_connector", "Connector_ID", 52, Map.of(
-            "Name", "Treener tahab muuta treeningu andmeid, sest ilmneb, et nende registreerimisel on tehtud viga või treeningu atribuutide väärtuste ja seoste hulgas on toimunud muudatus",
-            "PDATA3", "OP6, OP7, OP8"
+            "Name", "Treener tahab muuta treeningu andmeid, sest ilmneb, et nende registreerimisel on tehtud viga või treeningu atribuutide väärtuste ja seoste hulgas on toimunud muudatus.",
+            "PDATA3", "OP8"
         ));
+    }
+
+    private int findObjectId(String type, String name) throws Exception {
+        for (Row row : db.getTable("t_object")) {
+            if (type.equals(row.get("Object_Type")) && name.equals(row.get("Name")) && row.get("Object_ID") instanceof Number) {
+                return ((Number) row.get("Object_ID")).intValue();
+            }
+        }
+        return 0;
+    }
+
+    private int ensureActor(String name, String note) throws Exception {
+        int id = findObjectId("Actor", name);
+        if (id == 0) {
+            id = addObjectFromTemplate(16, PKG_PADEVUSALAD, "Actor", 0, name, note);
+        }
+        updateById("t_object", "Object_ID", id, Map.of("Name", name, "Note", note, "ModifiedDate", new Date()));
+        return id;
+    }
+
+    private void ensureActorSet() throws Exception {
+        ensureActor("Treener", "Sisemine pädevusala. Treener registreerib, muudab ja aktiveerib treeninguid.");
+        ensureActor("Juhataja", "Sisemine pädevusala. Juhataja vaatab koondaruandeid ja lõpetab treeninguid.");
+        ensureActor("Klient", "Väline pädevusala. Klient vaatab aktiivseid treeninguid ja saab teha treeninguga seotud broneeringuid.");
+        ensureActor("Uudistaja", "Väline pädevusala. Uudistaja vaatab avalikult nähtavat treeningute infot.");
+        ensureActor("Klassifikaatorite haldur", "Sisemine pädevusala. Klassifikaatorite haldur haldab treeningu seisundeid ja kategooriaid.");
+        ensureActor("Töötajate haldur", "Sisemine pädevusala. Töötajate haldur haldab töötajate ja rollide põhiandmeid.");
+        ensureActor("Maksekeskus", "Väline pädevusala. Maksekeskus vahendab treeninguga seotud maksete kinnitusi.");
     }
 
     private void fixStateTransitions() throws Exception {
         updateById("t_connector", "Connector_ID", 49, Map.of(
             "Name", "Treener tahab treeningu aktiveerida, sest treeningu ooteperiood või treeninguga seotud ajutised probleemid on lahenenud",
             "PDATA2", "Treening kuulub vähemalt ühte Treeningu_kategooriasse",
-            "PDATA3", "OP3"
+            "PDATA3", "OP11"
         ));
         updateById("t_connector", "Connector_ID", 45, Map.of(
             "Name", "Treener tahab treeningu uuesti aktiveerida, sest treeninguga seotud ajutised probleemid on lahenenud",
             "PDATA2", "Treening kuulub vähemalt ühte Treeningu_kategooriasse",
-            "PDATA3", "OP3"
+            "PDATA3", "OP11"
         ));
         updateById("t_connector", "Connector_ID", 44, Map.of(
             "Name", "Treener tahab treeningu ajutiselt kasutusest eemaldada, sest treeninguga on ilmnenud ajutise iseloomuga probleemid",
             "PDATA2", z(),
-            "PDATA3", "OP4"
+            "PDATA3", "OP13"
         ));
         updateById("t_connector", "Connector_ID", 46, Map.of(
             "Name", "Juhataja tahab treeningu lõpetada, sest treeninguga on ilmnenud püsiva iseloomuga probleemid või treeningut enam ei pakuta",
             "PDATA2", z(),
-            "PDATA3", "OP5"
+            "PDATA3", "OP15"
         ));
         updateById("t_connector", "Connector_ID", 47, Map.of(
             "Name", "Juhataja tahab mitteaktiivse treeningu lõpetada, sest treeninguga on ilmnenud püsiva iseloomuga probleemid või treeningut enam ei pakuta",
             "PDATA2", z(),
-            "PDATA3", "OP5"
+            "PDATA3", "OP15"
         ));
     }
 
@@ -338,23 +444,55 @@ public class EapFixes {
     }
 
     private void addCompetencyDiagram() throws Exception {
-        if (diagramExists(PKG_PADEVUSALAD, "Pädevusalad")) {
-            return;
+        int diagram = findDiagramId(PKG_PADEVUSALAD, "Pädevusalad");
+        if (diagram == 0) {
+            diagram = addDiagramFromTemplate(2, PKG_PADEVUSALAD, "Use Case", "Pädevusalad");
         }
-        int diagram = addDiagramFromTemplate(2, PKG_PADEVUSALAD, "Use Case", "Pädevusalad");
-        addDiagramObject(diagram, 16, 80, -80, 125, -170, 4);
-        addDiagramObject(diagram, 17, 230, -80, 275, -170, 3);
-        addDiagramObject(diagram, 62, 380, -80, 425, -170, 2);
-        addDiagramObject(diagram, 18, 530, -80, 575, -170, 1);
+        int treener = findObjectId("Actor", "Treener");
+        int juhataja = findObjectId("Actor", "Juhataja");
+        int klient = findObjectId("Actor", "Klient");
+        int uudistaja = findObjectId("Actor", "Uudistaja");
+        int klassifikaatoriteHaldur = findObjectId("Actor", "Klassifikaatorite haldur");
+        int tootajateHaldur = findObjectId("Actor", "Töötajate haldur");
+        int maksekeskus = findObjectId("Actor", "Maksekeskus");
+        ensureDiagramObject(diagram, treener, 80, -80, 125, -170, 7);
+        ensureDiagramObject(diagram, juhataja, 230, -80, 275, -170, 6);
+        ensureDiagramObject(diagram, klient, 380, -80, 425, -170, 5);
+        ensureDiagramObject(diagram, uudistaja, 530, -80, 575, -170, 4);
+        ensureDiagramObject(diagram, klassifikaatoriteHaldur, 80, -250, 185, -350, 3);
+        ensureDiagramObject(diagram, tootajateHaldur, 280, -250, 385, -350, 2);
+        ensureDiagramObject(diagram, maksekeskus, 480, -250, 585, -350, 1);
     }
 
     private boolean diagramExists(int packageId, String name) throws Exception {
+        return findDiagramId(packageId, name) != 0;
+    }
+
+    private int findDiagramId(int packageId, String name) throws Exception {
         for (Row row : db.getTable("t_diagram")) {
             if (name.equals(row.get("Name")) && row.get("Package_ID") instanceof Number && ((Number) row.get("Package_ID")).intValue() == packageId) {
+                return ((Number) row.get("Diagram_ID")).intValue();
+            }
+        }
+        return 0;
+    }
+
+    private boolean diagramHasObject(int diagramId, int objectId) throws Exception {
+        for (Row row : db.getTable("t_diagramobjects")) {
+            if (row.get("Diagram_ID") instanceof Number
+                && row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Diagram_ID")).intValue() == diagramId
+                && ((Number) row.get("Object_ID")).intValue() == objectId) {
                 return true;
             }
         }
         return false;
+    }
+
+    private void ensureDiagramObject(int diagramId, int objectId, int left, int top, int right, int bottom, int sequence) throws Exception {
+        if (objectId != 0 && !diagramHasObject(diagramId, objectId)) {
+            addDiagramObject(diagramId, objectId, left, top, right, bottom, sequence);
+        }
     }
 
     private void addRegisterDiagrams() throws Exception {
@@ -387,8 +525,8 @@ public class EapFixes {
         String[] notes = {
             "PostgreSQL tabel. PK: riigi_kood. Veerud: riigi_kood, nimetus, on_aktiivne.",
             "PostgreSQL tabel. PK: kood. Veerud: kood, nimetus, on_aktiivne.",
-            "PostgreSQL tabel. PK: isikukood + riigi_kood. Veerud: isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, reg_aeg, viimase_muutm_aeg, eesnimi, perenimi, elukoht, e_meil.",
-            "PostgreSQL tabel. PK/FK: e_meil. Veerud: e_meil, parool, on_aktiivne.",
+            "PostgreSQL tabel. PK: isikukood + riigi_kood. UK: e_meil. Veerud: isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, reg_aeg, viimase_muutm_aeg, eesnimi, perenimi, elukoht, e_meil.",
+            "PostgreSQL tabel. PK: e_meil. FK kasutajakonto.e_meil viitab isik.e_meil unikaalsele võtmele. Veerud: e_meil, parool, on_aktiivne.",
             "PostgreSQL tabel. PK: kood. Veerud: kood, nimetus, on_aktiivne.",
             "PostgreSQL tabel. PK/FK: e_meil. Veerud: e_meil, tootaja_seisundi_liik_kood.",
             "PostgreSQL tabel. PK: kood. Veerud: kood, nimetus, on_aktiivne, kirjeldus.",
@@ -396,7 +534,7 @@ public class EapFixes {
             "PostgreSQL tabel. PK: kood. Veerud: kood, nimetus, on_aktiivne.",
             "PostgreSQL tabel. PK: kood. Veerud: kood, nimetus, on_aktiivne.",
             "PostgreSQL tabel. PK: kood. Veerud: kood, treeningu_kategooria_tyyp_kood, nimetus, on_aktiivne.",
-            "PostgreSQL tabel. PK: treeningu_kood. Veerud: treeningu_kood, treeningu_seisundi_liik_kood, registreerija_e_meil, viimase_muutja_e_meil, reg_aeg, viimase_muutm_aeg, nimetus, kirjeldus, kestus_minutites, maksimaalne_osalejate_arv, vajalik_varustus, hind.",
+            "PostgreSQL tabel. PK: treeningu_kood. UK: nimetus. Veerud: treeningu_kood, treeningu_seisundi_liik_kood, registreerija_e_meil, viimase_muutja_e_meil, reg_aeg, viimase_muutm_aeg, nimetus, kirjeldus, kestus_minutites, maksimaalne_osalejate_arv, vajalik_varustus, hind.",
             "PostgreSQL tabel. PK: treeningu_kood + treeningu_kategooria_kood. Veerud: treeningu_kood, treeningu_kategooria_kood."
         };
         int[] ids = new int[tableNames.length];
@@ -440,9 +578,16 @@ public class EapFixes {
         notesById.put(4, "Treeningute arvuline kood, mille sisestab inimkasutaja. Treeningu loomulik identifikaator.");
         notesById.put(6, "Treeningu registreerimise kuupäev ja kellaaeg.");
         notesById.put(20, "Treeningu andmete viimase muutmise kuupäev ja kellaaeg.");
+        notesById.put(3, "Treeningu ametlik nimetus. Kohustuslik, mittetühi ja treeningute registris unikaalne.");
+        notesById.put(5, "Treeningu sisu kirjeldus. Kohustuslik ja mittetühi.");
+        notesById.put(22, "Treeningu kestus minutites. Kohustuslik väärtus vahemikus 15 kuni 240.");
+        notesById.put(23, "Treeningule lubatud maksimaalne osalejate arv. Kohustuslik positiivne täisarv.");
+        notesById.put(24, "Treeningul vajalik varustus. Kohustuslik ja mittetühi.");
+        notesById.put(25, "Treeningu hind eurodes. Kohustuslik null või positiivne rahasumma.");
 
         Cursor cursor = CursorBuilder.createCursor(attributes);
-        for (Row row : cursor) {
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
             int id = ((Number) row.get("ID")).intValue();
             if (notesById.containsKey(id)) {
                 row.put("Notes", notesById.get(id));
@@ -451,7 +596,7 @@ public class EapFixes {
                 row.put("LowerBound", "1");
                 row.put("UpperBound", "1");
             }
-            attributes.updateRow(row);
+            cursor.updateCurrentRowFromMap(row);
         }
 
         Table constraints = db.getTable("t_attributeconstraints");
@@ -465,6 +610,7 @@ public class EapFixes {
         addAttrConstraint(50, 7, "isikukood", "Mandatory", "Isikukood on kohustuslik.");
         addAttrConstraint(50, 7, "isikukood", "Format", "Lubatud on tähed, numbrid, tühikud, sidekriipsud, plussmärgid, võrdusmärgid ja kaldkriipsud.");
         addAttrConstraint(50, 7, "isikukood", "Unique", "Koos isikukoodi riigiga isiku unikaalne identifikaator.");
+        addAttrConstraint(50, 10, "sünni_kp", "Mandatory", "Sünnikuupäev on kohustuslik.");
         addAttrConstraint(50, 10, "sünni_kp", "Range", "Väärtus peab olema vahemikus 01.01.1900 kuni 31.12.2100.");
         addAttrConstraint(50, 13, "e_meil", "Mandatory", "E-posti aadress on kohustuslik.");
         addAttrConstraint(50, 13, "e_meil", "Length", "Võib olla kuni 254 märki pikk ja peab sisaldama @ märki.");
@@ -478,14 +624,43 @@ public class EapFixes {
         addAttrConstraint(53, 4, "treeningu_kood", "Mandatory", "Treeningu kood on kohustuslik.");
         addAttrConstraint(53, 4, "treeningu_kood", "Unique", "Treeningu kood on treeningu unikaalne identifikaator.");
         addAttrConstraint(53, 4, "treeningu_kood", "Range", "Väärtus peab olema positiivne täisarv.");
+        addAttrConstraint(53, 3, "nimetus", "Mandatory", "Treeningu nimetus on kohustuslik.");
+        addAttrConstraint(53, 3, "nimetus", "Not empty", "Treeningu nimetus ei tohi olla tühi string.");
+        addAttrConstraint(53, 3, "nimetus", "Unique", "Treeningu nimetus on treeningute registris unikaalne.");
+        addAttrConstraint(53, 5, "kirjeldus", "Mandatory", "Treeningu kirjeldus on kohustuslik.");
+        addAttrConstraint(53, 5, "kirjeldus", "Not empty", "Treeningu kirjeldus ei tohi olla tühi string.");
+        addAttrConstraint(53, 22, "kestus_minutites", "Mandatory", "Treeningu kestus on kohustuslik.");
+        addAttrConstraint(53, 22, "kestus_minutites", "Range", "Treeningu kestus peab olema 15 kuni 240 minutit.");
+        addAttrConstraint(53, 23, "maksimaalne_osalejate_arv", "Mandatory", "Maksimaalne osalejate arv on kohustuslik.");
+        addAttrConstraint(53, 23, "maksimaalne_osalejate_arv", "Range", "Maksimaalne osalejate arv peab olema positiivne täisarv.");
+        addAttrConstraint(53, 24, "vajalik_varustus", "Mandatory", "Vajalik varustus on kohustuslik.");
+        addAttrConstraint(53, 24, "vajalik_varustus", "Not empty", "Vajalik varustus ei tohi olla tühi string.");
+        addAttrConstraint(53, 25, "hind", "Mandatory", "Treeningu hind on kohustuslik.");
+        addAttrConstraint(53, 25, "hind", "Range", "Treeningu hind peab olema null või positiivne rahasumma.");
         addAttrConstraint(53, 6, "reg_aeg", "Mandatory", "Registreerimise aeg on kohustuslik.");
         addAttrConstraint(53, 20, "viimase_muutm_aeg", "Range", "Viimase muutmise aeg peab olema registreerimise ajast suurem või sellega võrdne.");
     }
 
     private void addUseCaseExtendsAndScenarioText() throws Exception {
-        addUseCaseConnectorIfMissing(63, 23, "extend");
-        addUseCaseConnectorIfMissing(22, 28, "extend");
+        removeUnsupportedUseCaseRelationship(63, 23, "extend");
+        removeUnsupportedUseCaseRelationship(22, 28, "extend");
         addActivationScenarioRows();
+    }
+
+    private void removeUnsupportedUseCaseRelationship(int sourceId, int targetId, String stereotype) throws Exception {
+        Table table = db.getTable("t_connector");
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if ("UseCase".equals(row.get("Connector_Type"))
+                && row.get("Start_Object_ID") instanceof Number
+                && row.get("End_Object_ID") instanceof Number
+                && ((Number) row.get("Start_Object_ID")).intValue() == sourceId
+                && ((Number) row.get("End_Object_ID")).intValue() == targetId
+                && stereotype.equals(s(row.get("Stereotype")).trim())) {
+                cursor.deleteCurrentRow();
+            }
+        }
     }
 
     private void addUseCaseConnectorIfMissing(int sourceId, int targetId, String stereotype) throws Exception {
@@ -513,10 +688,28 @@ public class EapFixes {
                 + "2. Käivitub kasutusjuht \"Vaata kõiki ootel või mitteaktiivseid treeninguid\".\n"
                 + "3. Treener valib nimekirjast treeningu ja annab korralduse see aktiivseks muuta.\n"
                 + "4. Süsteem kontrollib, et treening kuulub vähemalt ühte Treeningu_kategooriasse.\n"
-                + "5. Süsteem salvestab seisundimuudatuse operatsiooniga OP3.");
+                + "5. Süsteem salvestab seisundimuudatuse operatsiooniga OP11.");
         addScenario(25, "Alternatiivid", "Alternate",
             "3a. Kui nimekirjas ei ole ühtegi ootel või mitteaktiivset treeningut, siis ei saa Treener jätkata.\n"
                 + "4a. Kui treening ei kuulu ühtegi Treeningu_kategooriasse, siis aktiveerimine ebaõnnestub.");
+    }
+
+    private void addUseCaseNotes() throws Exception {
+        Map<Integer, String> notesById = new LinkedHashMap<>();
+        notesById.put(20, "Kasutaja esitab süsteemile autentimiseks vajalikud andmed ning süsteem seob kasutaja tema pädevusalaga.");
+        notesById.put(21, "Juhataja vaatab treeningute arvu seisundite ja kategooriate kaupa.");
+        notesById.put(22, "Juhataja lõpetab aktiivse või mitteaktiivse treeningu, mida jõusaal enam ei paku.");
+        notesById.put(23, "Treener registreerib uue treeningu põhiandmed ja seob treeningu sobivate kategooriatega.");
+        notesById.put(24, "Treener muudab ootel või mitteaktiivse treeningu põhiandmeid ja kategooriaseoseid.");
+        notesById.put(25, "Treener muudab ootel või mitteaktiivse treeningu aktiivseks, kui treening kuulub vähemalt ühte kategooriasse.");
+        notesById.put(26, "Treener eemaldab aktiivse treeningu ajutiselt kasutusest, kui treeninguga on ilmnenud ajutine probleem.");
+        notesById.put(27, "Klient või uudistaja vaatab aktiivsete treeningute avalikke andmeid.");
+        notesById.put(28, "Juhataja vaatab kõigi treeningute tööalaseid andmeid ja seisundeid.");
+        notesById.put(29, "Treener vaatab ootel ja mitteaktiivseid treeninguid, et valida muutmiseks või aktiveerimiseks sobiv treening.");
+        notesById.put(63, "Treener eemaldab ootel treeningu edasisest kasutusest, kui treeningut ei ole vaja pakkuda.");
+        for (Map.Entry<Integer, String> entry : notesById.entrySet()) {
+            updateById("t_object", "Object_ID", entry.getKey(), Map.of("Note", entry.getValue(), "ModifiedDate", new Date()));
+        }
     }
 
     private void addScenario(int objectId, String scenario, String type, String notes) throws Exception {
