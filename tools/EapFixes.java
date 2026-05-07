@@ -53,6 +53,10 @@ public class EapFixes {
         populateDesignRegisterPackage();
         addUseCaseExtendsAndScenarioText();
         addUseCaseNotes();
+        fixUseCaseDiagramConsistency();
+        populatePackageDiagramRelatedRegisters();
+        ensureConceptualAttributeCoverage();
+        populatePhysicalTableColumns();
         addAttributeNotesAndConstraints();
         removeResidualDuplicateIds();
     }
@@ -247,11 +251,10 @@ public class EapFixes {
     private void ensureActorSet() throws Exception {
         ensureActor("Treener", "Sisemine pädevusala. Treener registreerib, muudab ja aktiveerib treeninguid.");
         ensureActor("Juhataja", "Sisemine pädevusala. Juhataja vaatab koondaruandeid ja lõpetab treeninguid.");
-        ensureActor("Klient", "Väline pädevusala. Klient vaatab aktiivseid treeninguid ja saab teha treeninguga seotud broneeringuid.");
+        ensureActor("Klient", "Väline pädevusala. Klient vaatab aktiivseid treeninguid.");
         ensureActor("Uudistaja", "Väline pädevusala. Uudistaja vaatab avalikult nähtavat treeningute infot.");
         ensureActor("Klassifikaatorite haldur", "Sisemine pädevusala. Klassifikaatorite haldur haldab treeningu seisundeid ja kategooriaid.");
         ensureActor("Töötajate haldur", "Sisemine pädevusala. Töötajate haldur haldab töötajate ja rollide põhiandmeid.");
-        ensureActor("Maksekeskus", "Väline pädevusala. Maksekeskus vahendab treeninguga seotud maksete kinnitusi.");
     }
 
     private void fixStateTransitions() throws Exception {
@@ -376,6 +379,161 @@ public class EapFixes {
         return id;
     }
 
+    private void addDiagramLinkIfMissing(int diagramId, int connectorId) throws Exception {
+        Table table = db.getTable("t_diagramlinks");
+        for (Row row : table) {
+            if (row.get("DiagramID") instanceof Number
+                && row.get("ConnectorID") instanceof Number
+                && ((Number) row.get("DiagramID")).intValue() == diagramId
+                && ((Number) row.get("ConnectorID")).intValue() == connectorId) {
+                return;
+            }
+        }
+        table.setAllowAutoNumberInsert(true);
+        Row template = table.iterator().next();
+        Map<String, Object> row = copy(template);
+        row.put("DiagramID", diagramId);
+        row.put("ConnectorID", connectorId);
+        row.put("Geometry", z());
+        row.put("Style", z());
+        row.put("Hidden", false);
+        row.put("Path", z());
+        row.put("Instance_ID", maxLong(table, "Instance_ID") + 1);
+        table.addRowFromMap(row);
+    }
+
+    private void ensureConnectorOnDiagram(int diagramId, int templateConnectorId, String type, String stereotype, int sourceId, int targetId, String name) throws Exception {
+        for (Row row : db.getTable("t_connector")) {
+            if (type.equals(row.get("Connector_Type"))
+                && row.get("Start_Object_ID") instanceof Number
+                && row.get("End_Object_ID") instanceof Number
+                && ((Number) row.get("Start_Object_ID")).intValue() == sourceId
+                && ((Number) row.get("End_Object_ID")).intValue() == targetId) {
+                addDiagramLinkIfMissing(diagramId, ((Number) row.get("Connector_ID")).intValue());
+                return;
+            }
+        }
+        int connectorId = addConnectorFromTemplate(templateConnectorId, type, stereotype, sourceId, targetId, name, z(), z());
+        addDiagramLinkIfMissing(diagramId, connectorId);
+    }
+
+    private void removeConnectorAndLinks(String type, int sourceId, int targetId) throws Exception {
+        Set<Integer> connectorIds = new HashSet<>();
+        Table connectors = db.getTable("t_connector");
+        Cursor cursor = CursorBuilder.createCursor(connectors);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if (type.equals(row.get("Connector_Type"))
+                && row.get("Start_Object_ID") instanceof Number
+                && row.get("End_Object_ID") instanceof Number
+                && ((Number) row.get("Start_Object_ID")).intValue() == sourceId
+                && ((Number) row.get("End_Object_ID")).intValue() == targetId) {
+                connectorIds.add(((Number) row.get("Connector_ID")).intValue());
+                cursor.deleteCurrentRow();
+            }
+        }
+        if (connectorIds.isEmpty()) {
+            return;
+        }
+        Table links = db.getTable("t_diagramlinks");
+        Cursor linkCursor = CursorBuilder.createCursor(links);
+        Row linkRow;
+        while ((linkRow = linkCursor.getNextRow()) != null) {
+            if (linkRow.get("ConnectorID") instanceof Number
+                && connectorIds.contains(((Number) linkRow.get("ConnectorID")).intValue())) {
+                linkCursor.deleteCurrentRow();
+            }
+        }
+    }
+
+    private void removeObjectAndReferences(String type, String name) throws Exception {
+        Set<Integer> objectIds = new HashSet<>();
+        Set<String> guids = new HashSet<>();
+        Table objects = db.getTable("t_object");
+        Cursor objectCursor = CursorBuilder.createCursor(objects);
+        Row objectRow;
+        while ((objectRow = objectCursor.getNextRow()) != null) {
+            if (type.equals(objectRow.get("Object_Type")) && name.equals(objectRow.get("Name")) && objectRow.get("Object_ID") instanceof Number) {
+                objectIds.add(((Number) objectRow.get("Object_ID")).intValue());
+                guids.add(s(objectRow.get("ea_guid")));
+                objectCursor.deleteCurrentRow();
+            }
+        }
+        if (objectIds.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> connectorIds = new HashSet<>();
+        Table connectors = db.getTable("t_connector");
+        Cursor connectorCursor = CursorBuilder.createCursor(connectors);
+        Row connectorRow;
+        while ((connectorRow = connectorCursor.getNextRow()) != null) {
+            boolean matchesStart = connectorRow.get("Start_Object_ID") instanceof Number
+                && objectIds.contains(((Number) connectorRow.get("Start_Object_ID")).intValue());
+            boolean matchesEnd = connectorRow.get("End_Object_ID") instanceof Number
+                && objectIds.contains(((Number) connectorRow.get("End_Object_ID")).intValue());
+            if (matchesStart || matchesEnd) {
+                if (connectorRow.get("Connector_ID") instanceof Number) {
+                    connectorIds.add(((Number) connectorRow.get("Connector_ID")).intValue());
+                }
+                connectorCursor.deleteCurrentRow();
+            }
+        }
+
+        Table diagramObjects = db.getTable("t_diagramobjects");
+        Cursor diagramObjectCursor = CursorBuilder.createCursor(diagramObjects);
+        Row diagramObjectRow;
+        while ((diagramObjectRow = diagramObjectCursor.getNextRow()) != null) {
+            if (diagramObjectRow.get("Object_ID") instanceof Number
+                && objectIds.contains(((Number) diagramObjectRow.get("Object_ID")).intValue())) {
+                diagramObjectCursor.deleteCurrentRow();
+            }
+        }
+
+        Table attributes = db.getTable("t_attribute");
+        Cursor attributeCursor = CursorBuilder.createCursor(attributes);
+        Row attributeRow;
+        while ((attributeRow = attributeCursor.getNextRow()) != null) {
+            if (attributeRow.get("Object_ID") instanceof Number
+                && objectIds.contains(((Number) attributeRow.get("Object_ID")).intValue())) {
+                attributeCursor.deleteCurrentRow();
+            }
+        }
+
+        Table scenarios = db.getTable("t_objectscenarios");
+        Cursor scenarioCursor = CursorBuilder.createCursor(scenarios);
+        Row scenarioRow;
+        while ((scenarioRow = scenarioCursor.getNextRow()) != null) {
+            if (scenarioRow.get("Object_ID") instanceof Number
+                && objectIds.contains(((Number) scenarioRow.get("Object_ID")).intValue())) {
+                scenarioCursor.deleteCurrentRow();
+            }
+        }
+
+        if (!connectorIds.isEmpty()) {
+            Table links = db.getTable("t_diagramlinks");
+            Cursor linkCursor = CursorBuilder.createCursor(links);
+            Row linkRow;
+            while ((linkRow = linkCursor.getNextRow()) != null) {
+                if (linkRow.get("ConnectorID") instanceof Number
+                    && connectorIds.contains(((Number) linkRow.get("ConnectorID")).intValue())) {
+                    linkCursor.deleteCurrentRow();
+                }
+            }
+        }
+
+        if (db.getTableNames().contains("t_xref")) {
+            Table xrefs = db.getTable("t_xref");
+            Cursor xrefCursor = CursorBuilder.createCursor(xrefs);
+            Row xrefRow;
+            while ((xrefRow = xrefCursor.getNextRow()) != null) {
+                if (guids.contains(s(xrefRow.get("Client")))) {
+                    xrefCursor.deleteCurrentRow();
+                }
+            }
+        }
+    }
+
     private void addStereotypeXref(String type, String clientGuid, String stereotype) throws Exception {
         Table table = db.getTable("t_xref");
         Row template = table.iterator().next();
@@ -454,14 +612,12 @@ public class EapFixes {
         int uudistaja = findObjectId("Actor", "Uudistaja");
         int klassifikaatoriteHaldur = findObjectId("Actor", "Klassifikaatorite haldur");
         int tootajateHaldur = findObjectId("Actor", "Töötajate haldur");
-        int maksekeskus = findObjectId("Actor", "Maksekeskus");
         ensureDiagramObject(diagram, treener, 80, -80, 125, -170, 7);
         ensureDiagramObject(diagram, juhataja, 230, -80, 275, -170, 6);
         ensureDiagramObject(diagram, klient, 380, -80, 425, -170, 5);
         ensureDiagramObject(diagram, uudistaja, 530, -80, 575, -170, 4);
         ensureDiagramObject(diagram, klassifikaatoriteHaldur, 80, -250, 185, -350, 3);
         ensureDiagramObject(diagram, tootajateHaldur, 280, -250, 385, -350, 2);
-        ensureDiagramObject(diagram, maksekeskus, 480, -250, 585, -350, 1);
     }
 
     private boolean diagramExists(int packageId, String name) throws Exception {
@@ -598,6 +754,15 @@ public class EapFixes {
             }
             cursor.updateCurrentRowFromMap(row);
         }
+        setAttributeNoteByName(53, "nimetus", "Treeningu ametlik nimetus. Kohustuslik, mittetühi ja treeningute registris unikaalne.");
+        setAttributeNoteByName(53, "kirjeldus", "Klientidele ja töötajatele mõeldud treeningu sisu kirjeldus. Kohustuslik ja mittetühi.");
+        setAttributeNoteByName(53, "kestus_minutites", "Treeningu kestus minutites. Kohustuslik väärtus vahemikus 15 kuni 240.");
+        setAttributeNoteByName(53, "maksimaalne_osalejate_arv", "Treeningule lubatud maksimaalne osalejate arv. Kohustuslik positiivne täisarv.");
+        setAttributeNoteByName(53, "vajalik_varustus", "Treeningul vajalik varustus klientidele ja treenerile. Kohustuslik ja mittetühi.");
+        setAttributeNoteByName(53, "hind", "Treeningu hind eurodes koos käibemaksuga. Kohustuslik null või positiivne rahasumma, maksimaalselt kaks kohta pärast koma.");
+        setAttributeNoteByName(53, "seisund", "Treeningu elutsükli seisund.");
+        setAttributeNoteByName(53, "registreerija_e_meil", "Treeningu registreerinud kasutajakonto e-posti aadress.");
+        setAttributeNoteByName(53, "viimase_muutja_e_meil", "Treeningut viimati muutnud kasutajakonto e-posti aadress.");
 
         Table constraints = db.getTable("t_attributeconstraints");
         if (constraints.iterator().hasNext()) {
@@ -610,8 +775,8 @@ public class EapFixes {
         addAttrConstraint(50, 7, "isikukood", "Mandatory", "Isikukood on kohustuslik.");
         addAttrConstraint(50, 7, "isikukood", "Format", "Lubatud on tähed, numbrid, tühikud, sidekriipsud, plussmärgid, võrdusmärgid ja kaldkriipsud.");
         addAttrConstraint(50, 7, "isikukood", "Unique", "Koos isikukoodi riigiga isiku unikaalne identifikaator.");
-        addAttrConstraint(50, 10, "sünni_kp", "Mandatory", "Sünnikuupäev on kohustuslik.");
-        addAttrConstraint(50, 10, "sünni_kp", "Range", "Väärtus peab olema vahemikus 01.01.1900 kuni 31.12.2100.");
+        addAttrConstraint(50, 10, "synni_kp", "Mandatory", "Sünnikuupäev on kohustuslik.");
+        addAttrConstraint(50, 10, "synni_kp", "Range", "Väärtus peab olema vahemikus 01.01.1900 kuni 31.12.2100.");
         addAttrConstraint(50, 13, "e_meil", "Mandatory", "E-posti aadress on kohustuslik.");
         addAttrConstraint(50, 13, "e_meil", "Length", "Võib olla kuni 254 märki pikk ja peab sisaldama @ märki.");
         addAttrConstraint(50, 13, "e_meil", "Unique", "Tõstutundetu unikaalne identifikaator.");
@@ -639,6 +804,21 @@ public class EapFixes {
         addAttrConstraint(53, 25, "hind", "Range", "Treeningu hind peab olema null või positiivne rahasumma.");
         addAttrConstraint(53, 6, "reg_aeg", "Mandatory", "Registreerimise aeg on kohustuslik.");
         addAttrConstraint(53, 20, "viimase_muutm_aeg", "Range", "Viimase muutmise aeg peab olema registreerimise ajast suurem või sellega võrdne.");
+    }
+
+    private void setAttributeNoteByName(int objectId, String name, String note) throws Exception {
+        Table table = db.getTable("t_attribute");
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if (row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId
+                && name.equals(row.get("Name"))) {
+                row.put("Notes", note);
+                cursor.updateCurrentRowFromMap(row);
+                return;
+            }
+        }
     }
 
     private void addUseCaseExtendsAndScenarioText() throws Exception {
@@ -709,6 +889,212 @@ public class EapFixes {
         notesById.put(63, "Treener eemaldab ootel treeningu edasisest kasutusest, kui treeningut ei ole vaja pakkuda.");
         for (Map.Entry<Integer, String> entry : notesById.entrySet()) {
             updateById("t_object", "Object_ID", entry.getKey(), Map.of("Note", entry.getValue(), "ModifiedDate", new Date()));
+        }
+    }
+
+    private void fixUseCaseDiagramConsistency() throws Exception {
+        int diagram = 2;
+        int treener = findObjectId("Actor", "Treener");
+        int juhataja = findObjectId("Actor", "Juhataja");
+        int klient = findObjectId("Actor", "Klient");
+        int klassifikaatoriteHaldur = findObjectId("Actor", "Klassifikaatorite haldur");
+        int tootajateHaldur = findObjectId("Actor", "Töötajate haldur");
+        int tuvasta = findObjectId("UseCase", "Tuvasta kasutaja");
+        int vaataKoiki = findObjectId("UseCase", "Vaata kõiki treeninguid");
+        int muuda = findObjectId("UseCase", "Muuda treeningut");
+        int aktiveeri = findObjectId("UseCase", "Aktiveeri treening");
+        int vaataOotel = findObjectId("UseCase", "Vaata kõiki ootel või mitteaktiivseid treeninguid");
+
+        removeConnectorAndLinks("Association", klient, tuvasta);
+        removeConnectorAndLinks("Association", treener, vaataKoiki);
+        removeConnectorAndLinks("UseCase", muuda, vaataOotel);
+        removeConnectorAndLinks("UseCase", aktiveeri, vaataOotel);
+
+        ensureConnectorOnDiagram(diagram, 1, "Association", "", treener, tuvasta, z());
+        ensureConnectorOnDiagram(diagram, 1, "Association", "", juhataja, tuvasta, z());
+        ensureConnectorOnDiagram(diagram, 1, "Association", "", klassifikaatoriteHaldur, tuvasta, z());
+        ensureConnectorOnDiagram(diagram, 1, "Association", "", tootajateHaldur, tuvasta, z());
+        ensureConnectorOnDiagram(diagram, 1, "Association", "", juhataja, vaataKoiki, z());
+        ensureDiagramObject(diagram, klassifikaatoriteHaldur, 40, -710, 155, -810, 1);
+        ensureDiagramObject(diagram, tootajateHaldur, 210, -710, 325, -810, 1);
+    }
+
+    private int ensurePackageObject(String name) throws Exception {
+        int id = findObjectId("Package", name);
+        if (id == 0) {
+            id = addObjectFromTemplate(15, 9, "Package", 0, name, "Register, mida treeningute funktsionaalne allsüsteem loeb või kasutab seotud protsessides.");
+        }
+        updateById("t_object", "Object_ID", id, Map.of("Name", name, "Stereotype", "subsystem", "ModifiedDate", new Date()));
+        Row row = findRow(db.getTable("t_object"), "Object_ID", id);
+        addStereotypeXref("element", s(row.get("ea_guid")), "subsystem");
+        return id;
+    }
+
+    private void populatePackageDiagramRelatedRegisters() throws Exception {
+        // Scope is limited to the training-management subsystem and its directly used registers.
+    }
+
+    private void renameAttribute(int objectId, String oldName, String newName) throws Exception {
+        Table table = db.getTable("t_attribute");
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if (row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId
+                && oldName.equals(row.get("Name"))) {
+                row.put("Name", newName);
+                cursor.updateCurrentRowFromMap(row);
+            }
+        }
+    }
+
+    private boolean attributeExists(int objectId, String name) throws Exception {
+        for (Row row : db.getTable("t_attribute")) {
+            if (row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId
+                && name.equals(row.get("Name"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int maxAttributePos(int objectId) throws Exception {
+        int max = 0;
+        for (Row row : db.getTable("t_attribute")) {
+            if (row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId
+                && row.get("Pos") instanceof Number) {
+                max = Math.max(max, ((Number) row.get("Pos")).intValue());
+            }
+        }
+        return max;
+    }
+
+    private void addAttributeIfMissing(int objectId, String name, String type, String lower, String upper, String stereotype, String note) throws Exception {
+        if (attributeExists(objectId, name)) {
+            return;
+        }
+        Table table = db.getTable("t_attribute");
+        table.setAllowAutoNumberInsert(true);
+        Row template = table.iterator().next();
+        Map<String, Object> row = copy(template);
+        row.put("Object_ID", objectId);
+        row.put("Name", name);
+        row.put("Scope", "Private");
+        row.put("Stereotype", stereotype == null || stereotype.isBlank() ? z() : stereotype);
+        row.put("LowerBound", lower);
+        row.put("UpperBound", upper);
+        row.put("Notes", note);
+        row.put("ID", maxLong(table, "ID") + 1);
+        row.put("Pos", maxAttributePos(objectId) + 1);
+        row.put("Type", type);
+        row.put("ea_guid", guid());
+        table.addRowFromMap(row);
+    }
+
+    private void ensureConceptualAttributeCoverage() throws Exception {
+        renameAttribute(50, "sünni_kp", "synni_kp");
+        addAttributeIfMissing(53, "nimetus", "varchar(200)", "1", "1", "", "Treeningu ametlik nimetus. Kohustuslik, mittetühi ja unikaalne.");
+        addAttributeIfMissing(53, "kirjeldus", "text", "1", "1", "", "Klientidele ja töötajatele mõeldud treeningu sisu kirjeldus.");
+        addAttributeIfMissing(53, "kestus_minutites", "integer", "1", "1", "", "Treeningu kestus minutites vahemikus 15 kuni 240.");
+        addAttributeIfMissing(53, "maksimaalne_osalejate_arv", "integer", "1", "1", "", "Treeningule lubatud maksimaalne osalejate arv.");
+        addAttributeIfMissing(53, "vajalik_varustus", "text", "1", "1", "", "Treeningul vajalik varustus klientidele ja treenerile.");
+        addAttributeIfMissing(53, "hind", "numeric(8,2)", "1", "1", "", "Treeningu hind eurodes koos käibemaksuga, maksimaalselt kaks kohta pärast koma.");
+        addAttributeIfMissing(53, "seisund", "varchar(20)", "1", "1", "", "Treeningu elutsükli seisund.");
+        addAttributeIfMissing(53, "registreerija_e_meil", "varchar(254)", "1", "1", "", "Treeningu registreerinud kasutajakonto e-posti aadress.");
+        addAttributeIfMissing(53, "viimase_muutja_e_meil", "varchar(254)", "1", "1", "", "Treeningut viimati muutnud kasutajakonto e-posti aadress.");
+    }
+
+    private void populatePhysicalTableColumns() throws Exception {
+        addPhysicalColumns(79, new String[][] {
+            {"riigi_kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(80, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(81, new String[][] {
+            {"isikukood", "varchar(20)", "PK, NOT NULL"},
+            {"riigi_kood", "varchar(10)", "PK, FK riik.riigi_kood, NOT NULL"},
+            {"isiku_seisundi_liik_kood", "varchar(10)", "FK isiku_seisundi_liik.kood, NOT NULL"},
+            {"synni_kp", "date", "NOT NULL"},
+            {"reg_aeg", "timestamp with time zone", "NOT NULL"},
+            {"viimase_muutm_aeg", "timestamp with time zone", "NOT NULL"},
+            {"eesnimi", "varchar(200)", "NULL"},
+            {"perenimi", "varchar(200)", "NULL"},
+            {"elukoht", "varchar(500)", "NULL"},
+            {"e_meil", "varchar(254)", "UK, NOT NULL"}
+        });
+        addPhysicalColumns(82, new String[][] {
+            {"e_meil", "varchar(254)", "PK, FK isik.e_meil, NOT NULL"},
+            {"parool", "varchar(255)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(83, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(84, new String[][] {
+            {"e_meil", "varchar(254)", "PK, FK kasutajakonto.e_meil, NOT NULL"},
+            {"tootaja_seisundi_liik_kood", "varchar(10)", "FK tootaja_seisundi_liik.kood, NOT NULL"}
+        });
+        addPhysicalColumns(85, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"},
+            {"kirjeldus", "text", "NULL"}
+        });
+        addPhysicalColumns(86, new String[][] {
+            {"tootaja_e_meil", "varchar(254)", "PK, FK tootaja.e_meil, NOT NULL"},
+            {"tootaja_roll_kood", "varchar(10)", "PK, FK tootaja_roll.kood, NOT NULL"},
+            {"alguse_aeg", "timestamp with time zone", "PK, NOT NULL"},
+            {"lopu_aeg", "timestamp with time zone", "NULL"}
+        });
+        addPhysicalColumns(87, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(88, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(89, new String[][] {
+            {"kood", "varchar(10)", "PK, NOT NULL"},
+            {"treeningu_kategooria_tyyp_kood", "varchar(10)", "FK treeningu_kategooria_tyyp.kood, NOT NULL"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL DEFAULT TRUE"}
+        });
+        addPhysicalColumns(90, new String[][] {
+            {"treeningu_kood", "integer", "PK, NOT NULL"},
+            {"treeningu_seisundi_liik_kood", "varchar(10)", "FK treeningu_seisundi_liik.kood, NOT NULL"},
+            {"registreerija_e_meil", "varchar(254)", "FK kasutajakonto.e_meil, NOT NULL"},
+            {"viimase_muutja_e_meil", "varchar(254)", "FK kasutajakonto.e_meil, NOT NULL"},
+            {"reg_aeg", "timestamp with time zone", "NOT NULL"},
+            {"viimase_muutm_aeg", "timestamp with time zone", "NOT NULL"},
+            {"nimetus", "varchar(200)", "UK, NOT NULL"},
+            {"kirjeldus", "text", "NOT NULL"},
+            {"kestus_minutites", "integer", "NOT NULL"},
+            {"maksimaalne_osalejate_arv", "integer", "NOT NULL"},
+            {"vajalik_varustus", "text", "NOT NULL"},
+            {"hind", "numeric(8,2)", "NOT NULL"}
+        });
+        addPhysicalColumns(91, new String[][] {
+            {"treeningu_kood", "integer", "PK, FK treening.treeningu_kood, NOT NULL"},
+            {"treeningu_kategooria_kood", "varchar(10)", "PK, FK treeningu_kategooria.kood, NOT NULL"}
+        });
+    }
+
+    private void addPhysicalColumns(int objectId, String[][] columns) throws Exception {
+        for (String[] column : columns) {
+            String stereotype = column[2].contains("PK") ? "PK" : (column[2].contains("FK") ? "FK" : "");
+            addAttributeIfMissing(objectId, column[0], column[1], column[2].contains("NULL") && !column[2].contains("NOT NULL") ? "0" : "1", "1", stereotype, column[2]);
         }
     }
 

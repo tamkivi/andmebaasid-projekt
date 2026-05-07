@@ -31,7 +31,6 @@ EXPECTED_ACTORS = {
     "Uudistaja",
     "Klassifikaatorite haldur",
     "Töötajate haldur",
-    "Maksekeskus",
 }
 
 

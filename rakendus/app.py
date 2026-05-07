@@ -17,7 +17,7 @@ import logging
 
 # Konfigureerimine
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'iti0206-local-demo-secret')
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 

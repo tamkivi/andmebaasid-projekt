@@ -1,19 +1,19 @@
 # Jõusaali Infosüsteemi - Treeningu Funktsionaalne Allsüsteem
 
-Veebirakendusel üleslaaditud Flask'iga, mis rakendab jõusaali treeningu haldamise süsteemi.
+Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist, vaatamist ja seisundite muutmist.
 
 ## 📋 Projekt info
 
 - **Kursus:** ITI0206 - Andmebaaside projektid
 - **Semester:** 2026 kevad
 - **Autorid:** Tristan Aik Sild, Gustav Tamkivi
-- **Technoloogia:** Python Flask + PostgreSQL
+- **Tehnoloogia:** Python Flask + PostgreSQL
 
 ## ✨ Omadused
 
 ### Kasutajate rollid
 - **Treener** - Registreerib, muudab ja aktiveerib treeninguid
-- **Klient** - Vaatab aktiivseid treeninguid ja bronteerib
+- **Klient** - Vaatab aktiivseid treeninguid
 - **Uudistaja** - Vaatab avalikult nähtavat infot
 
 ### Funktsionaalsus
@@ -86,25 +86,12 @@ cp .env.example .env
 nano .env  # või teie lemmikeditor
 ```
 
-### 5. Testimiskasutajate lisamine
+### 5. Testiandmete lisamine
 
-Andmebaasi testimiseks saate lisada kasutajaid:
+Andmebaasi testimiseks saab käivitada kaasas oleva faili:
 
-```sql
--- Lisage riik
-INSERT INTO riik (riigi_kood, nimetus) VALUES ('EE', 'Eesti');
-
--- Lisage isikud ja kontod
-INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, perenimi, e_meil)
-VALUES 
-('12345678901', 'EE', 'KLIENT', '1990-01-01', 'Tristan', 'Treener', 'treener@jousaal.ee'),
-('12345678902', 'EE', 'KLIENT', '1995-05-15', 'Andres', 'Klient', 'klient@jousaal.ee');
-
--- Lisage kasutajakontod (paroolid on räsitud)
-INSERT INTO kasutajakonto (e_meil, parool, on_aktiivne)
-VALUES 
-('treener@jousaal.ee', '<parool_räsid>', TRUE),
-('klient@jousaal.ee', '<parool_räsid>', TRUE);
+```bash
+psql -U postgres -d jousaali -f test_data.sql
 ```
 
 ### 6. Rakenduse käivitamine
@@ -177,7 +164,7 @@ Rakendus peaks käivituma: `http://localhost:5000`
 1. Logige sisse
 2. Vaatage aktiivseid treeninguid
 3. Vaadake treeningu detaile
-4. Broneeri treening (funktsiooniks sammal)
+4. Kontrollige treeningu kirjelduse, hinna, kestuse ja osalejate arvu andmeid
 
 ## 🐛 Tõrkeotsing
 
@@ -235,23 +222,10 @@ rakendus/
 └── static/               # CSS, JavaScript, pildid (tulevikus)
 ```
 
-## 🔄 Jääkute arendus
-
-Võimalikud täiendused:
-
-- [ ] Treeningu broneeri funktsioon
-- [ ] Maksete haldus
-- [ ] Aruannete genereerimine
-- [ ] E-posti teatised
-- [ ] Kalender vaade
-- [ ] Piktogrammide lisamine
-- [ ] Mobiilne rakendus (React Native)
-
 ## 📝 Märkused
 
-- Rakendus on eesmärgiga õppematerjalina
-- Tootmiseks vajaks täiendavat turvasete ja jõudluse seadistust
-- HTTPS on soovitav tootmisserveril
+- Rakendus on loodud õppeprojekti lokaalse prototüübina.
+- Andmebaasi ühendus seadistatakse `.env` failis.
 
 ## 📞 Kontakt
 

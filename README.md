@@ -79,7 +79,7 @@ Enne esitamist ava `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.
 
 - Package tree avaneb korrektselt ning peamised paketid on nähtavad.
 - Kõik oodatud diagrammid on olemas ja avanevad ilma veateadeteta.
-- Kasutusjuhtude diagrammil on õiged tegutsejad: Treener, Juhataja, Klient, Uudistaja, Klassifikaatorite haldur, Töötajate haldur ja Maksekeskus.
+- Kasutusjuhtude diagrammil on õiged tegutsejad: Treener, Juhataja, Klient, Uudistaja, Klassifikaatorite haldur ja Töötajate haldur.
 - Kasutusjuhtude seosed on visuaalselt loogilised ning ei ole alles põhjendamata `extend` seoseid.
 - Klasside ja olemite diagrammid on loetavad.
 - Seisundi- ja tegevusdiagrammid ei ole tühjad.
