@@ -204,7 +204,7 @@ Testamiseks saate luua uue parooliga:
 
 ```python
 from werkzeug.security import generate_password_hash
-hash = generate_password_hash('password123')
+hash = generate_password_hash('password123', method='pbkdf2:sha256')
 print(hash)
 # Sisestage see andmebaasi
 ```

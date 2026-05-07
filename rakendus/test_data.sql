@@ -48,7 +48,7 @@ INSERT INTO treeningu_kategooria (kood, treeningu_kategooria_tyyp_kood, nimetus,
 ON CONFLICT DO NOTHING;
 
 -- Testimiskasutajad - parooliräsid on näidisandmetes juba olemas.
--- Kasutage: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('parool'))"
+-- Kasutage: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('parool', method='pbkdf2:sha256'))"
 
 -- Isikud
 INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, perenimi, e_meil)
@@ -60,14 +60,13 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Kasutajakonod (paroolid: treener123, juhataja123, klient123, uudistaja123)
--- Tekitate paroolide räsid:
--- python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('treener123'))"
+-- Parooliräsid on loodud portatiivse pbkdf2:sha256 meetodiga.
 INSERT INTO kasutajakonto (e_meil, parool, on_aktiivne)
 VALUES
-('treener@jousaal.ee', 'scrypt:32768:8:1$NLG0aRhGi41NdBvp$97d0c72a0f8e2c1f3e5a7b9d2c4e6f8a1b3d5f7a9c1e3f5a7b9d1c3e5f7a9b', TRUE),
-('juhataja@jousaal.ee', 'scrypt:32768:8:1$6YqFj0nKp3R7tVwx$8a9c1e3f5a7b9d1c3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a', TRUE),
-('klient@jousaal.ee', 'scrypt:32768:8:1$WxZ1aB2cD3eF4gHi$9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b', TRUE),
-('uudistaja@jousaal.ee', 'scrypt:32768:8:1$2nL8j5qT9wP0sV3xY$1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d3e5f7a9b1d', TRUE)
+('treener@jousaal.ee', 'pbkdf2:sha256:600000$qGrjekABIBB0g8pG$4272ce1a72ccbac241b1495117c3d283d55c610f1bc07b94ac360f92fd46a5f8', TRUE),
+('juhataja@jousaal.ee', 'pbkdf2:sha256:600000$NGnXTK9mS91J7f0j$584635e60de4cf6f7c5118e432d070a6c8637293d1d0e883f09804c42f947391', TRUE),
+('klient@jousaal.ee', 'pbkdf2:sha256:600000$B5iUw7q4jcv37X7p$4ed6374c3e1c0ef86063fa0a1033a4fcf780b5476a769a2b8bb19f89fbfbc1b2', TRUE),
+('uudistaja@jousaal.ee', 'pbkdf2:sha256:600000$LwatF4tC4eFejrx0$0ee7226e2c2a25ab2645c94db4f475e00e97cec4ac5aed69f270de751c5294b4', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Töötajad

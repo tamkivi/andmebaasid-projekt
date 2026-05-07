@@ -406,6 +406,10 @@ def validate_repo(failures: list[str]) -> None:
             fail("application test_data.sql contains Cyrillic-looking corrupted characters", failures)
         else:
             ok("application test_data.sql has no Cyrillic-looking corrupted characters")
+        if "scrypt:" in test_data:
+            fail("application test_data.sql contains scrypt password hashes, which are not portable in the local runtime", failures)
+        elif "pbkdf2:sha256:" in test_data:
+            ok("application test_data.sql uses portable pbkdf2 password hashes")
 
         required_seed_terms = ["treeningu_seisundi_liik", "treeningu_kategooria_tyyp", "treeningu_kategooria"]
         missing_seed_terms = [term for term in required_seed_terms if term not in test_data]
