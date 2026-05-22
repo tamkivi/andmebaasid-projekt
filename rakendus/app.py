@@ -1,9 +1,9 @@
 """
-Jõusaali Infosüsteemi - Treeningu Funktsionaalne Allsüsteem
+Jõusaali infosüsteemi treeningute funktsionaalne allsüsteem
 Flask rakendus
 
 Author: Tristan Aik Sild, Gustav Tamkivi
-Course: ITI0206 - Andmebaaside projektid
+Course: Andmebaasid I, ITI0206
 """
 
 from decimal import Decimal, InvalidOperation
@@ -281,6 +281,18 @@ def validate_training_form(form):
         'categories': categories,
     }, errors
 
+def validate_category_selection(cur, categories):
+    """Kontrolli, et kõik vormist tulnud kategooriad on aktiivsed klassifikaatori väärtused."""
+    if not categories:
+        return False
+    cur.execute("""
+        SELECT COUNT(*) AS arv
+        FROM treeningu_kategooria
+        WHERE kood::text = ANY(%s)
+          AND on_aktiivne = TRUE
+    """, (categories,))
+    return cur.fetchone()['arv'] == len(categories)
+
 def update_training_status(cur, training_id, next_status, allowed_statuses, changed_by):
     cur.execute("""
         UPDATE treening
@@ -288,7 +300,7 @@ def update_training_status(cur, training_id, next_status, allowed_statuses, chan
             viimase_muutja_e_meil = %s,
             viimase_muutm_aeg = NOW()
         WHERE treeningu_kood = %s
-          AND treeningu_seisundi_liik_kood = ANY(%s)
+          AND treeningu_seisundi_liik_kood::text = ANY(%s)
     """, (next_status, changed_by, training_id, list(allowed_statuses)))
     return cur.rowcount
 
@@ -361,22 +373,17 @@ def trainings():
         # Töötajad näevad tööalast terviknimekirja; kliendid ja uudistajad ainult aktiivseid.
         if session.get('role') == 'tootaja':
             cur.execute("""
-                SELECT t.treeningu_kood, t.nimetus, t.kirjeldus, t.kestus_minutites,
-                       t.maksimaalne_osalejate_arv, t.hind,
-                       s.kood as seisundi_kood, s.nimetus as seisund
-                FROM treening t
-                JOIN treeningu_seisundi_liik s ON t.treeningu_seisundi_liik_kood = s.kood
-                ORDER BY t.nimetus
+                SELECT treeningu_kood, nimetus, kirjeldus, kestus_minutites,
+                       maksimaalne_osalejate_arv, hind, seisundi_kood, seisund
+                FROM v_treeningud_kategooriatega
+                ORDER BY nimetus
             """)
         else:
             cur.execute("""
-                SELECT t.treeningu_kood, t.nimetus, t.kirjeldus, t.kestus_minutites,
-                       t.maksimaalne_osalejate_arv, t.hind,
-                       s.kood as seisundi_kood, s.nimetus as seisund
-                FROM treening t
-                JOIN treeningu_seisundi_liik s ON t.treeningu_seisundi_liik_kood = s.kood
-                WHERE s.kood = 'AKTIIVNE'
-                ORDER BY t.nimetus
+                SELECT treeningu_kood, nimetus, kirjeldus, kestus_minutites,
+                       maksimaalne_osalejate_arv, hind, seisundi_kood, seisund
+                FROM v_aktiivsed_treeningud
+                ORDER BY nimetus
             """)
 
         trainings = cur.fetchall()
@@ -400,14 +407,13 @@ def training_detail(training_id):
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
         # Treeningu info
-        visibility_condition = "" if session.get('role') == 'tootaja' else "AND t.treeningu_seisundi_liik_kood = 'AKTIIVNE'"
-        cur.execute(f"""
+        cur.execute("""
             SELECT t.*, s.nimetus as seisund
             FROM treening t
             JOIN treeningu_seisundi_liik s ON t.treeningu_seisundi_liik_kood = s.kood
             WHERE t.treeningu_kood = %s
-              {visibility_condition}
-        """, (training_id,))
+              AND (%s OR t.treeningu_seisundi_liik_kood = 'AKTIIVNE')
+        """, (training_id, session.get('role') == 'tootaja'))
 
         training = cur.fetchone()
         if not training:
@@ -474,21 +480,19 @@ def register_training():
         data, errors = validate_training_form(request.form)
         if errors:
             return jsonify({'error': ' '.join(errors)}), 400
+        if not validate_category_selection(cur, data['categories']):
+            return jsonify({'error': 'Valitud kategooria ei ole aktiivne või puudub.'}), 400
 
-        # Väldi prototüübis samaaegse lisamise korral MAX+1 konflikti.
-        cur.execute("LOCK TABLE treening IN EXCLUSIVE MODE")
-        cur.execute("SELECT COALESCE(MAX(treeningu_kood), 0) + 1 as next_id FROM treening")
-        next_id = cur.fetchone()['next_id']
-
-        # Sisestage treening
+        # Sisestage treening; koodi annab PostgreSQL sequence.
         cur.execute("""
             INSERT INTO treening
-            (treeningu_kood, treeningu_seisundi_liik_kood, registreerija_e_meil,
-             viimase_muutja_e_meil, nimetus, kirjeldus, kestus_minutites,
+            (treeningu_seisundi_liik_kood, registreerija_e_meil, viimase_muutja_e_meil,
+             nimetus, kirjeldus, kestus_minutites,
              maksimaalne_osalejate_arv, vajalik_varustus, hind)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING treeningu_kood
         """, (
-            next_id, 'OOTEL', session['user_id'], session['user_id'],
+            'OOTEL', session['user_id'], session['user_id'],
             data['name'],
             data['description'],
             data['duration'],
@@ -496,6 +500,7 @@ def register_training():
             data['equipment'],
             data['price']
         ))
+        next_id = cur.fetchone()['treeningu_kood']
 
         for cat in data['categories']:
             cur.execute("""
@@ -534,7 +539,7 @@ def edit_training(training_id):
                 SELECT *
                 FROM treening
                 WHERE treeningu_kood = %s
-                  AND treeningu_seisundi_liik_kood = ANY(%s)
+                  AND treeningu_seisundi_liik_kood::text = ANY(%s)
             """, (training_id, list(TRAINING_EDITABLE_STATUSES)))
             training = cur.fetchone()
             if not training:
@@ -558,6 +563,8 @@ def edit_training(training_id):
         data, errors = validate_training_form(request.form)
         if errors:
             return jsonify({'error': ' '.join(errors)}), 400
+        if not validate_category_selection(cur, data['categories']):
+            return jsonify({'error': 'Valitud kategooria ei ole aktiivne või puudub.'}), 400
 
         cur.execute("""
             UPDATE treening
@@ -570,7 +577,7 @@ def edit_training(training_id):
                 viimase_muutja_e_meil = %s,
                 viimase_muutm_aeg = NOW()
             WHERE treeningu_kood = %s
-              AND treeningu_seisundi_liik_kood = ANY(%s)
+              AND treeningu_seisundi_liik_kood::text = ANY(%s)
         """, (
             data['name'],
             data['description'],
@@ -742,21 +749,16 @@ def manager_report():
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT s.kood, s.nimetus, COUNT(t.treeningu_kood) AS arv
-            FROM treeningu_seisundi_liik s
-            LEFT JOIN treening t ON t.treeningu_seisundi_liik_kood = s.kood
-            GROUP BY s.kood, s.nimetus
-            ORDER BY s.nimetus
+            SELECT kood, nimetus, arv
+            FROM v_treeningute_arv_seisundi_kaupa
+            ORDER BY nimetus
         """)
         by_status = cur.fetchall()
 
         cur.execute("""
-            SELECT tk.nimetus AS kategooria, ktt.nimetus AS tyyp, COUNT(tko.treeningu_kood) AS arv
-            FROM treeningu_kategooria tk
-            JOIN treeningu_kategooria_tyyp ktt ON tk.treeningu_kategooria_tyyp_kood = ktt.kood
-            LEFT JOIN treeningu_kategooria_omamine tko ON tko.treeningu_kategooria_kood = tk.kood
-            GROUP BY tk.nimetus, ktt.nimetus
-            ORDER BY ktt.nimetus, tk.nimetus
+            SELECT kategooria, tyyp, arv
+            FROM v_treeningute_arv_kategooria_kaupa
+            ORDER BY tyyp, kategooria
         """)
         by_category = cur.fetchall()
         return render_template('report.html', by_status=by_status, by_category=by_category, user=template_user())

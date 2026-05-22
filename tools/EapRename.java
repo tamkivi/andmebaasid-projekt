@@ -22,10 +22,10 @@ public class EapRename {
         REPLACEMENTS.put("X elutsüklid", "treeningute elutsüklid");
         REPLACEMENTS.put("X haldur", "treener");
         REPLACEMENTS.put("Registreeri X", "Registreeri treening");
-        REPLACEMENTS.put("Unusta X", "Unusta treening");
+        REPLACEMENTS.put("Unusta X", "Unusta ootel treening");
         REPLACEMENTS.put("Muuda X mittaktiivseks", "Muuda treening mitteaktiivseks");
         REPLACEMENTS.put("Muuda X mitteaktiivseks", "Muuda treening mitteaktiivseks");
-        REPLACEMENTS.put("Muuda X", "Muuda treeningut");
+        REPLACEMENTS.put("Muuda X", "Muuda treeningu andmeid");
         REPLACEMENTS.put("Aktiveeri X", "Aktiveeri treening");
         REPLACEMENTS.put("Lõpeta X", "Lõpeta treening");
         REPLACEMENTS.put("Lõpeta valitud X", "Lõpeta valitud treening");

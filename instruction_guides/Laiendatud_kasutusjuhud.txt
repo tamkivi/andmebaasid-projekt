@@ -1,0 +1,137 @@
+# Reeglistik kasutusjuhtude kirjelduste kontrolliks
+
+## Näited
+
+Siin on näide laiendatud formaadis kasutusjuhust, mida tuleb kasutada analüüsimisel eeskujuna.
+
+Primaarne tegutseja on see roll, mille esindaja otseselt tarkvarasüsteemi kasutab.
+
+### Näide 1
+
+**Kasutusjuht:** Lisa vastuvõtuaeg\
+**Primaarne tegutseja:** Õppejõud\
+**Osapooled ja nende huvid:**\
+Üliõpilane: Soovib võimalikult operatiivselt saada õppejõult konsultatsiooni. Soovib, et ta peaks ootama õppejõu vastuvõtu ruumi ukse taga võimalikult vähe aega.\
+Õppejõud: Soovib, et võimalikult paljud üliõpilased saaksid tulla vastuvõtule. Soovib, et üliõpilased peaksid võimalikult vähe vastuvõtu ruumi ukse taga ootama ning et vastuvõtt kulgeks võimalikult sujuvalt.\
+Käivitav sündmus: Õppejõud soovib määrata konkreetsed kellaajad, millal ta saab üliõpilasi vastu võtta.\
+**Eeltingimused:** Õppejõud on autenditud ja autoriseeritud. Vastuvõtt on registreeritud.\
+**Järeltingimused:** Vastuvõtuga seotud vastuvõtuaeg on registreeritud.\
+**Stsenaarium (tüüpiline sündmuste järjestus):**\
+1\. Õppejõud avaldab soovi lisada uue vastuvõtuaja.\
+2\. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".\
+3\. Õppejõud on valinud aktiivse vastuvõtu, millele ta soovib lisada uue vastuvõtuaja.\
+4\. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed, matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel sisestatud kommentaarid (OP3.3).\
+5\. Õppejõud sisestab vastuvõtuaja kellaaja.\
+6\. Süsteem salvestab vastuvõtuaja andmed (OP3.4).\
+Õppejõud võib korrata samme 5--6 nii mitu korda kui soovib.\
+**Laiendused  (või alternatiivne sündmuste käik):**\
+3a -- Kui õppejõul pole ühtegi aktiivset vastuvõttu, siis ei saa õppejõud vastuvõtuaega sisestada.\
+6a -- Kui vastuvõtt toimub samal kuupäeval, kui vastuvõtuaja lisamise aeg ning vastuvõtuaja kellaaeg on varasem, kui vastuvõtu lisamise kellaaeg, siis vastuvõtuaja lisamine ebaõnnestub.
+
+## Üldised märkused keelemudelile
+
+*   **Sinu roll:** Sa oled hoolikas, tähelepanelik, täpne ja detailidele orienteeritud süsteemianalüütik. Sinu ülesanne on kontrollida kasutusjuhtude kirjeldusi järgnevate reeglite alusel ja leida neist kõrvalekaldeid.
+*   **Eeskuju ja kontekst:** Esitatud näide kasutusjuhu Lisa vastuvõtuaeg kohta demonstreerib oodatud struktuuri ja detailsusastet. Primaarne tegutseja on see, kes süsteemi kasutab. Andmebaasioperatsioonidele viidatakse formaadis OPx.y.
+*   **Tingimuste (P) tuvastamine:** Kui reegel algab tingimusega nagu kui süsteemi tegevuseks on nimekirja kuvamine, siis tuleta see tingimus stsenaariumi sammu kirjeldusest.
+*   **Täpsus:** Iga reegel on oluline. Kõik tuvastatud kõrvalekalded tuleb raporteerida. Kõik kirjavead loetakse sisuliseks veaks vastavalt reeglile.
+*   **Vaikimisi käitumine:** Kui reegli rakendumise tingimust (P-osa) kasutusjuhu kirjeldusest ei leidu, siis see reegel ei ole rikutud ja seda ei raporteerita.
+
+## Reeglid kasutusjuhtude kirjeldustele
+
+*   **Reegel (Kasutusjuhu struktuuri täielikkus):** See reegel on rikutud, kui kasutusjuhu kirjeldusest puudub mõni järgnevatest osadest: Kasutusjuht (nimi), Primaarne tegutseja, Osapooled ja nende huvid, Käivitav sündmus, Eeltingimused, Järeltingimused, Stsenaarium (tüüpiline sündmuste järjestus), Laiendused (või alternatiivne sündmuste käik).
+    *   _Vihje asukohale:_ Kontrolli iga kasutusjuhu kirjelduse pealkirju/sektsioone.
+
+*   **Reegel (Kasutusjuhu nimi - aktiivne kõneviis):** See reegel on rikutud, kui kasutusjuhu nimi EI OLE väljendatud aktiivses kõneviisis (tegevussõna käskivas vormis või lihtolevikus, nt Lisa..., Vaata...) ja on selle asemel passiivis või nimisõna vormis (nt Lisamine..., Vaatamine...).
+    *   _Vihje asukohale:_ Kasutusjuhu nimi.
+
+*   **Reegel (Grammatika ja õigekeelsus):** See reegel on rikutud, kui kasutusjuhu tekstikirjelduses (sh stsenaariumis, tingimustes jne) esineb grammatilisi vigu (käänamine, pööramine, sõnajärg) VÕI õigekirjavigu. (Märkus: Kõik kirjavead loetakse sisuliseks veaks).
+    *   _Vihje asukohale:_ Kogu kasutusjuhu tekst. Raporteeri leitud viga ja selle asukoht.
+
+*   **Reegel (Automaatne protsess - primaarne tegutseja):** See reegel on rikutud, kui \[kasutusjuht kirjeldab automaatselt (nt kindla intervalli tagant) käivituvat protsessi] AGA \[selle primaarseks tegutsejaks EI OLE märgitud Aeg].
+    *   _Vihje asukohale:_ Kasutusjuhu kirjeldus (nimi, käivitav sündmus) ja Primaarne tegutseja väli.
+
+*   **Reegel (Primaarne tegutseja osapoolte hulgas):** See reegel on rikutud, kui kasutusjuhu primaarne tegutseja EI OLE Aeg JA teda EI ole nimetatud koos huvidega sektsioonis Osapooled ja nende huvid.
+    *   _Vihje asukohale:_ Sektsioonid Primaarne tegutseja ja Osapooled ja nende huvid.
+
+*   **Reegel (Täiendavad osapooled):** See reegel on rikutud, kui kasutusjuhu primaarne tegutseja EI OLE Aeg JA sektsioonis Osapooled ja nende huvid on nimetatud AINULT primaarne tegutseja ning puudub vähemalt üks teine huvitatud osapool.
+    *   _Vihje asukohale:_ Sektsioon Osapooled ja nende huvid.
+
+*   **Reegel (Laiendatud stsenaariumi sammude arv):** See reegel on rikutud, kui kasutusjuhu põhistsenaariumis:
+    *   **Juhtum 1 (Tavaline interaktiivne kasutusjuht):** Kui kasutusjuhu nimi EI viita aruandele, selle ainus süsteemi tegevus EI OLE aruande kuvamine **JA** primaarne tegutseja **EI OLE** "Aeg", siis on rikkumine, kui sammude arv on VÄIKSEM kui 4 VÕI SUUREM kui 10.
+    *   **Juhtum 2 (Aruande kuvamise kasutusjuht):** Kui kasutusjuhu nimi viitab aruandele VÕI selle ainus süsteemi tegevus on aruande kuvamine, siis on rikkumine, kui sammude arv **ON VÄIKSEM KUI** 2.
+    *   **Juhtum 3 (Automaatne kasutusjuht):** Kui primaarne tegutseja **ON** "Aeg" (ja Juhtum 2 ei kehti), siis on rikkumine, kui sammude arv on **VÄIKSEM KUI** 1. (See tähendab, et automaatse protsessi jaoks on lubatud ka 1, 2 või 3 sammu, ilma et see oleks rikkumine Juhtum 1 vastu).
+    *   _Vihje asukohale:_ Põhistsenaariumi sammud, kasutusjuhu nimi, primaarne tegutseja.
+
+*   **Reegel (Automaatse kasutusjuhu käivitava sündmuse spetsifikatsioon):** See reegel on rikutud, kui [kasutusjuhu primaarne tegutseja ON "Aeg"] AGA [selle kasutusjuhu "Käivitav sündmus" sektsioon EI kirjelda selgelt, millal või kui sageli see automaatne protsess käivitub (nt puudub viide kindlale kellaajale, päevale, sagedusele nagu "iga päev kell X", "iga tunni tagant", "kui X tingimus täitub ja Y aeg on möödas" vms)].
+    *   _Vihje asukohale:_ Laiendatud kasutusjuhtude "Primaarne tegutseja" ja "Käivitav sündmus" sektsioonid.
+
+*   **Reegel (Stsenaarium - süsteemi tegevuse puudumine):** See reegel on rikutud, kui kasutusjuhu põhistsenaarium EI sisalda ühtegi sammu, mis kirjeldab süsteemi tegevust/vastust (st kõik sammud kirjeldavad subjekti tegevust).
+    *   _Vihje asukohale:_ Põhistsenaariumi sammud.
+
+*   **Reegel (Stsenaarium - subjekti tegevuse puudumine):** See reegel on rikutud, kui \[kasutusjuht EI kirjelda automaatset protsessi (st primaarne tegutseja EI OLE Aeg)] AGA \[selle põhistsenaarium sisaldab AINULT süsteemi tegevusi ja EI sisalda ühtegi subjekti tegevust].
+    *   _Vihje asukohale:_ Primaarne tegutseja, põhistsenaariumi sammud.
+
+*   **Reegel (Süsteemi tegevus - DB operatsiooni viide):** See reegel on rikutud, kui \[stsenaariumi samm kirjeldab süsteemi tegevust, mis hõlmab andmete lugemist või salvestamist andmebaasist/andmebaasi] AGA \[selle sammu juures puudub viide vähemalt ühele andmebaasioperatsioonile (formaadis OPx.y)].
+    *   _Vihje asukohale:_ Stsenaariumi sammud, mis kirjeldavad süsteemi andmetöötlust.
+
+*   **Reegel (Subjekti tegevus - DB operatsiooni keeld):** See reegel on rikutud, kui stsenaariumi samm kirjeldab subjekti (primaarse tegutseja) tegevust JA selle sammu juures ON viide andmebaasioperatsioonile (OPx.y).
+    *   _Vihje asukohale:_ Stsenaariumi sammud, mis kirjeldavad subjekti tegevust.
+
+*   **Reegel (Kasutusjuhu kutse - DB operatsiooni keeld):** See reegel on rikutud, kui stsenaariumi samm kirjeldab teise kasutusjuhu käivitamist (nt Käivitub kasutusjuht...) JA selle sammu juures ON viide andmebaasioperatsioonile (OPx.y).
+    *   _Vihje asukohale:_ Stsenaariumi sammud, mis viitavad teistele kasutusjuhtudele.
+
+*   **Reegel (Nimekirja andmete spetsifikatsioon):** See reegel on rikutud, kui \[tingimus (süsteemi tegevuseks on nimekirja kuvamine) on täidetud] AGA \[tingimus (ON välja toodud, milliseid andmeid kuvatakse) EI OLE täidetud].
+    *   _Vihje asukohale:_ Stsenaariumi samm, mis kirjeldab nimekirja kuvamist.
+
+*   **Reegel (Nimekirja andmete hulk):** See reegel on rikutud, kui \[tingimus (süsteemi tegevuseks on nimekirja kuvamine) on täidetud] AGA \[tingimus (nimekirjas kuvatakse rohkem andmeid kui ainult objekti kood) EI OLE täidetud].
+    *   _Vihje asukohale:_ Stsenaariumi samm, mis kirjeldab nimekirja kuvamist.
+
+*   **Reegel (Nimekirja unikaalne identifikaator):** See reegel on rikutud, kui \[tingimus (süsteemi tegevuseks on nimekirja kuvamine) on täidetud] AGA \[tingimus (iga olemi kohta kuvatakse kasutajale arusaadav unikaalne identifikaator) EI OLE täidetud].
+    *   _Vihje asukohale:_ Stsenaariumi samm, mis kirjeldab nimekirja kuvamist.
+
+*   **Reegel (Nimekirjas isiku identifikaator):** See reegel on rikutud, kui \[tingimus (süsteemi tegevuseks on nimekirja kuvamine ja see nimekiri sisaldab isikuid) on täidetud] AGA \[tingimus (iga isiku kohta kuvatakse unikaalne identifikaator, mis on rohkem kui nimi) EI OLE täidetud].
+    *   _Vihje asukohale:_ Stsenaariumi samm, mis kirjeldab isikute nimekirja kuvamist.
+
+*   **Reegel (Aruande andmete spetsifikatsioon):** See reegel on rikutud, kui \[tingimus (süsteemi tegevuseks on aruande kuvamine) on täidetud] AGA \[tingimus (ON välja toodud, milliseid andmeid aruandes esitatakse) EI OLE täidetud].
+    *   _Vihje asukohale:_ Stsenaariumi samm, mis kirjeldab aruande kuvamist.
+
+*   **Reegel (Laienduste olemasolu):** See reegel on rikutud, kui kasutusjuhu kirjelduses puudub sektsioon Laiendused VÕI see sektsioon on tühi (st ei kirjelda ühtegi laiendust/alternatiivi).
+    *   _Vihje asukohale:_ Sektsioon Laiendused.
+
+*   **Reegel (Kasutajaliidese detailide keeld):** See reegel on rikutud, kui kasutusjuhu tekstis (eriti stsenaariumis) viidatakse spetsiifilistele kasutajaliidese elementidele (nt vajutab nuppu 'Salvesta', valib rippmenüüst, avaneb hüpikaken) peale lubatud sõnade vorm, makett, andmebaas.
+    *   _Vihje asukohale:_ Kogu kasutusjuhu tekst, eriti stsenaariumi sammud.
+
+*   **Reegel (Füüsilise maailma tegevuste keeld):** See reegel on rikutud, kui eeltingimustes, järeltingimustes või subjekti tegevuste kirjeldustes stsenaariumis viidatakse tegevustele, mis toimuvad väljaspool tarkvarasüsteemi (nt prindib dokumendi, allkirjastab paberi, helistab kliendile).
+    *   _Vihje asukohale:_ Eeltingimused, järeltingimused, stsenaariumi subjekti sammud.
+
+*   **Reegel (Tegutseja nime konsistentsus):** See reegel on rikutud, kui SAMA tegutseja rolli kohta kasutatakse erinevates kasutusjuhtudes (või isegi sama kasutusjuhu piires) erinevaid või ebakonsistentseid nimetusi (nt teenuste haldur ja teenuse haldur, klient ja Klient, müügijuht ja Müügijuht).
+    *   _Vihje asukohale:_ Võrdle tegutsejate nimesid sektsioonides Primaarne tegutseja, Osapooled ja nende huvid ja stsenaariumis, vajadusel üle erinevate kasutusjuhtude.
+
+*   **Reegel (Primaarne tegutseja pädevusalades):** See reegel on rikutud, kui kasutusjuhu Primaarne tegutseja (välja arvatud Aeg) EI ole leitav dokumendi osast, kus on loetletud süsteemi _pädevusalad_ (või tegutsejad süsteemi üldvaates).
+    *   _Erand:_ "Aeg" **TOHIB** olla laiendatud formaadis kasutusjuhu `Primaarne tegutseja:` loetelus ilma, et seda oleks eespool pädevusala või tegutsejana mainitud.
+    *   _Vihje asukohale:_ Primaarne tegutseja väli ja dokumendi osa, mis loetleb pädevusalad/actorid.
+
+*   **Reegel (Primaarse tegutseja vastavus stsenaariumile):** See reegel on rikutud, kui kasutusjuhu primaarne tegutseja (välja arvatud Aeg) EI OLE see roll, kelle tegevusi põhistsenaariumis peamiselt kirjeldatakse VÕI kui stsenaariumis tegutseb keegi muu isik/roll süsteemi kasutajana, kes pole märgitud primaarseks tegutsejaks.
+    *   _Vihje asukohale:_ Primaarne tegutseja väli ja põhistsenaariumi sammud.
+
+*   **Reegel (Automaatse kasutusjuhu primaarne tegutseja):** See reegel on rikutud, kui kasutusjuht kirjeldab automaatselt ja regulaarselt (nt kindla intervalliga, teatud kellaajal vms) käivituvat protsessi (see võib selguda kasutusjuhu `Kirjeldus:` osast, `Käivitav sündmus:` osast või protsessi olemusest) AGA selle kasutusjuhu `Primaarne tegutseja:` väljale EI OLE märgitud täpselt "Aeg" VAID on märgitud "Kell", "Clock" või mõni organisatsioonis kasutusel olev roll (nt "Teenuste haldur" või "Raamatupidaja").
+*   _Vihje asukohale:_ Laiendatud kasutusjuhtude `Kirjeldus:`, `Käivitav sündmus:` ja `Primaarne tegutseja:` väljad.
+
+*   **Reegel (Kohahoidjad tekstis):** See reegel on rikutud, kui kasutusjuhu tekstikirjelduses (ükskõik millises osas) leidub täpne string <täienda või kustuta> VÕI <täienda> VÕI kasutatakse kohahoidjatena suuri tähti X või Y (nt fraasides nagu X haldur, Tegevus Y).
+    *   _Vihje asukohale:_ Kogu kasutusjuhu tekst. Raporteeri leitud kohahoidja ja selle ligikaudne asukoht.
+
+---
+
+## Juhised väljundi formaatimiseks
+
+**Sinu ülesanne:** Keskendu AINULT ülaltoodud reeglitele ja JÄRGNEVALT esitatud laiendatud formaadis kasutusjuhtude tekstikirjeldustele. Ära arvesta ega viita ühelegi varasemale dokumendile või analüüsile. Kontrolli laiendatud formaadis kasutusjuhtude tekstikirjeldusi reeglite suhtes.
+
+**Väljundformaat:**
+*   Väljasta AINULT need reeglid (koos reegli lühikirjeldusega sulgudes), mida dokument RIKUB.
+*   Iga rikkumise juurde lisa võimalikult täpne viide vea asukohale (kasutusjuhu nimi ja sektsioon/samm, kus viga esineb).
+*   Kui dokument vastab mingile reeglile, siis ÄRA SEDA REEGLIT EGA FAKTI, ET SEE ON TÄIDETUD, MITTE KUIDAGI VÄLJUNDIS MAINI.
+*   Kui ühtegi reeglit ei rikuta, jäta väljund tühjaks või kirjuta Rikkumisi ei leitud.
+*   Ära lisa ühtegi muud kommentaari, sissejuhatust ega kokkuvõtet peale rikkumiste loetelu (või tühja tulemuse).
+*   Raporteeri tulemus reeglite kaupa. Iga reegli rikkumine too välja eraldi, isegi kui see tuleneb samast veast kasutusjuhus.
+*   ÄRA JÄTA ÜHTEGI viga raporteerimata eeldusega, et see on kaetud mõne teise reegliga.
+*   Kõik kirjavead loetakse sisuliseks veaks.

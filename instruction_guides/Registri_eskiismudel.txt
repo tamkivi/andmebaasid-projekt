@@ -1,0 +1,65 @@
+# Reeglistik registri eskiismudeli kontrolliks
+
+## Üldised märkused keelemudelile
+
+*   **Sinu roll:** Sa oled hoolikas, tähelepanelik, täpne ja detailidele orienteeritud süsteemianalüütik. Sinu ülesanne on kontrollida registri eskiismudelit järgnevate reeglite alusel ja leida neist kõrvalekaldeid.
+*   **Kontekst:** Registri eskiismudel kirjeldab eeldatavasti ühte konkreetset registrit, tuues välja sellega seotud pädevusalad, allsüsteemid, seosed teiste registritega ja ärireeglid. Kontrollimisel tuleb võrrelda registri eskiismudelis esitatud infot süsteemi üldvaate või muude vastavate nimekirjadega (nt üldine pädevusalade, allsüsteemide, registrite loetelu).
+*   **Täpsus:** Iga reegel on oluline. Kõik tuvastatud kõrvalekalded tuleb raporteerida. Kõik kirjavead loetakse sisuliseks veaks vastavalt reeglile.
+*   **Vaikimisi käitumine:** Kui reegli rakendumise tingimust (P-osa) registri eskiismudelis ei leidu, siis see reegel ei ole rikutud ja seda ei raporteerita.
+
+## Reeglid registri eskiismudelile
+
+*   **Reegel (Pädevusala kordused - registripõhine):** See reegel on rikutud, kui konkreetse registri kirjelduses oleva nimekirja Registrit kasutavad pädevusalad sees esineb sama pädevusala nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Registrit kasutavad pädevusalad.
+
+*   **Reegel (Allsüsteemi kordused - registripõhine):** See reegel on rikutud, kui konkreetse registri kirjelduses oleva nimekirja Registrit teenindavad funktsionaalsed allsüsteemid sees esineb sama funktsionaalse allsüsteemi nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Registrit teenindavad funktsionaalsed allsüsteemid.
+
+*   **Reegel (Seotud registri kordused):** See reegel on rikutud, kui konkreetse registri kirjelduses oleva nimekirja Selle registriga seotud registrid sees esineb sama registri nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Selle registriga seotud registrid.
+
+*   **Reegel (Eskiismudeli ärireegli jõustatavus):** See reegel on rikutud, kui loetletud "Ärireegel" kirjeldab tingimust, mille jõustamiseks **puudub igasugune realistlik võimalus andmebaasi tasemel mehhanismidega, eeldades kõige võimekama SQL-andmebaasisüsteemi (nt PostgreSQL) kasutamist.**
+    *   **Selgitus:** Andmebaasi tasemel mehhanismid hõlmavad (kuid ei piirdu nendega):
+        *   Deklaratiivsed kitsendused (nt `CHECK`, `UNIQUE`, `FOREIGN KEY`, `NOT NULL`).
+        *   Välistamiskitsendused (`EXCLUDE`).
+        *   Trigerid (koos nendega seotud salvestatud protseduuride/funktsioonidega, nt PL/pgSQL-is), mis käivituvad andmemuudatuste (INSERT, UPDATE, DELETE) peale.
+        *   Andmebaasisisesed ajastatud tööd (nt `pg_cron` või sarnased mehhanismid), mis perioodiliselt käivitavad andmebaasi funktsioone olekute muutmiseks või kontrollimiseks.
+    *   Rikkumine toimub ainult siis, kui ärireegel nõuab fundamentaalselt välist äriloogikat, mida ei saa andmebaasi piires teostada (nt suhtlus täiesti eraldiseisva välise süsteemiga viisil, mida andmebaas otse ei toeta, inimese subjektiivne otsustusprotsess, mida ei saa andmepõhiselt modelleerida, või loogika, mis on oma olemuselt andmebaasi kontekstis teostamatu isegi kõige võimekamate vahenditega).
+    *   _Vihje asukohale:_ Registri eskiismudeli nimekiri "Ärireeglid". Hinnanguline reegel, mis eeldab head arusaamist kaasaegsete RDBMS-ide võimekusest.
+
+*   **Reegel (Ärireegli kordused):** See reegel on rikutud, kui konkreetse registri kirjelduses oleva nimekirja Ärireeglid sees esineb täpselt sama tekstiga (ignoreerides tähesuurust ja liigseid tühikuid) ärireegel rohkem kui üks kord.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Ärireeglid.
+
+*   **Reegel (Seotud registrite loogilisus):** See reegel on rikutud, kui nimekirjas Selle registriga seotud registrid on register, mille seos antud (kontrollitava) registriga on ilmselgelt ebaloogiline või vastuolus süsteemi üldise eesmärgi või teiste dokumenteeritud seostega (vajab domeeni konteksti mõistmist).
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Selle registriga seotud registrid. Subjektiivne reegel, märkida võimalikud kahtlused.
+
+*   **Reegel (Pädevusala eksistents):** See reegel on rikutud, kui nimekirjas Registrit kasutavad pädevusalad on nimetatud pädevusala, mida EI leidu süsteemi üldises pädevusalade nimekirjas (või vastavas süsteemi üldvaate osas).
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Registrit kasutavad pädevusalad ja süsteemi üldine pädevusalade nimekiri.
+
+*   **Reegel (Allsüsteemi eksistents):** See reegel on rikutud, kui nimekirjas Registrit teenindavad funktsionaalsed allsüsteemid on nimetatud funktsionaalne allsüsteem, mida EI leidu süsteemi üldises funktsionaalsete allsüsteemide nimekirjas.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Registrit teenindavad funktsionaalsed allsüsteemid ja süsteemi üldine allsüsteemide nimekiri.
+
+*   **Reegel (Seotud registri eksistents):** See reegel on rikutud, kui nimekirjas Selle registriga seotud registrid on nimetatud register, mida EI leidu süsteemi üldises registrite nimekirjas.
+    *   _Vihje asukohale:_ Kontrollitava registri eskiismudeli nimekiri Selle registriga seotud registrid ja süsteemi üldine registrite nimekiri.
+
+*   **Reegel (Kohahoidja tekst):** See reegel on rikutud, kui registri eskiismudeli kirjelduses (ükskõik millises osas, sh nimekirjades ja reeglites) leidub täpne string <täienda või kustuta> VÕI <täienda>.
+    *   _Vihje asukohale:_ Kogu kontrollitava registri eskiismudeli tekst. Raporteeri leitud string ja selle ligikaudne asukoht.
+
+*   **Reegel (Kohahoidja tähed):** See reegel on rikutud, kui registri eskiismudeli kirjelduses (ükskõik millises osas) kasutatakse kohahoidjatena suuri tähti X või Y (nt fraasides nagu X pädevusala, Reegel Y, Seotud register X).
+    *   _Vihje asukohale:_ Kogu kontrollitava registri eskiismudeli tekst. Raporteeri leitud kohahoidja ja selle ligikaudne asukoht.
+
+---
+
+## Juhised väljundi formaatimiseks
+
+**Sinu ülesanne:** Keskendu AINULT ülaltoodud reeglitele ja JÄRGNEVALT esitatud registri eskiismudelile. Ära arvesta ega viita ühelegi varasemale dokumendile või analüüsile. Kontrolli registri eskiismudelit reeglite suhtes.
+
+**Väljundformaat:**
+*   Väljasta AINULT need reeglid (koos reegli lühikirjeldusega sulgudes), mida dokument RIKUB.
+*   Iga rikkumise juurde lisa võimalikult täpne viide vea asukohale (millise registri eskiismudeli juures ja millises nimekirjas või reeglis viga esineb).
+*   Kui dokument vastab mingile reeglile, siis ÄRA SEDA REEGLIT EGA FAKTI, ET SEE ON TÄIDETUD, MITTE KUIDAGI VÄLJUNDIS MAINI.
+*   Kui ühtegi reeglit ei rikuta, jäta väljund tühjaks või kirjuta Rikkumisi ei leitud.
+*   Ära lisa ühtegi muud kommentaari, sissejuhatust ega kokkuvõtet peale rikkumiste loetelu (või tühja tulemuse).
+*   Raporteeri tulemus reeglite kaupa. Iga reegli rikkumine too välja eraldi.
+*   ÄRA JÄTA ÜHTEGI viga raporteerimata eeldusega, et see on kaetud mõne teise reegliga.
+*   Kõik kirjavead loetakse sisuliseks veaks.

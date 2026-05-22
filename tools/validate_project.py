@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
+from xml.etree import ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
 from docx import Document
@@ -22,6 +23,8 @@ GUIDES = ROOT / "instruction_guides"
 SQL_OUTPUT = ROOT / "jousaali_skript.sql"
 APP_DIR = ROOT / "rakendus"
 SUBMISSION_DIR = ROOT / "submission_files"
+EXPLAINER_FILE_NAME = "PROJECT_EXPLAINER_NOT_FOR_SUBMISSION.md"
+DOCX_NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 sys.path.insert(0, str(ROOT / "tools"))
 from sql_ddl import SQL_DDL  # noqa: E402
 
@@ -62,7 +65,7 @@ EXPECTED_APP_ZIP_TOP_LEVEL = {
 }
 
 FORBIDDEN_ZIP_COMPONENTS = {"__MACOSX", "__pycache__", "venv", ".venv", "flask_session"}
-FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env"}
+FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env", EXPLAINER_FILE_NAME}
 FORBIDDEN_ZIP_SUFFIXES = {".pyc", ".pyo", ".class", ".jar"}
 
 PLACEHOLDER_RE = re.compile(
@@ -197,6 +200,57 @@ def docx_text(doc: Document) -> str:
     return "\n".join(parts)
 
 
+def validate_docx_heading_colors(failures: list[str]) -> None:
+    with ZipFile(DOCX) as archive:
+        document_xml = ET.fromstring(archive.read("word/document.xml"))
+        styles_xml = ET.fromstring(archive.read("word/styles.xml"))
+
+    used_heading_styles = set()
+    direct_heading_colors = []
+    optional_heading_colors = []
+    for paragraph in document_xml.findall(".//w:p", DOCX_NS):
+        pstyle = paragraph.find("./w:pPr/w:pStyle", DOCX_NS)
+        if pstyle is None:
+            continue
+        style_id = pstyle.attrib.get(f"{{{DOCX_NS['w']}}}val", "")
+        if not style_id.startswith("Heading"):
+            continue
+        text = "".join(t.text or "" for t in paragraph.findall(".//w:t", DOCX_NS)).strip()
+        used_heading_styles.add(style_id)
+        colors = [
+            color.attrib.get(f"{{{DOCX_NS['w']}}}val", "").upper()
+            for color in paragraph.findall("./w:r/w:rPr/w:color", DOCX_NS)
+        ]
+        direct_heading_colors.extend((text, color) for color in colors if color)
+        if "ANDMEBAASID II" in text.upper() or "ORACLE" in text.upper():
+            optional_heading_colors.extend((text, color) for color in colors if color)
+
+    non_black_styles = []
+    for style_id in sorted(used_heading_styles):
+        style = styles_xml.find(f".//w:style[@w:styleId='{style_id}']", DOCX_NS)
+        color = style.find(".//w:rPr/w:color", DOCX_NS) if style is not None else None
+        value = color.attrib.get(f"{{{DOCX_NS['w']}}}val", "").upper() if color is not None else ""
+        if value not in {"000000", "AUTO"}:
+            non_black_styles.append(f"{style_id}={value or 'inherited'}")
+
+    blue_direct = [(text, color) for text, color in direct_heading_colors if color in {"0070C0", "1F4E79", "4F81BD"}]
+    if non_black_styles:
+        fail(f"DOCX mandatory heading styles are not black: {non_black_styles}", failures)
+    elif blue_direct:
+        fail(f"DOCX mandatory headings have blue direct formatting: {blue_direct[:5]}", failures)
+    else:
+        ok("DOCX mandatory heading styles are black and no generated heading is blue")
+
+    if optional_heading_colors:
+        non_blue_optional = [(text, color) for text, color in optional_heading_colors if color not in {"0070C0", "1F4E79", "4F81BD"}]
+        if non_blue_optional:
+            fail(f"DOCX optional Andmebaasid II/Oracle headings are not blue: {non_blue_optional[:5]}", failures)
+        else:
+            ok("DOCX optional Andmebaasid II/Oracle headings are blue")
+    else:
+        ok("DOCX contains no generated Andmebaasid II/Oracle continuation headings")
+
+
 def validate_docx(failures: list[str]) -> None:
     doc = Document(DOCX)
     text = docx_text(doc)
@@ -217,6 +271,7 @@ def validate_docx(failures: list[str]) -> None:
         ok(f"DOCX has real heading styles ({heading_count})")
     else:
         fail(f"DOCX heading style count too low ({heading_count})", failures)
+    validate_docx_heading_colors(failures)
     heading_numbers = []
     for paragraph in doc.paragraphs:
         if paragraph.style.name.startswith("Heading"):
@@ -241,8 +296,10 @@ def validate_docx(failures: list[str]) -> None:
     else:
         fail(f"DOCX caption counts are insufficient: figures={len(figure_captions)}, tables={len(table_captions)}", failures)
 
-    forbidden = ["HYPERLINK", "PAGEREF", "REF ", "SEQ", "MERGEFORMAT", "<täienda>", "<täienda või kustuta>", "<Siia"]
+    forbidden = ["HYPERLINK", "PAGEREF", "REF ", "MERGEFORMAT", "<täienda>", "<täienda või kustuta>", "<Siia"]
     found = [item for item in forbidden if item in text]
+    if re.search(r"\bSEQ\b", text):
+        found.append("SEQ")
     if found:
         fail(f"DOCX contains forbidden visible field/placeholder text: {found}", failures)
     else:
@@ -376,12 +433,41 @@ def validate_sql(failures: list[str]) -> None:
         "duration range": "kestus_minutites BETWEEN 15 AND 240",
         "positive participant count": "maksimaalne_osalejate_arv > 0",
         "timestamp consistency": "viimase_muutm_aeg >= reg_aeg",
+        "JSON source-data loading": "jsonb_to_recordset",
+        "execution-plan example": "EXPLAIN",
     }
     missing = [name for name, needle in sql_checks.items() if needle not in sql]
     if missing:
         fail(f"SQL missing declared constraints: {missing}", failures)
     else:
         ok("SQL declared uniqueness and check constraints exist")
+
+    required_sql_objects = {
+        "domain kood_10": "CREATE DOMAIN kood_10",
+        "schema setup": "CREATE SCHEMA IF NOT EXISTS public",
+        "training code sequence": "CREATE SEQUENCE seq_treeningu_kood",
+        "active trainings view": "CREATE VIEW v_aktiivsed_treeningud",
+        "status report view": "CREATE VIEW v_treeningute_arv_seisundi_kaupa",
+        "category report view": "CREATE VIEW v_treeningute_arv_kategooria_kaupa",
+        "initial status trigger": "CREATE TRIGGER trg_treening_initial_status",
+        "status transition trigger": "CREATE TRIGGER trg_treening_status_transition",
+        "active category trigger": "CREATE CONSTRAINT TRIGGER trg_treening_no_active_without_category",
+        "rollbackable trigger checks": "ROLLBACK;",
+        "user authentication helper routine": "fn_kasutaja_tuvastamise_andmed",
+        "training registration routine": "fn_registreeri_treening",
+        "training activation routine": "fn_aktiveeri_treening",
+        "training finish routine": "fn_lopeta_treening",
+        "database creation note": "CREATE DATABASE jousaali",
+        "role setup": "CREATE ROLE jousaali_rakendus",
+        "public privilege revoke": "REVOKE ALL ON SCHEMA public FROM PUBLIC",
+        "application role grant": "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO jousaali_rakendus",
+        "cleanup drop order": "DROP TRIGGER trg_treening_initial_status ON treening",
+    }
+    missing_objects = [name for name, needle in required_sql_objects.items() if needle not in sql]
+    if missing_objects:
+        fail(f"SQL missing required PostgreSQL deliverable/integrity objects: {missing_objects}", failures)
+    else:
+        ok("SQL includes domains, schema/admin sections, sequence, views, lifecycle triggers, routines, and rollbackable checks")
 
     keys: dict[str, set[tuple[str, ...]]] = {}
     for table in re.findall(r"CREATE TABLE\s+(\w+)\s*\(", sql):
@@ -499,7 +585,7 @@ def validate_repo(failures: list[str]) -> None:
     if missing:
         fail(f"instruction_guides is missing PDFs: {missing}", failures)
     else:
-        ok("instruction_guides contains required PDFs")
+        ok("instruction_guides contains required guide files")
     for path in [
         "build_all.sh",
         "build_all.bat",
@@ -560,6 +646,27 @@ def validate_repo(failures: list[str]) -> None:
         else:
             ok("application test_data.sql contains required classifier seed data")
 
+        app_source = (APP_DIR / "app.py").read_text(encoding="utf-8")
+        register_template = (APP_DIR / "templates" / "register_training.html").read_text(encoding="utf-8")
+        app_needles = {
+            "registration uses database sequence/default via RETURNING": "RETURNING treeningu_kood",
+            "category IDs are validated before writes": "validate_category_selection",
+            "training detail query has no f-string SQL": "visibility_condition",
+        }
+        if "visibility_condition" in app_source or "cur.execute(f" in app_source:
+            fail("application training detail route still uses dynamically formatted SQL", failures)
+        else:
+            ok("application training detail route avoids dynamically formatted SQL")
+        missing_app_needles = [name for name, needle in app_needles.items() if name != "training detail query has no f-string SQL" and needle not in app_source]
+        if missing_app_needles:
+            fail(f"application is missing lifecycle/category safety implementation markers: {missing_app_needles}", failures)
+        else:
+            ok("application includes sequence-backed insert and category validation markers")
+        if "fetch(this.action" in register_template:
+            ok("training form posts to its current route for create and edit")
+        else:
+            fail("training form JavaScript does not post to the form action", failures)
+
     local_only = [path for path in [APP_DIR / ".env", APP_DIR / "venv"] if path.exists()]
     if local_only:
         fail(f"application contains local-only files that should not be committed: {[str(path.relative_to(ROOT)) for path in local_only]}", failures)
@@ -578,21 +685,38 @@ def validate_submission_files(failures: list[str]) -> None:
         elif SQL_OUTPUT.exists():
             fail("submission_files/skript.sql does not match jousaali_skript.sql", failures)
 
-    dokument_names = read_zip_checked(SUBMISSION_DIR / "dokument.zip", failures)
-    mudelid_names = read_zip_checked(SUBMISSION_DIR / "mudelid.zip", failures)
+    obsolete_zips = [path.name for path in [SUBMISSION_DIR / "dokument.zip", SUBMISSION_DIR / "mudelid.zip"] if path.exists()]
+    if obsolete_zips:
+        fail(f"obsolete document/model ZIP files should not be used for submission: {obsolete_zips}", failures)
+    else:
+        ok("obsolete document/model ZIP files are absent")
+
+    explainer_in_submission = SUBMISSION_DIR / EXPLAINER_FILE_NAME
+    explainer_at_root = ROOT / EXPLAINER_FILE_NAME
+    if explainer_in_submission.exists():
+        fail(f"{EXPLAINER_FILE_NAME} is non-submittable and must not be copied into submission_files", failures)
+    elif explainer_at_root.exists():
+        ok("non-submittable project explainer exists outside submission_files")
+    else:
+        ok("non-submittable project explainer is not present in submission_files")
+
     app_names = read_zip_checked(SUBMISSION_DIR / "rakendus.zip", failures)
 
-    dokument_files = zip_file_entries(dokument_names)
-    if dokument_files == {"dokument.docx"}:
-        ok("dokument.zip contains the expected top-level DOCX only")
+    dokument_docx = SUBMISSION_DIR / "dokument.docx"
+    if not dokument_docx.exists():
+        fail("submission_files/dokument.docx is missing", failures)
+    elif dokument_docx.read_bytes() == DOCX.read_bytes():
+        ok("submission_files/dokument.docx matches the regenerated DOCX")
     else:
-        fail(f"dokument.zip contents are not exactly dokument.docx: {sorted(dokument_files)}", failures)
+        fail("submission_files/dokument.docx does not match the regenerated DOCX", failures)
 
-    mudelid_files = zip_file_entries(mudelid_names)
-    if mudelid_files == {"mudelid.eap"}:
-        ok("mudelid.zip contains the expected top-level EAP only")
+    mudelid_eap = SUBMISSION_DIR / "mudelid.eap"
+    if not mudelid_eap.exists():
+        fail("submission_files/mudelid.eap is missing", failures)
+    elif mudelid_eap.read_bytes() == EAP.read_bytes():
+        ok("submission_files/mudelid.eap matches the regenerated EAP")
     else:
-        fail(f"mudelid.zip contents are not exactly mudelid.eap: {sorted(mudelid_files)}", failures)
+        fail("submission_files/mudelid.eap does not match the regenerated EAP", failures)
 
     app_files = zip_file_entries(app_names)
     missing_app_files = sorted(EXPECTED_APP_ZIP_FILES - app_files)
@@ -600,6 +724,10 @@ def validate_submission_files(failures: list[str]) -> None:
         fail(f"rakendus.zip is missing expected app files: {missing_app_files}", failures)
     else:
         ok("rakendus.zip contains expected application files, including README.md")
+    if EXPLAINER_FILE_NAME in app_files:
+        fail(f"rakendus.zip must not include non-submittable {EXPLAINER_FILE_NAME}", failures)
+    elif explainer_at_root.exists():
+        ok("rakendus.zip excludes the non-submittable project explainer")
 
     app_top_level = zip_top_level_entries(app_names)
     missing_top_level = sorted(EXPECTED_APP_ZIP_TOP_LEVEL - app_top_level)

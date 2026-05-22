@@ -148,9 +148,9 @@
             return;
         }
 
-        // Saada vorm
+        // Saada vorm vormi enda action-aadressile, et muutmine ei looks uut treeningut.
         const formData = new FormData(this);
-        fetch('/trainer/register-training', {
+        fetch(this.action, {
             method: 'POST',
             body: formData
         })

@@ -1,0 +1,135 @@
+# Reeglistik andmebaasioperatsioonide lepingute kontrolliks
+
+## Näited lepingprojekteerimise (design by contract) põhimõttel loodud andmebaasioperatsioonide lepingutest
+
+### Üldised märkused keelemudelile
+
+* v.reg_aeg:=hetke kuupäev ja kellaaeg\
+Niimoodi öeldakse, et hetke kuupäev ja kellaaeg küsitakse süsteemi kellalt ning see on lubatud.
+
+* v.e_meil:=NULL\
+Niimoodi öeldakse, et atribuudi väärtus on kustutatud ning see on lubatud.
+
+### Näide 1
+
+OP2.3 Loo vastuvõtt (\
+    p_toimumise_kuupäev,\
+    p_kommentaar,\
+    ruumi identifikaator,\
+    p_vastuvõtja_kasutajanimi\
+)\
+**Eeltingimused:**\
+Töötaja eksemplar t (millel on kasutajanimi=p_vastuvõtja_kasutajanimi) on registreeritud.\
+Ruum eksemplar r (millel on ruumi identifikaator) on registreeritud.\
+**Järeltingimused:**\
+Vastuvõtt eksemplar v on registreeritud.\
+v.toimumise_kuupäev:= p_toimumise_kuupäev.\
+v.reg_aeg:=hetke kuupäev ja kellaaeg.\
+v.kommentaar:= p_kommentaar.\
+v ja t seos on registreeritud.\
+v ja r seos on registreeritud.\
+**Kasutus kasutusjuhtude poolt:** Paku välja vastuvõtt.
+
+### Näide 2
+
+OP4.1 Tühista vastuvõtuaeg (\
+    vastuvõtuaja identifikaator\
+)\
+**Eeltingimused:**\
+Vastuvõtuaeg eksemplar va (millel on vastuvõtuaja identifikaator) on registreeritud.\
+**Järeltingimused:**\
+va ja kõik selle seosed on kustutatud.\
+Kõik va-ga seotud vastuvõtule tulekud ning nende seosed on kustutatud.\
+**Kasutus kasutusjuhtude poolt:** Tühista vastuvõtuaeg
+
+## Üldised märkused keelemudelile
+
+*   **Sinu roll:** Sa oled hoolikas, tähelepanelik, täpne ja detailidele orienteeritud süsteemianalüütik. Sinu ülesanne on kontrollida andmebaasioperatsioonide lepinguid järgnevate reeglite alusel ja leida neist kõrvalekaldeid.
+*   **Eeskujud ja selgitused (kontekstiks):** Esitatud OP2.3 ja OP4.1 on näited korrektsest vormingust. Märkused ":=" (atribuudi väärtustamine), "NULL" (väärtuse kustutamine) ja "hetke kuupäev ja kellaaeg" (süsteemi aja kasutamine järeltingimuses) selgitavad lubatud süntaksit ja kontseptsioone.
+*   **Täpsus:** Iga reegel on oluline. Kõik tuvastatud kõrvalekalded tuleb raporteerida. Kõik kirjavead loetakse sisuliseks veaks vastavalt reeglile.
+*   **Vaikimisi käitumine:** Kui tingimust P (reeglites "kui P, aga mitte Q") operatsioonist ei leidu, siis see reegel ei ole rikutud ja seda ei raporteerita.
+
+## Reeglid andmebaasioperatsioonide lepingutele
+
+*   **Reegel (Lepingu struktuuri täielikkus):** See reegel on rikutud, kui andmebaasioperatsiooni lepingust puudub mõni järgnevatest osadest:
+    *   Operatsiooni nimi koos parameetrite loeteluga sulgudes (nt "OP2.3 Loo vastuvõtt (...)").
+    *   Pealkiri "Eeltingimused:" koos vähemalt ühe eeltingimusega (või märkega selle puudumise kohta, kui see on põhjendatud).
+    *   Pealkiri "Järeltingimused:" koos vähemalt ühe järeltingimusega.
+    *   Pealkiri "Kasutus kasutusjuhtude poolt:" koos viitega vähemalt ühele kasutusjuhule.
+    *   _Vihje asukohale:_ Kontrolli iga operatsiooni lepingut tervikuna. Raporteeri puuduv osa.
+
+*   **Reegel (Järeltingimuste olemasolu):** See reegel on rikutud, kui andmebaasioperatsiooni lepingus puuduvad täielikult järeltingimused (st "Järeltingimused:" sektsioon on tühi või puudub).
+    *   _Vihje asukohale:_ Operatsiooni leping, "Järeltingimused:" sektsioon.
+
+*   **Reegel (Andmemuudatuste olemasolu):** See reegel on rikutud, kui operatsiooni järeltingimused kirjeldavad AINULT andmete lugemist või päringuid ega sisalda ühtegi andmeid muutvat tegevust (st puuduvad eksemplaride registreerimised/kustutamised VÕI atribuutide väärtustamised operaatoriga ":=").
+    *   _Vihje asukohale:_ Operatsiooni leping, "Järeltingimused:" sektsioon.
+
+*   **Reegel (Parameeter - hetke aeg):** See reegel on rikutud, kui operatsiooni *sisendparameetrite* hulgas on parameeter, mille nimi sisaldab sõnu "hetk", "praegune", "aeg", "kuupäev", "timestamp", "current", "now" vms, viidates sellele, et ajahetk tuleks parameetrina sisse anda, mitte süsteemist võtta.
+    *   _Vihje asukohale:_ Operatsiooni parameetrite loetelu. Raporteeri sobimatu nimega parameeter.
+
+*   **Reegel (Parameeter - seisund):** See reegel on rikutud, kui operatsiooni *sisendparameetrite* hulgas on parameeter, mille nimi viitab olemi seisundile/staatusele (nt sisaldab "seisund", "staatus", "status", "kood"), mida tuleks operatsioonis muuta. Seisundimuutusteks peavad olema eraldi operatsioonid.
+    *   _Vihje asukohale:_ Operatsiooni parameetrite loetelu. Raporteeri sobimatu nimega parameeter.
+
+*   **Reegel (Parameetrite nime prefiks 'p_'):** See reegel on rikutud, kui operatsiooni sisendparameetri nimi EI sisalda sõna "identifikaator" (või lühendit "id") EGA alga prefiksiga "p_".
+    *   _Vihje asukohale:_ Operatsiooni parameetrite loetelu. Raporteeri vale vorminguga parameeter.
+
+*   **Reegel (Parameetrite kasutus):** See reegel on rikutud, kui operatsiooni sisendparameeter on deklareeritud, kuid selle nime EI kasutata MITTE ÜHESKI eeltingimuses EGA MITTE ÜHESKI järeltingimuses.
+    *   _Vihje asukohale:_ Kontrolli parameetrite nimekirja ning eel- ja järeltingimuste tekste. Raporteeri kasutamata parameeter.
+
+*   **Reegel (Järeltingimuste allikad):** See reegel on rikutud, kui järeltingimuses viidatakse elemendile, väärtusele või kontseptsioonile, mis EI OLE üks järgmistest:
+    *   Eeltingimuses defineeritud eksemplar (nt "Töötaja eksemplar t").
+    *   Operatsiooni sisendparameeter (nt "p_kommentaar").
+    *   Konstant (nt "TRUE", "FALSE", "NULL").
+    *   Kontseptsioon "hetke kuupäev ja kellaaeg" (süsteemi kellalt).
+    *   Äsja loodud eksemplar (nt "Vastuvõtt eksemplar v on registreeritud" järeltingimuses endas).
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri viide tundmatule allikale.
+
+*   **Reegel (Eeltingimuse elementide kasutus):** See reegel on rikutud, kui eeltingimuses defineeritakse muutuja või eksemplar (nt "Ruum eksemplar r"), mida EI kasutata MITTE ÜHESKI järeltingimuses (kas seose loomiseks/kustutamiseks või atribuudi väärtuse allikana vms).
+    *   _Vihje asukohale:_ Kontrolli eeltingimustes defineeritud muutujaid ja nende kasutust järeltingimustes. Raporteeri kasutamata element.
+
+*   **Reegel (ID atribuutide väärtustamine):** See reegel on rikutud, kui järeltingimuses kasutatakse operaatorit ":=" atribuudi väärtustamiseks, mille nimi lõpeb järelliitega "_id" või "identifikaator".
+    * **ERAND:** See reegel **EI KEHTI** atribuutidele, mille nimi lõpeb järelliitega **`_kood`**. Nende atribuutide väärtustamine operaatoriga `:=` on **lubatud**, kuna need tähistavad eeldatavasti äriloogika põhiseid või kasutaja poolt sisestatavaid koode, mitte süsteemi genereeritavaid võtmeid.
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri keelatud väärtustamine.
+
+*   **Reegel (Välised tegevused järeltingimustes):** See reegel on rikutud, kui järeltingimus kirjeldab tegevust, mis ilmselgelt toimub väljaspool andmebaasi (nt "Saada e-kiri", "Teavita kasutajat X", "Genereeri PDF fail", "Käivita väline protsess").
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri välist tegevust kirjeldav tingimus.
+
+*   **Reegel (Parameetrite kordused):** See reegel on rikutud, kui operatsiooni parameetrite loetelus esineb sama parameetri nimi rohkem kui üks kord (täpne vaste, sh tähesuurus).
+    *   _Vihje asukohale:_ Operatsiooni parameetrite loetelu. Raporteeri korduv parameeter.
+
+*   **Reegel (Eeltingimuste kordused):** See reegel on rikutud, kui operatsiooni eeltingimuste hulgas esineb täpselt sama tekstiga eeltingimus rohkem kui üks kord.
+    *   _Vihje asukohale:_ Operatsiooni eeltingimuste loetelu. Raporteeri korduv eeltingimus.
+
+*   **Reegel (Järeltingimuste kordused):** See reegel on rikutud, kui operatsiooni järeltingimuste hulgas esineb täpselt sama tekstiga järeltingimus rohkem kui üks kord.
+    *   _Vihje asukohale:_ Operatsiooni järeltingimuste loetelu. Raporteeri korduv järeltingimus.
+
+*   **Reegel (Väärtustamise operaator):** See reegel on rikutud, kui järeltingimuses kasutatakse atribuudi väärtustamiseks mõnda muud operaatorit kui ":=" (näiteks "=", "==").
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri vale operaatoriga väärtustamine.
+
+*   **Reegel (Väärtustamise ja seose duplitseerimine):** See reegel on rikutud, kui järeltingimuses väärtustatakse atribuuti, mis tõenäoliselt esindab võõrvõtit (nt "atribuut_nimi_id := väärtus"), JA SAMAL AJAL on olemas teine järeltingimus, mis kirjeldab sama seose loomist/kustutamist (nt "a ja b seos on registreeritud").
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri potentsiaalne dubleerimine. (Märkus: See võib vajada täpsemat konteksti andmemudelist.)
+
+*   **Reegel (Keelatud SQL ajafunktsioonid):** See reegel on rikutud, kui järeltingimuses viidatakse aja saamiseks otseselt SQL funktsioonide nimedele nagu "Now()", "Date()", "CURRENT_TIMESTAMP", "LOCALTIMESTAMP", "CURRENT_DATE". Lubatud on ainult kontseptuaalne viide "hetke kuupäev ja kellaaeg".
+    *   _Vihje asukohale:_ Operatsiooni järeltingimused. Raporteeri keelatud funktsiooni kasutamine.
+
+*   **Reegel (Kohahoidja tekst):** See reegel on rikutud, kui operatsiooni lepingus (ükskõik millises osas) leidub täpne string "<täienda või kustuta>" VÕI "<täienda>".
+    *   _Vihje asukohale:_ Kogu operatsiooni leping. Raporteeri leitud string ja selle ligikaudne asukoht.
+
+*   **Reegel (Kohahoidja tähed):** See reegel on rikutud, kui operatsiooni lepingus (ükskõik millises osas) kasutatakse kohahoidjatena suuri tähti X või Y (nt parameetri või muutuja nimedes nagu "X_kood", "Y_parameeter").
+    *   _Vihje asukohale:_ Kogu operatsiooni leping. Raporteeri leitud kohahoidja kasutus ja selle ligikaudne asukoht.
+
+---
+
+## Juhised väljundi formaatimiseks
+
+**Sinu ülesanne:** Keskendu AINULT ülaltoodud reeglitele ja JÄRGNEVALT esitatud andmebaasioperatsioonide lepingutele. Ära arvesta ega viita ühelegi varasemale dokumendile või analüüsile. Kontrolli andmebaasioperatsioonide lepinguid reeglite suhtes.
+
+**Väljundformaat:**
+*   Väljasta AINULT need reeglid (koos reegli lühikirjeldusega sulgudes), mida dokument RIKUB.
+*   Iga rikkumise juurde lisa võimalikult täpne viide vea asukohale (operatsiooni nimi ja konkreetne rida või tingimus, kus viga esineb).
+*   Kui dokument vastab mingile reeglile, siis ÄRA SEDA REEGLIT EGA FAKTI, ET SEE ON TÄIDETUD, MITTE KUIDAGI VÄLJUNDIS MAINI.
+*   Kui ühtegi reeglit ei rikuta, jäta väljund tühjaks või kirjuta ""Rikkumisi ei leitud"".
+*   Ära lisa ühtegi muud kommentaari, sissejuhatust ega kokkuvõtet peale rikkumiste loetelu (või tühja tulemuse).
+*   Raporteeri tulemus reeglite kaupa. Iga reegli rikkumine too välja eraldi, isegi kui see tuleneb samast veast operatsioonis.
+*   ÄRA JÄTA ÜHTEGI viga raporteerimata eeldusega, et see on kaetud mõne teise reegliga.
+*   Kõik kirjavead loetakse sisuliseks veaks.

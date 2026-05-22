@@ -2,12 +2,13 @@
 
 Use this checklist after the final files are built and before uploading.
 
-## ZIP and File Hygiene
+## File and ZIP Hygiene
 
-- [ ] Unzip `submission_files/dokument.zip` into an empty folder and confirm it contains only `dokument.docx`.
-- [ ] Unzip `submission_files/mudelid.zip` into an empty folder and confirm it contains only `mudelid.eap`.
+- [ ] Confirm `submission_files/dokument.docx` exists and matches the regenerated DOCX.
+- [ ] Confirm `submission_files/mudelid.eap` exists and matches the regenerated EAP.
+- [ ] Confirm obsolete `submission_files/dokument.zip` and `submission_files/mudelid.zip` are absent.
 - [ ] Unzip `submission_files/rakendus.zip` into an empty folder and confirm the Flask app starts from the extracted files.
-- [ ] Confirm ZIPs do not contain `.env`, `.DS_Store`, `__MACOSX`, `__pycache__`, `*.pyc`, `venv`, `flask_session`, `.class`, or other generated/local junk.
+- [ ] Confirm `rakendus.zip` does not contain `.env`, `.DS_Store`, `__MACOSX`, `__pycache__`, `*.pyc`, `venv`, `flask_session`, `.class`, or other generated/local junk.
 - [ ] Confirm `submission_files/skript.sql` exists, is non-empty, and matches the final SQL script.
 
 ## Database Smoke Test

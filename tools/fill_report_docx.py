@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 import re
+import shutil
+import tempfile
 from typing import Iterable
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from docx import Document
 from docx.enum.section import WD_SECTION_START
@@ -87,16 +91,16 @@ PROCESSES = [
 ]
 
 
-TRAINING_LIST_DETAILS = "iga rea kohta treeningu kood, nimetus, kategooria, seisund, kestus minutites, hind, maksimaalne osalejate arv, registreerimise aeg ja viimase muutmise aeg"
-PUBLIC_TRAINING_LIST_DETAILS = "iga rea kohta treeningu kood, nimetus, kategooria, seisund, kestus minutites, hind, maksimaalne osalejate arv ja vajalik varustus"
+TRAINING_LIST_DETAILS = "iga rea kohta treeningu kood, nimetus, kategooriad, seisund, kestus minutites, hind, maksimaalne osalejate arv, registreerimise aeg ja viimase muutmise aeg"
+PUBLIC_TRAINING_LIST_DETAILS = "iga rea kohta treeningu kood, nimetus, kategooriad, seisund, kestus minutites, hind, maksimaalne osalejate arv ja vajalik varustus"
 CATEGORY_LIST_DETAILS = "iga rea kohta kategooria kood, nimetus, tüüp ja aktiivsuse tunnus"
 
 
 HIGH_LEVEL_USE_CASES = [
     ("Tuvasta kasutaja", "Treener, Juhataja, Klassifikaatorite haldur, Töötajate haldur", "Kasutaja esitab süsteemile enda tuvastamiseks vajalikud andmed ning süsteem seob kasutaja tema pädevusalaga."),
     ("Registreeri treening", "Treener", "Treener registreerib uue treeningu põhiandmed ja seob treeningu sobivate kategooriatega."),
-    ("Muuda treeningut", "Treener", "Treener muudab ootel või mitteaktiivse treeningu põhiandmeid ja kategooriaseoseid."),
-    ("Unusta treening", "Treener", "Treener eemaldab ootel treeningu edasisest kasutusest, kui treeningut ei ole vaja pakkuda."),
+    ("Muuda treeningu andmeid", "Treener", "Treener muudab ootel või mitteaktiivse treeningu põhiandmeid ja kategooriaseoseid."),
+    ("Unusta ootel treening", "Treener", "Treener eemaldab ootel treeningu edasisest kasutusest, kui treeningut ei ole vaja pakkuda."),
     ("Aktiveeri treening", "Treener", "Treener muudab ootel või mitteaktiivse treeningu aktiivseks, kui treening kuulub vähemalt ühte kategooriasse."),
     ("Muuda treening mitteaktiivseks", "Treener", "Treener eemaldab aktiivse treeningu ajutiselt kasutusest, kui treeninguga on ilmnenud ajutine probleem."),
     ("Lõpeta treening", "Juhataja", "Juhataja lõpetab aktiivse või mitteaktiivse treeningu, kui treeningut enam ei pakuta."),
@@ -108,37 +112,37 @@ HIGH_LEVEL_USE_CASES = [
 
 
 OPERATIONS = [
-    ("OP3", "Registreeri treening(\n    p_treeningu_kood,\n    p_nimetus,\n    p_kirjeldus,\n    p_kestus_minutites,\n    p_maksimaalne_osalejate_arv,\n    p_vajalik_varustus,\n    p_hind,\n    p_treeningu_kategooria_koodid,\n    p_registreerija_e_meil\n)", [
+    ("OP3", "Registreeri treening(\n    p_nimetus,\n    p_kirjeldus,\n    p_kestus_minutites,\n    p_maksimaalne_osalejate_arv,\n    p_vajalik_varustus,\n    p_hind,\n    p_treeningu_kategooria_koodid,\n    p_registreerija_e_meil\n)", [
         "Treener on autenditud ja autoriseeritud.",
-        "Treeningu_seisundi_liik eksemplar tsl (mille kood on Ootel) on registreeritud.",
+        "Treeningu_seisundi_liik eksemplar tsl (mille kood on OOTEL) on registreeritud.",
+        "p_treeningu_kategooria_koodid ei ole tühi hulk.",
         "Kõik p_treeningu_kategooria_koodid hulka kuuluvad Treeningu_kategooria eksemplarid on registreeritud.",
         "Kasutajakonto eksemplar k (mille e_meil = p_registreerija_e_meil) on registreeritud."
     ], [
         "Treening eksemplar t on registreeritud.",
-        "t.treeningu_kood := p_treeningu_kood.",
         "t.nimetus := p_nimetus.",
         "t.kirjeldus := p_kirjeldus.",
         "t.kestus_minutites := p_kestus_minutites.",
         "t.maksimaalne_osalejate_arv := p_maksimaalne_osalejate_arv.",
         "t.vajalik_varustus := p_vajalik_varustus.",
         "t.hind := p_hind.",
-        "t.seisund := Ootel.",
-        "t.registreerija_e_meil := p_registreerija_e_meil.",
-        "t.viimase_muutja_e_meil := p_registreerija_e_meil.",
+        "t.seisund := tsl.",
+        "t.registreerija := k.",
+        "t.viimase_muutja := k.",
         "t.reg_aeg := hetke kuupäev ja kellaaeg.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg.",
         "t ja kõik p_treeningu_kategooria_koodid järgi leitud Treeningu_kategooria eksemplarid on seotud."
     ]),
-    ("OP6", "Unusta treening(\n    p_treeningu_kood,\n    p_muutja_e_meil\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on ootel seisundis registreeritud.",
+    ("OP6", "Unusta ootel treening(\n    p_treeningu_kood,\n    p_muutja_e_meil\n)", [
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis OOTEL registreeritud.",
         "Kasutajakonto eksemplar k (mille e_meil = p_muutja_e_meil) on registreeritud."
     ], [
-        "t.seisund := Unustatud.",
-        "t.viimase_muutja_e_meil := p_muutja_e_meil.",
+        "t.seisund := UNUSTATUD.",
+        "t.viimase_muutja := k.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg."
     ]),
-    ("OP8", "Muuda treeningut(\n    p_treeningu_kood,\n    p_nimetus,\n    p_kirjeldus,\n    p_kestus_minutites,\n    p_maksimaalne_osalejate_arv,\n    p_vajalik_varustus,\n    p_hind,\n    p_muutja_e_meil\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on ootel või mitteaktiivses seisundis registreeritud.",
+    ("OP8", "Muuda treeningu andmeid(\n    p_treeningu_kood,\n    p_nimetus,\n    p_kirjeldus,\n    p_kestus_minutites,\n    p_maksimaalne_osalejate_arv,\n    p_vajalik_varustus,\n    p_hind,\n    p_muutja_e_meil\n)", [
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis OOTEL või MITTEAKT registreeritud.",
         "Kasutajakonto eksemplar k (mille e_meil = p_muutja_e_meil) on registreeritud."
     ], [
         "t.nimetus := p_nimetus.",
@@ -147,46 +151,46 @@ OPERATIONS = [
         "t.maksimaalne_osalejate_arv := p_maksimaalne_osalejate_arv.",
         "t.vajalik_varustus := p_vajalik_varustus.",
         "t.hind := p_hind.",
-        "t.viimase_muutja_e_meil := p_muutja_e_meil.",
+        "t.viimase_muutja := k.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg."
     ]),
     ("OP9", "Lisa treeningu kategooria seos(\n    p_treeningu_kood,\n    p_treeningu_kategooria_kood\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on registreeritud.",
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis OOTEL või MITTEAKT registreeritud.",
         "Treeningu_kategooria eksemplar tk (mille kood = p_treeningu_kategooria_kood) on registreeritud.",
         "t ja tk seos ei ole registreeritud."
     ], [
         "t ja tk seos on registreeritud."
     ]),
     ("OP10", "Eemalda treeningu kategooria seos(\n    p_treeningu_kood,\n    p_treeningu_kategooria_kood\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on registreeritud.",
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis OOTEL või MITTEAKT registreeritud.",
         "Treeningu_kategooria eksemplar tk (mille kood = p_treeningu_kategooria_kood) on registreeritud.",
         "t ja tk seos on registreeritud."
     ], [
         "t ja tk seos on kustutatud."
     ]),
     ("OP11", "Aktiveeri treening(\n    p_treeningu_kood,\n    p_muutja_e_meil\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on ootel või mitteaktiivses seisundis registreeritud.",
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis OOTEL või MITTEAKT registreeritud.",
         "t on seotud vähemalt ühe Treeningu_kategooria eksemplariga.",
         "Kasutajakonto eksemplar k (mille e_meil = p_muutja_e_meil) on registreeritud."
     ], [
-        "t.seisund := Aktiivne.",
-        "t.viimase_muutja_e_meil := p_muutja_e_meil.",
+        "t.seisund := AKTIIVNE.",
+        "t.viimase_muutja := k.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg."
     ]),
     ("OP13", "Muuda treening mitteaktiivseks(\n    p_treeningu_kood,\n    p_muutja_e_meil\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on aktiivses seisundis registreeritud.",
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis AKTIIVNE registreeritud.",
         "Kasutajakonto eksemplar k (mille e_meil = p_muutja_e_meil) on registreeritud."
     ], [
-        "t.seisund := Mitteaktiivne.",
-        "t.viimase_muutja_e_meil := p_muutja_e_meil.",
+        "t.seisund := MITTEAKT.",
+        "t.viimase_muutja := k.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg."
     ]),
     ("OP15", "Lõpeta treening(\n    p_treeningu_kood,\n    p_muutja_e_meil\n)", [
-        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on aktiivses või mitteaktiivses seisundis registreeritud.",
+        "Treening eksemplar t (mille treeningu_kood = p_treeningu_kood) on seisundis AKTIIVNE või MITTEAKT registreeritud.",
         "Kasutajakonto eksemplar k (mille e_meil = p_muutja_e_meil) on registreeritud."
     ], [
-        "t.seisund := Lõppenud.",
-        "t.viimase_muutja_e_meil := p_muutja_e_meil.",
+        "t.seisund := LOPPENUD.",
+        "t.viimase_muutja := k.",
         "t.viimase_muutm_aeg := hetke kuupäev ja kellaaeg."
     ]),
 ]
@@ -226,7 +230,7 @@ EXTENDED_USE_CASES = [
         ],
         "trigger": "Treener saab teabe uue jõusaalis pakutava treeningu kohta.",
         "pre": ["Treener on autenditud ja autoriseeritud.", "Treeningu seisundi ja kategooria klassifikaatorid on registreeritud."],
-        "post": ["Treening on registreeritud ootel seisundis.", "Treening on seotud valitud treeningu kategooriatega."],
+        "post": ["Treening on registreeritud seisundis OOTEL.", "Treening on seotud valitud treeningu kategooriatega."],
         "steps": [
             ("Treener avaldab soovi registreerida uus treening.", ""),
             (f"Süsteem kuvab treeningu sisestamiseks vajaliku vormi ning aktiivsed treeningu kategooriad; kategooriate nimekirjas kuvatakse {CATEGORY_LIST_DETAILS}.", ""),
@@ -241,7 +245,7 @@ EXTENDED_USE_CASES = [
         ],
     },
     {
-        "name": "Muuda treeningut",
+        "name": "Muuda treeningu andmeid",
         "actor": "Treener",
         "stakeholders": [
             ("Treener", "Soovib parandada treeningu andmeid või ajakohastada kategooriaseoseid."),
@@ -249,7 +253,7 @@ EXTENDED_USE_CASES = [
             ("Klient", "Soovib, et aktiivseks muutuvad treeningud oleksid sisuliselt õiged."),
         ],
         "trigger": "Treener märkab ootel või mitteaktiivse treeningu andmetes muutmise vajadust.",
-        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel või mitteaktiivses seisundis."],
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on seisundis OOTEL või MITTEAKT."],
         "post": ["Treeningu põhiandmed ja kategooriaseosed on ajakohased."],
         "steps": [
             ("Treener avaldab soovi muuta treeningu andmeid.", ""),
@@ -267,15 +271,15 @@ EXTENDED_USE_CASES = [
         ],
     },
     {
-        "name": "Unusta treening",
+        "name": "Unusta ootel treening",
         "actor": "Treener",
         "stakeholders": [
             ("Treener", "Soovib eemaldada ootel treeningu edasisest töövoost."),
             ("Juhataja", "Soovib, et treeningute portfell ei sisaldaks realiseerumata ettepanekuid."),
         ],
         "trigger": "Treener saab teabe, et ootel treeningut ei hakata pakkuma.",
-        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel seisundis."],
-        "post": ["Treening on unustatud seisundis."],
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on seisundis OOTEL."],
+        "post": ["Treening on seisundis UNUSTATUD."],
         "steps": [
             ("Treener avaldab soovi unustada treening.", ""),
             (f"Süsteem kuvab ootel treeningud; nimekirjas kuvatakse {TRAINING_LIST_DETAILS}.", ""),
@@ -296,8 +300,8 @@ EXTENDED_USE_CASES = [
             ("Juhataja", "Soovib, et avalikus vaates oleks ainult kontrollitud treeningud."),
         ],
         "trigger": "Treener otsustab, et ootel või mitteaktiivne treening on valmis aktiivseks muutmiseks.",
-        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on ootel või mitteaktiivses seisundis."],
-        "post": ["Treening on aktiivses seisundis."],
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on seisundis OOTEL või MITTEAKT."],
+        "post": ["Treening on seisundis AKTIIVNE."],
         "steps": [
             ("Treener avaldab soovi aktiveerida treening.", ""),
             (f"Süsteem kuvab ootel ja mitteaktiivsed treeningud; nimekirjas kuvatakse {TRAINING_LIST_DETAILS}.", ""),
@@ -320,8 +324,8 @@ EXTENDED_USE_CASES = [
             ("Juhataja", "Soovib, et treeningute avalik pakkumine oleks kontrollitud."),
         ],
         "trigger": "Treener saab teabe aktiivse treeningu ajutisest probleemist.",
-        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on aktiivses seisundis."],
-        "post": ["Treening on mitteaktiivses seisundis."],
+        "pre": ["Treener on autenditud ja autoriseeritud.", "Treening on seisundis AKTIIVNE."],
+        "post": ["Treening on seisundis MITTEAKT."],
         "steps": [
             ("Treener avaldab soovi muuta treening mitteaktiivseks.", ""),
             (f"Süsteem kuvab aktiivsed treeningud; nimekirjas kuvatakse {TRAINING_LIST_DETAILS}.", ""),
@@ -342,8 +346,8 @@ EXTENDED_USE_CASES = [
             ("Klient", "Soovib näha ainult tegelikult pakutavaid aktiivseid treeninguid."),
         ],
         "trigger": "Juhataja saab teabe, et treeningut enam ei pakuta või selle probleem on püsiv.",
-        "pre": ["Juhataja on autenditud ja autoriseeritud.", "Treening on aktiivses või mitteaktiivses seisundis."],
-        "post": ["Treening on lõppenud seisundis."],
+        "pre": ["Juhataja on autenditud ja autoriseeritud.", "Treening on seisundis AKTIIVNE või MITTEAKT."],
+        "post": ["Treening on seisundis LOPPENUD."],
         "steps": [
             ("Juhataja avaldab soovi lõpetada treening.", ""),
             (f"Süsteem kuvab kõik treeningud koos seisunditega; nimekirjas kuvatakse {TRAINING_LIST_DETAILS}.", ""),
@@ -480,8 +484,8 @@ ATTRIBUTES = [
     ("Treening", "vajalik_varustus", "Klientidele ja treenerile mõeldud kirjeldus treeningul vajaliku varustuse kohta {Kohustuslik. Ei tohi olla tühi string.}. Näiteväärtus: Joogamatt ja veepudel"),
     ("Treening", "hind", "Treeningu hind eurodes koos käibemaksuga {Kohustuslik. Null või positiivne rahasumma. Väärtus võib olla 0. Maksimaalselt kaks kohta pärast koma.}. Näiteväärtus: 12.50"),
     ("Treening", "seisund", "Treeningu elutsükli seisund {Kohustuslik. Väärtus peab vastama registreeritud Treeningu_seisundi_liik väärtusele.}. Näiteväärtus: Aktiivne"),
-    ("Treening", "registreerija_e_meil", "Treeningu registreerinud kasutajakonto e-posti aadress {Kohustuslik. Peab sisaldama märki @. Peab viitama registreeritud kasutajakontole.}. Näiteväärtus: treener@example.com"),
-    ("Treening", "viimase_muutja_e_meil", "Treeningut viimati muutnud kasutajakonto e-posti aadress {Kohustuslik. Peab sisaldama märki @. Peab viitama registreeritud kasutajakontole.}. Näiteväärtus: juhataja@example.com"),
+    ("Treening", "registreerija", "Treeningu registreerinud kasutajakonto {Kohustuslik. Peab olema registreeritud kasutajakonto.}. Näiteväärtus: treener@example.com"),
+    ("Treening", "viimase_muutja", "Treeningut viimati muutnud kasutajakonto {Kohustuslik. Peab olema registreeritud kasutajakonto.}. Näiteväärtus: juhataja@example.com"),
     ("Treening", "reg_aeg", "Treeningu registreerimise kuupäev ja kellaaeg {Kohustuslik. Küsitakse süsteemi kellalt. Lubatud vahemik on 01.01.2020 00:00 kuni 31.12.2100 23:59.}. Näiteväärtus: 05.04.2026 12:00"),
     ("Treening", "viimase_muutm_aeg", "Treeningu viimase muutmise kuupäev ja kellaaeg {Kohustuslik. Lubatud vahemik on 01.01.2020 00:00 kuni 31.12.2100 23:59. Ei tohi olla varasem kui reg_aeg.}. Näiteväärtus: 06.04.2026 08:45"),
 ]
@@ -508,7 +512,9 @@ CRUD_BY_ENTITY = {
 BUSINESS_RULES = [
     "Treeningu nimetus peab olema treeningute registris unikaalne.",
     "Treeningu saab aktiivseks muuta ainult siis, kui treening kuulub vähemalt ühte treeningu kategooriasse.",
-    "Aktiivne treening peab olema seotud aktiivse treeningu seisundi liigiga.",
+    "Treeningu seisundimuudatus peab vastama seisundidiagrammile.",
+    "Aktiivselt treeningult ei tohi eemaldada viimast kategooriaseost.",
+    "Klientidele ja uudistajatele tohib kuvada ainult aktiivseid treeninguid.",
     "Treeningu kestus peab olema 15 kuni 240 minutit.",
     "Treeningu maksimaalne osalejate arv peab olema positiivne täisarv.",
     "Treeningu hind peab olema null või positiivne rahasumma.",
@@ -594,6 +600,27 @@ def draw_arrow(draw: ImageDraw.ImageDraw, start: tuple[int, int], end: tuple[int
     draw.polygon(points, fill=fill)
 
 
+def trim_image_whitespace(img: Image.Image, margin: int = 36) -> Image.Image:
+    width, height = img.size
+    pixels = img.load()
+    left, top, right, bottom = width, height, 0, 0
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if r < 245 or g < 245 or b < 245:
+                left = min(left, x)
+                top = min(top, y)
+                right = max(right, x)
+                bottom = max(bottom, y)
+    if right == 0 and bottom == 0:
+        return img
+    left = max(0, left - margin)
+    top = max(0, top - margin)
+    right = min(width, right + margin)
+    bottom = min(height, bottom + margin)
+    return img.crop((left, top, right, bottom))
+
+
 def make_diagrams() -> list[tuple[Path, str]]:
     DIAGRAM_DIR.mkdir(parents=True, exist_ok=True)
     diagrams: list[tuple[Path, str]] = []
@@ -632,7 +659,7 @@ def make_diagrams() -> list[tuple[Path, str]]:
             usecase_boxes = [(440, 145, 710, 235), (760, 145, 1030, 235), (1080, 145, 1320, 235), (440, 410, 710, 500), (760, 410, 1030, 500), (440, 605, 710, 695)]
             for box, item in zip(actor_boxes, ["Treener", "Juhataja", "Klient ja Uudistaja"]):
                 draw_box(draw, box, item, "#fff3df", "#9a5b00")
-            for box, item in zip(usecase_boxes, ["Registreeri treening", "Muuda treeningut", "Aktiveeri treening", "Lõpeta treening", "Vaata aruannet", "Vaata aktiivseid"]):
+            for box, item in zip(usecase_boxes, ["Registreeri treening", "Muuda treeningu andmeid", "Aktiveeri treening", "Lõpeta treening", "Vaata koondaruannet", "Vaata aktiivseid"]):
                 draw.ellipse(box, fill="#eef4ff", outline="#1f4e79", width=3)
                 draw_centered(draw, box, item, "#1b1b1b", font(20))
             for end in [(440, 190), (760, 190), (1080, 190)]:
@@ -644,12 +671,21 @@ def make_diagrams() -> list[tuple[Path, str]]:
             coords = [(105, 340), (430, 180), (430, 500), (830, 180), (830, 500)]
             for (x, y), item in zip(coords, items):
                 draw_box(draw, (x, y, x + 230, y + 105), item, "#f2f7ed", "#3d6b2f")
+            draw.ellipse((45, 382, 65, 402), fill="#203040")
+            draw_arrow(draw, (65, 392), (105, 392))
+            draw.text((70, 360), "OP3", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (335, 392), (430, 232))
+            draw.text((340, 275), "OP11", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (335, 392), (830, 552))
+            draw.text((475, 420), "OP6", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (545, 285), (545, 500))
+            draw.text((565, 385), "OP13", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (615, 500), (615, 285))
+            draw.text((635, 385), "OP11", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (660, 232), (830, 232))
+            draw.text((710, 200), "OP15", fill="#203040", font=font(18, bold=True))
             draw_arrow(draw, (660, 552), (830, 232))
+            draw.text((720, 430), "OP15", fill="#203040", font=font(18, bold=True))
         elif kind == "flow":
             x = 70
             box_width = 170
@@ -693,6 +729,7 @@ def make_diagrams() -> list[tuple[Path, str]]:
                 draw_arrow(draw, (380, 395), (930, 395))
                 draw_arrow(draw, (380, 425), (500, 580))
                 draw_arrow(draw, (850, 580), (930, 580))
+        img = trim_image_whitespace(img)
         img.save(path)
         diagrams.append((path, title))
     return diagrams
@@ -715,6 +752,7 @@ def set_repeat_table_header(row) -> None:
 def style_table(table) -> None:
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.style = "Table Grid"
+    table.autofit = True
     header = table.rows[0]
     set_repeat_table_header(header)
     for cell in header.cells:
@@ -739,6 +777,7 @@ def add_table(doc: Document, caption: str, headers: list[str], rows: list[Iterab
     counter.tables += 1
     p = doc.add_paragraph(f"Tabel {counter.tables}. {caption}", style="Caption")
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.keep_with_next = True
     table = doc.add_table(rows=1, cols=len(headers))
     style_table(table)
     for i, header in enumerate(headers):
@@ -761,6 +800,7 @@ def add_figure(doc: Document, image_path: Path, caption: str, counter: CaptionCo
     counter.figures += 1
     paragraph = doc.add_paragraph()
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.keep_with_next = True
     run = paragraph.add_run()
     run.add_picture(str(image_path), width=Inches(6.6))
     cp = doc.add_paragraph(f"Joonis {counter.figures}. {caption}", style="Caption")
@@ -778,11 +818,22 @@ def number_list(doc: Document, items: Iterable[str]) -> None:
 
 
 def add_heading(doc: Document, text: str, level: int) -> None:
-    doc.add_heading(text, level=level)
+    paragraph = doc.add_heading(text, level=level)
+    paragraph.paragraph_format.keep_with_next = True
 
 
 def setup_document() -> Document:
     doc = Document()
+    props = doc.core_properties
+    props.title = "Jõusaali infosüsteemi treeningute funktsionaalne allsüsteem"
+    props.subject = "Andmebaasid I, ITI0206 andmebaasiprojekt"
+    props.author = AUTHORS
+    props.last_modified_by = AUTHORS
+    props.comments = "Generated from repository sources by build_all."
+    props.category = "ITI0206"
+    props.keywords = "Jõusaal; Treeningute register; PostgreSQL; Flask; Enterprise Architect"
+    props.created = datetime(2026, 5, 20, tzinfo=timezone.utc)
+    props.modified = datetime(2026, 5, 20, tzinfo=timezone.utc)
     section = doc.sections[0]
     section.start_type = WD_SECTION_START.NEW_PAGE
     section.page_width = Cm(21)
@@ -796,16 +847,67 @@ def setup_document() -> Document:
     styles["Normal"].font.name = "Arial"
     styles["Normal"]._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
     styles["Normal"].font.size = Pt(10.5)
-    for style_name, size in [("Title", 20), ("Heading 1", 16), ("Heading 2", 13), ("Heading 3", 11)]:
+    title_style = styles["Title"]
+    title_style.font.name = "Arial"
+    title_style._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
+    title_style.font.size = Pt(20)
+    title_style.font.color.rgb = RGBColor(31, 78, 121)
+    title_style.paragraph_format.keep_with_next = True
+
+    for style_name, size in [
+        ("Heading 1", 16),
+        ("Heading 2", 13),
+        ("Heading 3", 11),
+        ("Heading 4", 10.5),
+        ("Heading 5", 10.5),
+        ("Heading 6", 10.5),
+    ]:
         style = styles[style_name]
         style.font.name = "Arial"
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
         style.font.size = Pt(size)
-        style.font.color.rgb = RGBColor(31, 78, 121)
+        style.font.color.rgb = RGBColor(0, 0, 0)
+        style.paragraph_format.keep_with_next = True
     styles["Caption"].font.name = "Arial"
     styles["Caption"].font.size = Pt(9)
     styles["Caption"].font.italic = True
     return doc
+
+
+def strip_unused_docx_parts(path: Path) -> None:
+    """Remove python-docx template leftovers that are not used by this report."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".docx", dir=path.parent) as tmp:
+        tmp_path = Path(tmp.name)
+
+    try:
+        with ZipFile(path, "r") as src, ZipFile(tmp_path, "w", ZIP_DEFLATED) as dst:
+            for info in src.infolist():
+                name = info.filename
+                if name.startswith("customXml/"):
+                    continue
+                if name == "[Content_Types].xml":
+                    content = src.read(name).decode("utf-8")
+                    content = re.sub(
+                        r'<Override PartName="/customXml/[^"]+" ContentType="[^"]+"\s*/>',
+                        "",
+                        content,
+                    )
+                    dst.writestr(info, content.encode("utf-8"))
+                    continue
+                if name.endswith(".rels"):
+                    content = src.read(name).decode("utf-8")
+                    content = re.sub(
+                        r'<Relationship\b[^>]*Target="(?:\.\./)?customXml/[^"]+"[^>]*/>',
+                        "",
+                        content,
+                    )
+                    dst.writestr(info, content.encode("utf-8"))
+                    continue
+                dst.writestr(info, src.read(name))
+        shutil.move(tmp_path, path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
 
 
 def add_title_page(doc: Document) -> None:
@@ -951,7 +1053,8 @@ def add_operations(doc: Document, counter: CaptionCounter) -> None:
     add_heading(doc, "6 Operatsioonilepingud", 1)
     doc.add_paragraph("Operatsioonilepingud on koostatud lepingprojekteerimise põhimõttel ning nende tähised vastavad kasutusjuhtudes kasutatud viidetele.")
     for op_id, name, pre, post in OPERATIONS:
-        add_heading(doc, f"{op_id} {name}", 2)
+        operation_title = name.split("(", 1)[0].strip()
+        add_heading(doc, f"{op_id} {operation_title}", 2)
         add_table(doc, f"Andmebaasioperatsiooni leping: {op_id}", ["Osa", "Sisu"], [
             ("Operatsioon", f"{op_id} {name}"),
             ("Eeltingimused", "\n".join(pre)),
@@ -967,17 +1070,23 @@ def add_data_design(doc: Document, counter: CaptionCounter, diagrams: list[tuple
     add_table(doc, "Olemitüübid", ["Olemitüüp", "Definitsioon", "Identifikaator"], ENTITIES, counter)
     add_table(doc, "Atribuutide definitsioonid", ["Olemitüüp", "Atribuut", "Definitsioon"], ATTRIBUTES, counter)
     use_case_names = [name for name, _, _ in HIGH_LEVEL_USE_CASES]
-    crud_headers = ["Olemitüüp", *use_case_names, "Kokku"]
-    crud_rows = []
-    for entity, *_ in ENTITIES:
-        values = CRUD_BY_ENTITY[entity]
-        crud_rows.append([entity, *values, crud_summary(values)])
-    crud_table = add_table(doc, "CRUD maatriks", crud_headers, crud_rows, counter)
-    shrink_table_text(crud_table, 6)
+    doc.add_page_break()
+    for part_number, start in enumerate(range(0, len(use_case_names), 6), start=1):
+        selected_use_cases = use_case_names[start:start + 6]
+        crud_headers = ["Olemitüüp", *selected_use_cases, "Kokku"]
+        crud_rows = []
+        for entity, *_ in ENTITIES:
+            values = CRUD_BY_ENTITY[entity]
+            selected_values = values[start:start + 6]
+            crud_rows.append([entity, *selected_values, crud_summary(selected_values)])
+        crud_table = add_table(doc, f"CRUD maatriks ({part_number})", crud_headers, crud_rows, counter)
+        shrink_table_text(crud_table, 8)
+    doc.add_page_break()
     add_heading(doc, "7.2 Seisundimudel", 2)
     add_figure(doc, diagrams[5][0], diagrams[5][1], counter)
     add_heading(doc, "7.3 Füüsiline mudel", 2)
     add_figure(doc, diagrams[6][0], diagrams[6][1], counter)
+    doc.add_page_break()
     add_heading(doc, "7.4 SQL DDL", 2)
     doc.add_paragraph("Järgmine DDL on PostgreSQL jaoks koostatud ning seda kasutatakse projekti kontrollis.")
     for line in SQL_DDL.strip().splitlines():
@@ -986,10 +1095,13 @@ def add_data_design(doc: Document, counter: CaptionCounter, diagrams: list[tuple
         run = p.add_run(display_line)
         run.font.name = "Courier New"
         run._element.rPr.rFonts.set(qn("w:eastAsia"), "Courier New")
-        run.font.size = Pt(8)
+        run.font.size = Pt(7.2)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = Pt(8.0)
 
 
 def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
+    doc.add_page_break()
     add_heading(doc, "8 Reprodutseerimine ja kontroll", 1)
     doc.add_paragraph("Projekt on taastoodetav jälgitavatest lähtefailidest. Lõppartefaktid genereeritakse skriptiga, mis loob DOCX dokumendi, teisendab EAP malli, rakendab EAP parandused ning väljastab PostgreSQL DDL skripti.")
     add_table(doc, "Taastootmise sisendid ja väljundid", ["Fail või kataloog", "Roll"], [
@@ -1001,6 +1113,7 @@ def add_reproducibility(doc: Document, counter: CaptionCounter) -> None:
         ("tools/sql_ddl.py", "PostgreSQL DDL lähtefail."),
         ("jousaali_skript.sql", "Esitamiseks mõeldud PostgreSQL tabelite loomise skript."),
         ("rakendus/", "Treeneri ja juhataja töökoha prototüübi lähtekood ja käivitamisjuhend."),
+        ("submission_files/", "Buildi käigus värskendatav esitusfailide kataloog."),
         ("tools/validate_project.py", "Automaatne kontrollskript."),
         ("build_all.sh või build_all.bat", "Lõppartefaktide taastootmine puhtast kloonist."),
     ], counter)
@@ -1035,6 +1148,7 @@ def main() -> None:
     add_reproducibility(doc, counter)
     validate_text_sanity(doc)
     doc.save(DST)
+    strip_unused_docx_parts(DST)
     print(f"Wrote {DST}")
     print(f"Embedded figures: {counter.figures}")
     print(f"Word tables: {counter.tables}")

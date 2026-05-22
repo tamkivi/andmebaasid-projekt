@@ -1,0 +1,161 @@
+## Üldised märkused keelemudelile
+
+*   **Sinu roll:** Sa oled hoolikas, tähelepanelik, täpne ja detailidele orienteeritud süsteemianalüütik. Sinu ülesanne on leida kõrvalekaldeid järgnevatest reeglitest.
+*   **Täpsus:** Iga reegel on oluline. Kõik tuvastatud kõrvalekalded tuleb raporteerida. Kõik kirjavead loetakse sisuliseks veaks vastavalt reeglile.
+*   **Terminoloogia:** Kui reeglis viidatakse kindlale dokumendi osale (nt *põhiobjektide* hulgas, *tegutsejate* hulgas, *lausendid*, *tekstikirjeldus*), siis eeldatakse, et need osad on dokumendis selgelt identifitseeritavad. Kontrolli alati viidatud sektsiooni sisu.
+*   **Vaikimisi käitumine:** Kui tingimust P (reeglites kui P, aga mitte Q) dokumendist ei leidu, siis see reegel ei ole rikutud ja seda ei raporteerita.
+
+## Reeglid
+
+### (A) Üldised ja kontseptuaalsed reeglid
+
+*   **Reegel (Organisatsiooni eesmärgid):** See reegel on rikutud, kui peatükis Organisatsiooni eesmärgid esitatud eesmärgid kirjeldavad loodava _infosüsteemi_ funktsionaalsust või eesmärke, mitte _organisatsiooni_ enda üldisemaid strateegilisi või ärilisi sihte (miks organisatsioon eksisteerib ja mida ta saavutada püüab).
+    *   _Vihje asukohale:_ Peatükk Organisatsiooni eesmärgid.
+
+*   **Reegel (Lausendi struktuur):** See reegel on rikutud, kui peatükis Lausendid (või vastavas osas) leidub lause, mis EI OLE lihtlause (st on liitlause, koondlause või põimlause). Igal lausel peab olema tuvastatav alus, öeldis ja vajadusel sihitis/määrus/öeldistäide.
+    *   _Vihje asukohale:_ Peatükk Lausendid (või vastav osa). Raporteeri konkreetne lause, mis reeglit rikub.
+
+*   **Reegel (Lausendi kordused):** See reegel on rikutud, kui peatükis Lausendid (või vastavas osas) leidub kaks või enam lauset, mis on tähemärgi tasemel identsed.
+    *   _Vihje asukohale:_ Peatükk Lausendid. Raporteeri korduvad laused.
+
+*   **Reegel (Nimetuste kontseptsioonid):** See reegel on rikutud, kui mõne _põhiobjekti_, _tegutseja_, _funktsionaalse allsüsteemi_ või _registri_ nimi ühendab selgelt kahte või enamat erinevat kontseptsiooni, kasutades sidesõna 'ja' vms (nt turundus ja kampaaniad, piletihinnad ja allahindlused).
+    *   _Vihje asukohale:_ Nimekirjad Põhiobjektid, Tegutsejad, Funktsionaalsed allsüsteemid, Registrid. Raporteeri konkreetne nimi.
+
+*   **Reegel (Pädevusala kattuvus):** See reegel on rikutud, kui sama nimetusega _pädevusala_ on dokumendis määratletud KUI sisemine JA KUI välimine.
+    *   _Vihje asukohale:_ Pädevusalade määratlused. Raporteeri kattuvalt määratletud pädevusala.
+
+*   **Reegel (Allsüsteemi kattuvus):** See reegel on rikutud, kui sama nimetusega _funktsionaalne allsüsteem_ on dokumendis määratletud KUI administratiivne JA KUI sisuline.
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide määratlused. Raporteeri kattuvalt määratletud allsüsteem.
+
+*   **Reegel (Registri kattuvus):** See reegel on rikutud, kui sama nimetusega _register_ on dokumendis määratletud KUI administratiivne JA KUI sisuline.
+    *   _Vihje asukohale:_ Registrite määratlused. Raporteeri kattuvalt määratletud register.
+
+*   **Reegel (Pädevusala kordused):** See reegel on rikutud, kui _pädevusalade_ nimekirjas esineb sama nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord.
+    *   _Vihje asukohale:_ Pädevusalade nimekiri. Raporteeri korduv nimi.
+
+*   **Reegel (Allsüsteemi kordused):** See reegel on rikutud, kui _funktsionaalsete allsüsteemide_ nimekirjas esineb sama nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord.
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide nimekiri. Raporteeri korduv nimi.
+
+*   **Reegel (Registri kordused):** See reegel on rikutud, kui _registrite_ nimekirjas esineb sama nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord (NB! siin ei tohi olla ka sünonüüme).
+    *   _Vihje asukohale:_ Registrite nimekiri. Raporteeri korduv nimi.
+
+### (B) Põhiobjektide reeglid
+
+*   **Reegel (Põhiobjektide ainsus):** See reegel on rikutud, kui _põhiobjektide_ nimekirjas leidub nimi, mis on grammatilises mitmuses (nt Filmid). Kõik nimed peavad olema ainsuses.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri. Raporteeri mitmuses olev nimi.
+
+*   **Reegel (Põhiobjekt Klassifikaator):** See reegel on rikutud, kui _põhiobjektide_ nimekirjas EI OLE sõna Klassifikaator.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri.
+
+*   **Reegel (Põhiobjektide nimi andmed):** See reegel on rikutud, kui mõne _põhiobjekti_ nimes kasutatakse sõna andmed või data (sõltumata tähesuurusest). Lubatud on fraas "andmete varundamine".
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri. Raporteeri reeglit rikkuv nimi.
+
+*   **Reegel (Toode/Kaup => Tellimine/Müük):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Toode või Kaup) on täidetud], AGA \[tingimus (_põhiobjektide_ hulgas EI OLE sõna Tellimine, Tellimus, Müük ega Ost) on täidetud].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri.
+
+*   **Reegel (Hoiuruum/Teenus => Tellimine/Broneering):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Hoiuruum või Teenus) on täidetud], AGA \[tingimus (_põhiobjektide_ hulgas EI OLE sõna Tellimine, Tellimus ega Broneering) on täidetud].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri.
+
+*   **Reegel (Seanss/Väljumine/Lend => Pilet):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Seanss, Väljumine või Lend) on täidetud], AGA \[tingimus (_põhiobjektide_ hulgas EI OLE sõna Pilet) on täidetud].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri.
+
+*   **Reegel (Töögraafik => Töötamine):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Töögraafik) on täidetud], AGA \[tingimus (_põhiobjektide_ hulgas EI OLE sõna Töötamine või sarnase tähendusega sõna, mis viitab graafiku täitmisele) on täidetud].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri.
+
+*   **Reegel (Põhiobjektide detailitase):** See reegel on rikutud, kui _põhiobjektide_ nimekirjas leidub mõni liiga spetsiifiline töötaja roll (nt Juhataja, Klienditeenindaja, Seansside haldur) VÕI liiga spetsiifiline klassifikaatori tüüp (nt Riik, Isiku_seisundi_liik, Keel). Lubatud on üldised mõisted nagu Töötaja, Klient, Klassifikaator.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri. Raporteeri liiga detailne nimi.
+
+*   **Reegel (Põhiobjektide kordused):** See reegel on rikutud, kui _põhiobjektide_ nimekirjas esineb sama nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord (sünonüümid võivad olla, aga sama sõna ei tohi korrata).
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri. Raporteeri korduv nimi.
+
+### (C) Tegutsejate (actor) reeglid
+
+*   **Reegel (Halduri nime vorming):** See reegel on rikutud, kui _tegutsejate_ nimekirjas on tegutseja, kelle eestikeelne nimi viitab põhiobjekti haldamisele (eeldab vormi [põhiobjekti nimi] haldur või sarnast), AGA see nimi EI OLE vormindatud kui [vastava põhiobjekti nimi mitmuse omastavas] haldur (nt on Film haldur asemel, et olla Filmide haldur). Kontrolli nii ainsuses kui mitmuses põhiobjektide puhul, et vorming oleks korrektne.
+    *   _Vihje asukohale:_ Tegutsejate nimekiri ja põhiobjektide nimekiri. Raporteeri vale vorminguga halduri nimi ja viita vastavale põhiobjektile.
+
+*   **Reegel (Tegutsejate kordused):** See reegel on rikutud, kui _tegutsejate_ nimekirjas esineb sama nimi (tähemärgi tasemel identne, ignoreerides tähesuurust) rohkem kui üks kord. (NB! Sünonüümid nagu Töötajate haldur ja Personalihaldur on lubatud ja neid ei loeta korduseks selle reegli mõistes).
+    *   _Vihje asukohale:_ Tegutsejate nimekiri. Raporteeri korduv nimi.
+
+*   **Reegel (Mitmesõnalise põhiobjekti halduri vorming):** See reegel on rikutud, kui \[tingimus (_põhiobjekt_ on mitmesõnaline fraas omadussõna+nimisõna vormingus, nt Tehniline vara) on täidetud] AGA \[sellele põhiobjektile viitava _tegutseja_ (halduri) nimi EI OLE vormindatud nii, et põhinimisõna on mitmuses ja omadussõna on mitmuse omastavas (nt on vale vorm nagu Tehniline vara haldur või Tehnilise vara haldur oodatud Tehniliste varade haldur asemel)].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja tegutsejate nimekiri. Raporteeri vale vorminguga halduri nimi ja viita vastavale põhiobjektile.
+
+*   **Reegel (Töötaja rollide spetsiifilisus):** See reegel on rikutud, kui \[tingimus (_tegutsejate_ hulgas on sõna Töötaja) on täidetud] AGA [_tegutsejate_ hulgas EI OLE ühtegi täpsemat töötaja rolli (nagu Müügijuht, Spetsialist, Raamatupidaja vms). Roll Juhataja võib olla, kuid peab olema vähemalt üks *lisaks*]. Lihtsalt Töötaja ja Juhataja koos ei ole piisav.
+    *   _Vihje asukohale:_ Tegutsejate nimekiri.
+
+*   **Reegel (Müük/Teenus => Pank/Maksekeskus):** See reegel on rikutud, kui \[tingimus (dokumendi üldisest kontekstist, nt eesmärkidest või kirjeldustest, selgub, et organisatsioon müüb kaupu või osutab teenuseid) on täidetud] AGA [_tegutsejate_ hulgas EI OLE sõna Pank EGA sõna Maksekeskus].
+    *   _Vihje asukohale:_ Dokumendi üldine kontekst ja tegutsejate nimekiri.
+
+*   **Reegel (Põhiobjekt Töötaja => Töötajate haldur):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Töötaja) on täidetud] AGA [_tegutsejate_ hulgas EI OLE fraasi Töötajate haldur EGA fraasi Personalihaldur EGA fraasi "Personalitöötaja"].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja tegutsejate nimekiri.
+
+*   **Reegel (Põhiobjekt Klassifikaator => Klassifikaatorite haldur):** See reegel on rikutud, kui \[tingimus (_põhiobjektide_ hulgas on sõna Klassifikaator) on täidetud] AGA [_tegutsejate_ hulgas EI OLE fraasi Klassifikaatorite haldur].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja tegutsejate nimekiri.
+
+*   **Reegel (Tegutsejate miinimumarv):** See reegel on rikutud, kui _tegutsejate_ nimekirjas on kokku vähem kui kaks (2) unikaalset tegutsejat.
+    *   _Vihje asukohale:_ Tegutsejate nimekiri.
+
+### (D) Funktsionaalsed allsüsteemid ja registrid
+
+*   **Reegel (Allsüsteemi nime vorming):** See reegel on rikutud, kui mõne _funktsionaalse allsüsteemi_ eestikeelne nimi EI OLE vormingus [vastava põhiobjekti nimi mitmuse omastavas] funktsionaalne allsüsteem (nt Filmide funktsionaalne allsüsteem).
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide nimekiri ja põhiobjektide nimekiri. Raporteeri vale vorminguga allsüsteemi nimi ja viita vastavale põhiobjektile.
+
+*   **Reegel (Allsüsteemi nimi arvestus):** See reegel on rikutud, kui mõne _funktsionaalse allsüsteemi_ eestikeelses nimes kasutatakse sõna arvestus.
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide nimekiri. Raporteeri reeglit rikkuv nimi.
+
+*   **Reegel (Registri nime vorming):** See reegel on rikutud, kui mõne _registri_ eestikeelne nimi EI OLE vormingus [vastava põhiobjekti nimi mitmuse omastavas] register (nt Filmide register).
+    *   _Vihje asukohale:_ Registrite nimekiri ja põhiobjektide nimekiri. Raporteeri vale vorminguga registri nimi ja viita vastavale põhiobjektile.
+
+*   **Reegel (Mitmesõnalise põhiobjekti allsüsteemi/registri vorming):** See reegel on rikutud, kui \[tingimus (_põhiobjekt_ on mitmesõnaline fraas omadussõna+nimisõna vormingus, nt Tehniline vara) on täidetud] AGA \[sellele põhiobjektile viitava _funktsionaalse allsüsteemi_ VÕI _registri_ nimi EI OLE vormindatud nii, et põhinimisõna on mitmuses ja omadussõna on mitmuse omastavas (nt korrektse Tehniliste varade... asemel on kasutatud valet vormi nagu Tehniline vara... või Tehnilise vara...)].
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri, funktsionaalsete allsüsteemide nimekiri, registrite nimekiri. Raporteeri vale vorminguga nimi ja viita põhiobjektile.
+
+*   **Reegel (Allsüsteemi ja registri nimede vastavus):** See reegel on rikutud, kui leidub _funktsionaalne allsüsteem_ JA sellele (eeldatavasti) vastav _register_, mille nimede põhiosad (enne sõna funktsionaalne allsüsteem või register) EI OLE tähemärgi tasemel identsed.
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide nimekiri ja registrite nimekiri. Raporteeri mitte-vastavuses olev paar.
+
+### (E) Elementide omavahelised seosed ja kattuvus
+
+*   **Reegel (Allsüsteemi-registri seos (1:1)):** See reegel on rikutud, kui leidub _funktsionaalne allsüsteem_, millel puudub täpselt üks samanimeline (vt eelmist reeglit) vastav _register_ VÕI kui leidub _register_, millel puudub täpselt üks samanimeline vastav _funktsionaalne allsüsteem_.
+    *   _Vihje asukohale:_ Funktsionaalsete allsüsteemide nimekiri ja registrite nimekiri. Raporteeri üksikuks jäänud allsüsteem või register.
+
+*   **Reegel (Organisatsiooni eesmärk => Põhiobjekt seos):** See reegel on rikutud, kui on esitatud _organisatsiooni eesmärk_, mille täitmist EI saa siduda ühegi _põhiobjekti_ haldamisega (st pole loogilist seost eesmärgi ja ühegi põhiobjekti vahel).
+    *   _Vihje asukohale:_ Organisatsiooni eesmärgid ja põhiobjektide nimekiri. Raporteeri eesmärk, millel puudub seos.
+
+*   **Reegel (Põhiobjekt => Infosüsteemi eesmärk seos):** See reegel on rikutud, kui leidub _põhiobjekt_, mida EI mainita (üheski käändes) üheski _infosüsteemi eesmärgis_.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja infosüsteemi eesmärkide tekstid. Raporteeri põhiobjekt, mida pole mainitud.
+
+*   **Reegel (Põhiobjekt => Lausend seos):** See reegel on rikutud, kui leidub _põhiobjekt_, mida EI mainita (üheski käändes) üheski _lausendis_.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja lausendite tekstid. Raporteeri põhiobjekt, mida pole mainitud.
+
+*   **Reegel (Tegutseja => Lausend seos):** See reegel on rikutud, kui leidub _tegutseja_, mida EI mainita (üheski käändes) üheski _lausendis_.
+    *   _Vihje asukohale:_ Tegutsejate nimekiri ja lausendite tekstid. Raporteeri tegutseja, keda pole mainitud.
+
+*   **Reegel (Põhiobjekt => Põhiprotsess seos):** See reegel on rikutud, kui leidub _põhiobjekt_, mida EI mainita (üheski käändes) ühegi _põhiprotsessi_ kirjelduses VÕI selle protsessi käivitavas sündmuses.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri ja põhiprotsesside kirjeldused koos sündmustega. Raporteeri põhiobjekt, mida pole mainitud.
+
+*   **Reegel (Põhiobjekt <=> Allsüsteem/Register seos):** See reegel on rikutud, kui leidub _põhiobjekt_, mis EI vasta täpselt ühele _funktsionaalsele allsüsteemile_ JA täpselt ühele _registrile_ (vastavalt nimele, vt vormingureegleid) VÕI kui leidub _funktsionaalne allsüsteem_ või _register_, mis ei vasta ühelegi _põhiobjektile_ VÕI vastab rohkem kui ühele.
+    *   _Vihje asukohale:_ Põhiobjektide nimekiri, funktsionaalsete allsüsteemide nimekiri, registrite nimekiri. Raporteeri objekt/allsüsteem/register, mille seosed on valed (puuduvad või on mitmesed).
+
+*   **Reegel (Tegutseja <=> Pädevusala seos):** See reegel on rikutud, kui leidub _tegutseja_, millel EI OLE täpselt üht samanimelist vastavat _pädevusala_ VÕI kui leidub _pädevusala_, millel EI OLE täpselt üht samanimelist vastavat _tegutsejat_ VÕI kui seoseid on rohkem kui üks.
+    *   _Vihje asukohale:_ Tegutsejate nimekiri ja pädevusalade nimekiri. Raporteeri tegutseja/pädevusala, mille seosed on valed.
+
+### (F) Tekstikirjelduse reeglid
+
+*   **Reegel (Kohahoidja tekst):** See reegel on rikutud, kui dokumendi tekstis leidub täpne string `<täienda või kustuta>` VÕI `<täienda>`.
+    *   _Vihje asukohale:_ Kogu dokumendi tekst. Raporteeri leitud string ja selle ligikaudne asukoht.
+
+*   **Reegel (Kohahoidja tähed):** See reegel on rikutud, kui dokumendi tekstis kasutatakse kohahoidjatena suuri tähti X või Y (nt fraasides nagu X haldur, Y register, Kliendi X andmed).
+    *   _Vihje asukohale:_ Kogu dokumendi tekst. Raporteeri leitud kohahoidja kasutus ja selle ligikaudne asukoht.
+
+---
+
+## Juhised väljundi formaatimiseks
+
+**Sinu ülesanne:** Keskendu AINULT ülaltoodud reeglitele ja JÄRGNEVALT esitatud infosüsteemi üldvaatele. Ära arvesta ega viita ühelegi varasemale dokumendile või analüüsile. Kontrolli infosüsteemi üldvaadet reeglite suhtes.
+
+**Väljundformaat:**
+*   Väljasta AINULT need reeglid (koos reegli lühikirjeldusega sulgudes), mida dokument RIKUB.
+*   Iga rikkumise juurde lisa võimalikult täpne viide vea asukohale dokumendis (nt peatüki nimi, nimekiri, konkreetne fraas või lause).
+*   Kui dokument vastab mingile reeglile, siis ÄRA SEDA REEGLIT EGA FAKTI, ET SEE ON TÄIDETUD, MITTE KUIDAGI VÄLJUNDIS MAINI.
+*   Kui ühtegi reeglit ei rikuta, jäta väljund tühjaks või kirjuta `Rikkumisi ei leitud`.
+*   Ära lisa ühtegi muud kommentaari, sissejuhatust ega kokkuvõtet peale rikkumiste loetelu (või tühja tulemuse).
+*   Raporteeri tulemus reeglite kaupa. Iga reegli rikkumine too välja eraldi, isegi kui see tuleneb samast veast dokumendis (nt üks vale nimi võib rikkuda mitut reeglit).
+*   ÄRA JÄTA ÜHTEGI viga raporteerimata eeldusega, et see on kaetud mõne teise reegliga.

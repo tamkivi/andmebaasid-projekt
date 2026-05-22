@@ -41,15 +41,18 @@ Build teeb järgmised sammud:
 4. Rakendab EAP mudelile nime-, sisu- ja kvaliteediparandused.
 5. Genereerib DOCX dokumendi päris Wordi pealkirjade, tabelite, piltide ja pealdistega.
 6. Genereerib PostgreSQL DDL skripti `jousaali_skript.sql`.
+7. Värskendab `submission_files/` kataloogi esitusfailid: `dokument.docx`, `mudelid.eap`, `skript.sql` ja `rakendus.zip`.
 
 ## Esitamiseks vajalikud failid
 
-Maurus/e-õppe keskkonna esitusvormi jaoks vasta failinimedele järgmiselt:
+Maurus/e-õppe keskkonna esitusvormi jaoks kasuta `submission_files/` kataloogis olevaid faile järgmiselt:
 
-- dokument: `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx`
-- mudelid: `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap`
-- rakendus: paki kataloog `rakendus/` ZIP-failiks, jättes välja lokaalsed failid nagu `rakendus/.env`, `rakendus/venv/`, `__pycache__/` ja `*.pyc`
-- skript: `jousaali_skript.sql`
+- dokument: `submission_files/dokument.docx`
+- mudelid: `submission_files/mudelid.eap`
+- rakendus: `submission_files/rakendus.zip`
+- skript: `submission_files/skript.sql`
+
+`submission_files/` sisu taastoodetakse buildi käigus. Kui muudad lähtefaile, käivita enne esitamist uuesti `./build_all.sh` või `build_all.bat`, et esitusfailid ei jääks aegunuks.
 
 ## Kontroll
 

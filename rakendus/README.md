@@ -1,10 +1,10 @@
-# Jõusaali Infosüsteemi - Treeningu Funktsionaalne Allsüsteem
+# Jõusaali infosüsteemi treeningute funktsionaalne allsüsteem
 
 Flaskiga loodud veebirakendus, mis toetab jõusaali treeningute registreerimist, muutmist, vaatamist ja seisundite juhtimist.
 
 ## 📋 Projekt info
 
-- **Kursus:** ITI0206 - Andmebaaside projektid
+- **Kursus:** Andmebaasid I, ITI0206
 - **Semester:** 2026 kevad
 - **Autorid:** Tristan Aik Sild, Gustav Tamkivi
 - **Tehnoloogia:** Python Flask + PostgreSQL
@@ -287,7 +287,7 @@ rakendus/
 ## 📞 Kontakt
 
 - **E-mail:** tristansild@icloud.com
-- **Projekt:** ITI0206 Andmebaaside projektid
+- **Projekt:** Andmebaasid I, ITI0206
 - **Instituut:** Tallinna Tehnikaülikool
 
 ## 📄 Litsents

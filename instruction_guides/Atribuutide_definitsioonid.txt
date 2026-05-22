@@ -1,0 +1,142 @@
+# Reeglistik atribuutide definitsioonide kontrolliks
+
+## Näited
+
+
+Definitsioonides kasutatakse viiteid, mille nimi algab @
+
+@Kohustuslik -- atribuudi väärtuse registreerimine on kohustuslik, st väärtus ei tohi ühegi olemi korral puududa.\
+@Pole_tühi -- atribuudi väärtus ei tohi olla tühi string ja ainult tühimärkidest koosnev string.
+
+### Näide 1
+
+Siin on näide olemitüübi Isik" atribuudi "kasutajanimi" definitsioonist:
+
+**Definitsioon:** Isiku poolt süsteemis kasutatav nimi.
+
+{Isiku tõstutundetu unikaalne identifikaator (st näiteks Mets ja mets  on võrdsed). @Kohustuslik. Peab olema 4 kuni 20 märki pikk (otspunktid kaasa arvatud). @Pole_tühi.}
+
+**Näiteväärtus:** testkasutaja
+
+### Näide 2
+
+Siin on näide olemitüübi "Isik" atribuudi "e_meil" definitsioonist:
+
+**Definitsioon:** Aadress, millele saab  üle võrgu (ühest arvutist või tööjaamast teise) saata isikule mõeldud kirjalikke sõnumeid.
+
+{Isiku tõstutundetu unikaalne identifikaator (st näiteks Mets@hot.ee ja mets@hot.ee on võrdsed). @Kohustuslik. e_mail peab sisaldama vähemalt ühte "@" märki. Võib olla kuni 254 märki pikk.}
+
+**Näiteväärtus:** kalamees@hot.ee
+
+## Üldised märkused keelemudelile
+
+*   **Sinu roll:** Sa oled hoolikas, tähelepanelik, täpne ja detailidele orienteeritud süsteemianalüütik. Sinu ülesanne on kontrollida atribuutide definitsioone järgnevate reeglite alusel ja leida neist kõrvalekaldeid.
+*   **Eeskujud ja kontekst:** Esitatud näited atribuutide "kasutajanimi" ja "e_meil" kohta demonstreerivad oodatud struktuuri: "selgitus {piirangud}" ja annotatsioonide (nt "@Kohustuslik", "@Pole_tühi") kasutamist piirangute osas.
+*   **Tingimuste (P) tuvastamine:** Kui reegel algab tingimusega nagu "kui atribuut esitab rahalist väärtust", siis tuleta see tingimus atribuudi nimest ja/või inimesele mõeldud selgitusest.
+*   **Täpsus:** Iga reegel on oluline. Kõik tuvastatud kõrvalekalded tuleb raporteerida. Kõik kirjavead loetakse sisuliseks veaks.
+*   **Vaikimisi käitumine:** Kui reegli rakendumise tingimust (P-osa) atribuudi definitsioonis ei leidu, siis see reegel ei ole rikutud ja seda ei raporteerita.
+
+## Reeglid atribuutide definitsioonidele
+
+*   **Reegel (Definitsiooni struktuur):** See reegel on rikutud, kui atribuudi definitsioon EI vasta struktuurile: "tähenduse selgitus inimkasutajale {piirangud atribuudi väärtusele}". Rikkumine on toimunud, kui puudub inimesele mõeldud selgitus ENNE looksulge VÕI puuduvad looksulud "{}" VÕI looksulgude osa on tühi.
+    *   _Vihje asukohale:_ Kontrolli iga atribuudi definitsiooni üldist vormingut.
+
+*   **Reegel (Selgituste ja piirangute eraldamine):** See reegel on rikutud, kui inimesele mõeldud tähenduse selgitus (mis peaks olema enne looksulge) on paigutatud looksulgude "{}" SISSE VÕI kui tarkvaraliselt jõustatav piirang (mis peaks olema looksulgude sees) on paigutatud looksulgudest VÄLJAPOOLE.
+    *   _Vihje asukohale:_ Kontrolli teksti asukohta looksulgude "{}" suhtes.
+
+*   **Reegel (Inimloetava selgituse olemasolu):** See reegel on rikutud, kui atribuudi definitsioonist puudub täielikult inimesele mõeldud tähenduse selgitus enne looksulge "{}".
+    *   _Vihje asukohale:_ Kontrolli teksti olemasolu enne "{".
+
+*   **Reegel (Piirangute olemasolu looksulgudes):** See reegel on rikutud, kui atribuudi definitsioonist puudub looksulgude "{}" vaheline osa VÕI see osa on täiesti tühi (st seal pole ühtegi piirangut ega annotatsiooni).
+    *   _Vihje asukohale:_ Kontrolli "{}" osa sisu.
+
+*   **Reegel (Atribuudi annotatsioonide mittekasutus):** See reegel on rikutud, kui atribuutide definitsioonidele eelnevas metainfo osas defineeritud annotatsiooni (nt @Unikaalne) EI kasutata MITTE ÜHEGI atribuudi piirangute {} osas.
+    *   _Vihje asukohale:_ Võrdle annotatsioonide definitsioonide loetelu ja nende kasutamist kõigi atribuutide {} osades.
+
+*   **Reegel (Defineerimata atribuudi annotatsioonide kasutus):** See reegel on rikutud, kui atribuudi piirangute {} osas viidatakse annotatsioonile (nt @Mittenegatiivne), mida ei ole atribuutide definitsioonidele eelnevas metainfo osas defineeritud annotatsioonide hulgas.
+    *   _Vihje asukohale:_ Võrdle annotatsioonide definitsioonide loetelu ja nende kasutamist kõigi atribuutide {} osades.
+
+*   **Reegel (Keelatud terminid "tabel", "veerg"):** See reegel on rikutud, kui atribuudi definitsioonis (ükskõik kas selgituses või piirangutes) kasutatakse sõna "tabel" või "veerg".
+    *   _Vihje asukohale:_ Otsi keelatud sõnu definitsiooni tekstist.
+
+*   **Reegel (Keelatud nimejärelliide "_id"):** See reegel on rikutud, kui atribuudi nimi lõpeb järelliitega "_id".
+    *   _Vihje asukohale:_ Kontrolli atribuudi nime.
+
+*   **Reegel (Keelatud sõnad atribuudi nimes - Kontseptuaalne mudel):** See reegel on rikutud, kui **kontseptuaalse andmemudeli** (ERD ja atribuutide definitsioonid) piires atribuudi nimes sisaldub sõna, mis on TÄPSELT sama (ignoreerides käändeid ja tähesuurust), mis on mõne **TEISE** sama mudeli olemitüübi nimi.
+    *   **Näide rikkumisest:** Kui mudelis on olemitüüp nimega Hoone, siis atribuudi nimi nagu hoone_kood või hoone_nimi on keelatud olemitüübis Ruum (või mis tahes muus olemitüübis peale Hoone).
+    *   **ERAND 1:** See reegel **EI KEHTI** füüsilise andmemudeli (SQL tabelite) kirjeldustele.
+    *   **ERAND 2:** See reegel **EI KEHTI** juhul, kui atribuut kuulub olemitüüpi, millega tal on sama nimi (nt atribuut tuba_kood on lubatud olemitüübis Tuba).
+    *   _Vihje asukohale:_ Atribuutide definitsioonid ja ER diagrammid. Kontrolli atribuudi nime ja võrdle seda *teiste* olemitüüpide nimedega samas mudelis.
+
+*   **Reegel (Süsteemi genereeritav ID):** See reegel on rikutud, kui atribuudi definitsioonis (selgituses või piirangutes) viidatakse sellele, et väärtus on süsteemi poolt genereeritav järjestikune täisarvuline identifikaator.
+    *   _Vihje asukohale:_ Otsi definitsiooni tekstist viiteid automaatsele genereerimisele.
+
+*   **Reegel (Primaarvõti):** See reegel on rikutud, kui atribuudi definitsioonis (selgituses või piirangutes) viidatakse sellele, et tegemist on primaarvõtmega.
+    *   _Vihje asukohale:_ Otsi definitsiooni tekstist terminit "primaarvõti".
+
+*   **Reegel (Välisvõti):** See reegel on rikutud, kui atribuudi definitsioonis (selgituses või piirangutes) viidatakse sellele, et tegemist on välisvõtmega.
+    *   _Vihje asukohale:_ Otsi definitsiooni tekstist terminit "välisvõti".
+
+*   **Reegel (Näiteväärtuse olemasolu):** See reegel on rikutud, kui atribuudi definitsiooni lõpus puudub osa "Näiteväärtus:" VÕI kui see osa on tühi.
+    *   _Vihje asukohale:_ Kontrolli "Näiteväärtus:" olemasolu ja sisu iga atribuudi definitsioonis.
+
+*   **Reegel (Rahaline väärtus - valuuta):** See reegel on rikutud, kui \[tingimus (atribuut esitab rahalist väärtust) on täidetud] AGA \[atribuudi inimkasutajale mõeldud definitsioonist EI selgu kasutatav valuuta (nt EUR, USD)].
+    *   _Vihje asukohale:_ Inimloetav selgitus.
+
+*   **Reegel (Rahaline väärtus - käibemaks):** See reegel on rikutud, kui \[tingimus (atribuut esitab rahalist väärtust) on täidetud] AGA \[atribuudi inimkasutajale mõeldud definitsioonis EI OLE öeldud, kas väärtus sisaldab käibemaksu või mitte].
+    *   _Vihje asukohale:_ Inimloetav selgitus.
+
+*   **Reegel (Rahaline väärtus - komakohad):** See reegel on rikutud, kui \[tingimus (atribuut esitab rahalist väärtust) on täidetud] AGA \[atribuudi väärtuse piirangute osast "{}" EI selgu maksimaalne lubatud kohtade arv pärast koma].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Rahaline väärtus - nullväärtus):** See reegel on rikutud, kui \[tingimus (atribuut esitab rahalist väärtust) on täidetud] AGA \[atribuudi väärtuse piirangute osas "{}" EI OLE määratletud, kas väärtus võib olla 0 (nt kas on lubatud ">=0" või nõutud ">0" vms)].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Kogus - mõõtühik):** See reegel on rikutud, kui \[tingimus (atribuut esitab kogust) on täidetud] AGA \[atribuudi inimkasutajale mõeldud definitsioonist EI selgu mõõtühik (nt kg, tk, m)].
+    *   _Vihje asukohale:_ Inimloetav selgitus.
+
+*   **Reegel (Kogus - null või negatiivne):** See reegel on rikutud, kui \[tingimus (atribuut esitab kogust) on täidetud] AGA \[atribuudi väärtuse piirangute osast "{}" EI selgu, kas väärtus võib olla 0 VÕI kas see võib olla negatiivne arv (nt kas on lubatud ">=0", ">0" või ka negatiivsed väärtused)].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Kirjeldus/Kommentaar - sihtgrupp):** See reegel on rikutud, kui \[tingimus (atribuut esitab kirjeldust, kommentaari vms vaba teksti) on täidetud] AGA \[atribuudi inimkasutajale mõeldud definitsioonis EI OLE öeldud, kellele see tekst on mõeldud (nt sisemiseks kasutamiseks, kliendile kuvamiseks)].
+    *   _Vihje asukohale:_ Inimloetav selgitus.
+
+*   **Reegel (Tekst - tühjuse keeld):** See reegel on rikutud, kui \[tingimus (atribuudil on tekstiline väärtus ja see ei ole mõeldud spetsiifiliselt tühjana salvestamiseks) on täidetud] AGA \[piirangute hulgas "{}" EI OLE annotatsiooni "@Pole_tühi" VÕI samaväärset piirangut, mis keelaks nii tühja stringi kui ka ainult tühimärkidest koosneva stringi].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Atribuudi kuupäev/aeg - vahemik):** See reegel on rikutud, kui:
+1.  Atribuudi väärtus on kuupäev või kuupäev+kellaaeg.
+2.  **JA** atribuudi väärtuse piirangute osast "{}" **EI** selgu **otseselt**, milline väärtuste vahemik on lubatud (nt tekstina "vahemikus X kuni Y").
+3.  **JA** atribuudi väärtuse piirangute osas "{}" **EI** ole kasutatud annotatsiooni (nt @Lubatud_ajavahemik, @ValidDateRange vms), mis on atribuutide definitsioonidele eelnevas metainfo osas **defineeritud nii, et see määrab kindla kuupäevade või aegade vahemiku**.
+    *   **Vihje asukohale:** Kontrolli kuupäeva/aja atribuudi piirangute osa "{}". Veendu, et seal on kas otse sõnadega kirjas lubatud vahemik VÕI on kasutatud annotatsiooni, mille definitsioon (leitav dokumendi algusest, kus annotatsioonid on defineeritud) sisaldab selget kuupäevade/aegade vahemikku. Kui vähemalt üks neist tingimustest on täidetud, ei ole reegel rikutud.
+
+*   **Reegel (E-mail - @ märk):** See reegel on rikutud, kui \[tingimus (atribuudi väärtus on e-posti aadress) on täidetud] AGA \[atribuudi väärtuse piirangute osast "{}" EI selgu, et "@" märk on väärtuses kohustuslik].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Telefoninumber - märgid):** See reegel on rikutud, kui \[tingimus (atribuudi väärtus on telefoninumber) on täidetud] AGA \[atribuudi väärtuse piirangute osast "{}" EI selgu täpselt, millised märgid on väärtuses lubatud (nt ainult numbrid, "+", tühik)].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Isikukood - märgid/formaat):** See reegel on rikutud, kui \[tingimus (atribuudi väärtus on isikukood) on täidetud] AGA \[atribuudi väärtuse piirangute osast "{}" EI selgu täpselt, millised märgid ja millises formaadis/pikkuses on väärtus lubatud].
+    *   _Vihje asukohale:_ Piirangute osa "{}" ja annotatsioonid (nt @Lubatud_ajavahemik), mis on  atribuutide definitsioonidele eelnevas metainfo osas.
+
+*   **Reegel (Kohahoidja tekst):** See reegel on rikutud, kui atribuudi definitsioonis (ükskõik millises osas) leidub täpne string "<täienda või kustuta>" VÕI "<täienda>" VÕI "<abc>".
+    *   _Vihje asukohale:_ Kogu definitsiooni tekst. Raporteeri leitud string ja atribuudi nimi.
+
+*   **Reegel (Kohahoidja tähed):** See reegel on rikutud, kui atribuudi definitsioonis (ükskõik millises osas) kasutatakse kohahoidjatena suuri tähti X või Y (nt piirangutes nagu "pikkus X kuni Y").
+    *   _Vihje asukohale:_ Kogu definitsiooni tekst. Raporteeri leitud kohahoidja kasutus ja atribuudi nimi.
+
+---
+
+## Juhised väljundi formaatimiseks
+
+**Sinu ülesanne:** Keskendu AINULT ülaltoodud reeglitele ja JÄRGNEVALT esitatud atribuutide definitsioonidele. Ära arvesta ega viita ühelegi varasemale dokumendile või analüüsile. Kontrolli atribuutide definitsioone reeglite suhtes.
+
+**Väljundformaat:**
+*   Väljasta AINULT need reeglid (koos reegli lühikirjeldusega sulgudes), mida dokument RIKUB.
+*   Iga rikkumise juurde lisa võimalikult täpne viide vea asukohale (atribuudi nimi, milles viga esineb, ja vajadusel tsitaat või täpsem kirjeldus).
+*   Kui dokument vastab mingile reeglile, siis ÄRA SEDA REEGLIT EGA FAKTI, ET SEE ON TÄIDETUD, MITTE KUIDAGI VÄLJUNDIS MAINI.
+*   Kui ühtegi reeglit ei rikuta, jäta väljund tühjaks või kirjuta ""Rikkumisi ei leitud"".
+*   Ära lisa ühtegi muud kommentaari, sissejuhatust ega kokkuvõtet peale rikkumiste loetelu (või tühja tulemuse).
+*   Raporteeri tulemus reeglite kaupa. Iga reegli rikkumine too välja eraldi, isegi kui see tuleneb samast veast.
+*   ÄRA JÄTA ÜHTEGI viga raporteerimata eeldusega, et see on kaetud mõne teise reegliga.
+*   Kõik kirjavead loetakse sisuliseks veaks.

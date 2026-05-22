@@ -1,9 +1,9 @@
 #!/bin/bash
-# Jõusaali Infosüsteemi - Rakenduse seadistamise skript
+# Jõusaali infosüsteemi rakenduse seadistamise skript
 
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║  Jõusaali Infosüsteemi - Rakenduse Seadistamine               ║"
-echo "║  ITI0206 - Andmebaaside projektid                             ║"
+echo "║  Jõusaali infosüsteemi rakenduse seadistamine                 ║"
+echo "║  Andmebaasid I, ITI0206                                       ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 

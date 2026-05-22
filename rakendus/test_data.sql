@@ -1,4 +1,4 @@
--- Jõusaali Infosüsteemi - Testimandmete skript
+-- Jõusaali infosüsteemi testandmete skript
 -- Kasutage seda skripti andmebaasi testimiseks
 
 -- Klassifikaatorite lisamine (kui pole veel)
@@ -49,7 +49,7 @@ INSERT INTO treeningu_kategooria (kood, treeningu_kategooria_tyyp_kood, nimetus,
 ON CONFLICT DO NOTHING;
 
 -- Testimiskasutajad - parooliräsid on näidisandmetes juba olemas.
--- Kasutage: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('parool', method='pbkdf2:sha256'))"
+-- Näide räsi loomiseks: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('treener123', method='pbkdf2:sha256'))"
 
 -- Isikud
 INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, perenimi, e_meil)
@@ -60,7 +60,7 @@ VALUES
 ('12345678904', 'EE', 'KLIENT', '2000-12-10', 'Kärt', 'Uudistaja', 'uudistaja@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
--- Kasutajakonod (paroolid: treener123, juhataja123, klient123, uudistaja123)
+-- Kasutajakontod (paroolid: treener123, juhataja123, klient123, uudistaja123)
 -- Parooliräsid on loodud portatiivse pbkdf2:sha256 meetodiga.
 INSERT INTO kasutajakonto (e_meil, parool, on_aktiivne)
 VALUES
@@ -93,14 +93,14 @@ INSERT INTO treening (
 )
 VALUES
 (
-    1, 'AKTIIVNE', 'treener@jousaal.ee', 'treener@jousaal.ee',
+    1, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
     'Jõutreening algajatele',
-    'Põhiline jõutreening, mis keskendub tehnikale ja tugevuse arendamisele. Sobib algajatele ja kogenud treening harrastajatele.',
+    'Põhiline jõutreening, mis keskendub tehnikale ja tugevuse arendamisele. Sobib algajatele ja kogenud treeninguharrastajatele.',
     60, 12, 'Hantlid, ribad, matid', 15.00
 ),
 (
-    2, 'AKTIIVNE', 'treener@jousaal.ee', 'treener@jousaal.ee',
-    'Yoga ja painduvus',
+    2, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
+    'Jooga ja painduvus',
     'Rahustav ja painduvust arendav treening, mis parandab keha valmisolekut ja vaimset heaolu.',
     75, 15, 'Matid, plokid, rihmad', 12.00
 ),
@@ -119,6 +119,13 @@ VALUES
 (2, 'GRUPP'),
 (3, 'KARDIO')
 ON CONFLICT DO NOTHING;
+
+UPDATE treening
+SET treeningu_seisundi_liik_kood = 'AKTIIVNE',
+    viimase_muutja_e_meil = 'treener@jousaal.ee',
+    viimase_muutm_aeg = CURRENT_TIMESTAMP
+WHERE treeningu_kood IN (1, 2)
+  AND treeningu_seisundi_liik_kood = 'OOTEL';
 
 -- Näita testandmeid
 SELECT 'Testandmed on lisatud edukalt.';

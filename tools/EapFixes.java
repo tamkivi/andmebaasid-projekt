@@ -44,6 +44,8 @@ public class EapFixes {
 
     private void apply() throws Exception {
         removeStaleDuplicateRows();
+        removeStaleConstraintObjects();
+        removeStaleMentorRelationship();
         renameModelItems();
         ensureActorSet();
         fixStateTransitions();
@@ -205,6 +207,8 @@ public class EapFixes {
         updateById("t_object", "Object_ID", 48, Map.of("Name", "Treeningu_kategooria", "ModifiedDate", new Date()));
         updateById("t_object", "Object_ID", 54, Map.of("Name", "Treeningu_kategooria_omamine", "ModifiedDate", new Date()));
         updateById("t_object", "Object_ID", 64, Map.of("Name", "Treeningu_kategooria_tüüp", "ModifiedDate", new Date()));
+        updateById("t_object", "Object_ID", 24, Map.of("Name", "Muuda treeningu andmeid", "ModifiedDate", new Date()));
+        updateById("t_object", "Object_ID", 63, Map.of("Name", "Unusta ootel treening", "ModifiedDate", new Date()));
 
         updateById("t_diagram", "Diagram_ID", 2, Map.of("Name", "Treeningute funktsionaalne allsüsteem", "ModifiedDate", new Date()));
         updateById("t_diagram", "Diagram_ID", 3, Map.of("Name", "Treeningu lõpetamise tegevusdiagramm", "ModifiedDate", new Date()));
@@ -494,6 +498,66 @@ public class EapFixes {
                 objectCursor.deleteCurrentRow();
             }
         }
+        removeReferencesForObjects(objectIds, guids);
+    }
+
+    private void removeStaleConstraintObjects() throws Exception {
+        // Empty/template EA constraint nodes that are not part of the submitted model.
+        removeObjectByIdAndReferences(52);
+        removeObjectByIdAndReferences(65);
+        removeObjectByIdAndReferences(66);
+    }
+
+    private void removeStaleMentorRelationship() throws Exception {
+        Set<Integer> connectorIds = new HashSet<>();
+        Table connectors = db.getTable("t_connector");
+        Cursor cursor = CursorBuilder.createCursor(connectors);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if ("Association".equals(row.get("Connector_Type"))
+                && row.get("Start_Object_ID") instanceof Number
+                && row.get("End_Object_ID") instanceof Number
+                && ((Number) row.get("Start_Object_ID")).intValue() == 51
+                && ((Number) row.get("End_Object_ID")).intValue() == 51
+                && "juhendatav".equals(row.get("SourceRole"))
+                && "mentor".equals(row.get("DestRole"))) {
+                connectorIds.add(((Number) row.get("Connector_ID")).intValue());
+                cursor.deleteCurrentRow();
+            }
+        }
+        if (connectorIds.isEmpty()) {
+            return;
+        }
+        Table links = db.getTable("t_diagramlinks");
+        Cursor linkCursor = CursorBuilder.createCursor(links);
+        Row linkRow;
+        while ((linkRow = linkCursor.getNextRow()) != null) {
+            if (linkRow.get("ConnectorID") instanceof Number
+                && connectorIds.contains(((Number) linkRow.get("ConnectorID")).intValue())) {
+                linkCursor.deleteCurrentRow();
+            }
+        }
+    }
+
+    private void removeObjectByIdAndReferences(int objectId) throws Exception {
+        Set<Integer> objectIds = new HashSet<>();
+        Set<String> guids = new HashSet<>();
+        Table objects = db.getTable("t_object");
+        Cursor objectCursor = CursorBuilder.createCursor(objects);
+        Row objectRow;
+        while ((objectRow = objectCursor.getNextRow()) != null) {
+            if (objectRow.get("Object_ID") instanceof Number
+                && ((Number) objectRow.get("Object_ID")).intValue() == objectId) {
+                objectIds.add(objectId);
+                guids.add(s(objectRow.get("ea_guid")));
+                objectCursor.deleteCurrentRow();
+                break;
+            }
+        }
+        removeReferencesForObjects(objectIds, guids);
+    }
+
+    private void removeReferencesForObjects(Set<Integer> objectIds, Set<String> guids) throws Exception {
         if (objectIds.isEmpty()) {
             return;
         }
@@ -766,7 +830,7 @@ public class EapFixes {
         notesById.put(15, "Rollist tulenevate õiguste ja kohustuste vabatekstiline kirjeldus.");
         notesById.put(16, "Kuupäev ja kellaaeg, millest alates töötaja kannab rolli.");
         notesById.put(17, "Kuupäev ja kellaaeg, milleni töötaja kannab rolli.");
-        notesById.put(4, "Treeningute arvuline kood, mille sisestab inimkasutaja. Treeningu loomulik identifikaator.");
+        notesById.put(4, "Treeningu arvuline kood, mille järgi töötaja eristab treeningut. Kohustuslik, positiivne ja unikaalne.");
         notesById.put(6, "Treeningu registreerimise kuupäev ja kellaaeg.");
         notesById.put(20, "Treeningu andmete viimase muutmise kuupäev ja kellaaeg.");
         notesById.put(3, "Treeningu ametlik nimetus. Kohustuslik, mittetühi ja treeningute registris unikaalne.");
@@ -796,8 +860,10 @@ public class EapFixes {
         setAttributeNoteByName(53, "vajalik_varustus", "Treeningul vajalik varustus klientidele ja treenerile. Kohustuslik ja mittetühi.");
         setAttributeNoteByName(53, "hind", "Treeningu hind eurodes koos käibemaksuga. Kohustuslik null või positiivne rahasumma, maksimaalselt kaks kohta pärast koma.");
         setAttributeNoteByName(53, "seisund", "Treeningu elutsükli seisund.");
-        setAttributeNoteByName(53, "registreerija_e_meil", "Treeningu registreerinud kasutajakonto e-posti aadress.");
-        setAttributeNoteByName(53, "viimase_muutja_e_meil", "Treeningut viimati muutnud kasutajakonto e-posti aadress.");
+        setAttributeNoteByName(53, "registreerija", "Treeningu registreerinud kasutajakonto.");
+        setAttributeNoteByName(53, "viimase_muutja", "Treeningut viimati muutnud kasutajakonto.");
+        setAttributeTypeByName(53, "registreerija", "Kasutajakonto");
+        setAttributeTypeByName(53, "viimase_muutja", "Kasutajakonto");
 
         Table constraints = db.getTable("t_attributeconstraints");
         if (constraints.iterator().hasNext()) {
@@ -850,6 +916,21 @@ public class EapFixes {
                 && ((Number) row.get("Object_ID")).intValue() == objectId
                 && name.equals(row.get("Name"))) {
                 row.put("Notes", note);
+                cursor.updateCurrentRowFromMap(row);
+                return;
+            }
+        }
+    }
+
+    private void setAttributeTypeByName(int objectId, String name, String type) throws Exception {
+        Table table = db.getTable("t_attribute");
+        Cursor cursor = CursorBuilder.createCursor(table);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            if (row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId
+                && name.equals(row.get("Name"))) {
+                row.put("Type", type);
                 cursor.updateCurrentRowFromMap(row);
                 return;
             }
@@ -936,7 +1017,7 @@ public class EapFixes {
         int tootajateHaldur = findObjectId("Actor", "Töötajate haldur");
         int tuvasta = findObjectId("UseCase", "Tuvasta kasutaja");
         int vaataKoiki = findObjectId("UseCase", "Vaata kõiki treeninguid");
-        int muuda = findObjectId("UseCase", "Muuda treeningut");
+        int muuda = findObjectId("UseCase", "Muuda treeningu andmeid");
         int aktiveeri = findObjectId("UseCase", "Aktiveeri treening");
         int vaataOotel = findObjectId("UseCase", "Vaata kõiki ootel või mitteaktiivseid treeninguid");
 
@@ -1030,6 +1111,8 @@ public class EapFixes {
 
     private void ensureConceptualAttributeCoverage() throws Exception {
         renameAttribute(50, "sünni_kp", "synni_kp");
+        renameAttribute(53, "registreerija_e_meil", "registreerija");
+        renameAttribute(53, "viimase_muutja_e_meil", "viimase_muutja");
         addAttributeIfMissing(53, "nimetus", "varchar(200)", "1", "1", "", "Treeningu ametlik nimetus. Kohustuslik, mittetühi ja unikaalne.");
         addAttributeIfMissing(53, "kirjeldus", "text", "1", "1", "", "Klientidele ja töötajatele mõeldud treeningu sisu kirjeldus.");
         addAttributeIfMissing(53, "kestus_minutites", "integer", "1", "1", "", "Treeningu kestus minutites vahemikus 15 kuni 240.");
@@ -1037,8 +1120,8 @@ public class EapFixes {
         addAttributeIfMissing(53, "vajalik_varustus", "text", "1", "1", "", "Treeningul vajalik varustus klientidele ja treenerile.");
         addAttributeIfMissing(53, "hind", "numeric(8,2)", "1", "1", "", "Treeningu hind eurodes koos käibemaksuga, maksimaalselt kaks kohta pärast koma.");
         addAttributeIfMissing(53, "seisund", "varchar(20)", "1", "1", "", "Treeningu elutsükli seisund.");
-        addAttributeIfMissing(53, "registreerija_e_meil", "varchar(254)", "1", "1", "", "Treeningu registreerinud kasutajakonto e-posti aadress.");
-        addAttributeIfMissing(53, "viimase_muutja_e_meil", "varchar(254)", "1", "1", "", "Treeningut viimati muutnud kasutajakonto e-posti aadress.");
+        addAttributeIfMissing(53, "registreerija", "Kasutajakonto", "1", "1", "", "Treeningu registreerinud kasutajakonto.");
+        addAttributeIfMissing(53, "viimase_muutja", "Kasutajakonto", "1", "1", "", "Treeningut viimati muutnud kasutajakonto.");
     }
 
     private void populatePhysicalTableColumns() throws Exception {
