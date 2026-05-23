@@ -61,6 +61,38 @@ REQUIRED_VIEWS = [
     "v_treeningute_taituvuse_statistika",
 ]
 
+REQUIRED_EAP_PHYSICAL_ATTRIBUTES = {
+    "klient": ["e_meil"],
+    "treeninguliigi_seisundi_liik": ["kood", "nimetus"],
+    "treeninguliik": ["treeninguliigi_kood", "nimetus", "seisundi_kood"],
+    "ruum": ["ruumi_kood", "nimetus", "mahutavus"],
+    "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_kood"],
+    "treeningukorra_seisundi_liik": ["kood", "nimetus"],
+    "treeningukord": [
+        "treeningukorra_kood",
+        "treeninguliigi_kood",
+        "treener_e_meil",
+        "ruumi_kood",
+        "alguse_aeg",
+        "lopu_aeg",
+        "seisundi_kood",
+    ],
+    "registreeringu_seisundi_liik": ["kood", "nimetus"],
+    "registreering": ["registreeringu_kood", "treeningukorra_kood", "klient_e_meil", "seisundi_kood"],
+    "osalemine": ["registreeringu_kood", "osales", "markija_e_meil"],
+}
+
+REQUIRED_EAP_CONNECTORS = [
+    ("treeningukord", "treeninguliik"),
+    ("treeningukord", "ruum"),
+    ("treeningukord", "tootaja"),
+    ("registreering", "treeningukord"),
+    ("registreering", "klient"),
+    ("osalemine", "registreering"),
+    ("treeneri_padevus", "tootaja"),
+    ("treeneri_padevus", "treeninguliik"),
+]
+
 REQUIRED_DIAGRAMS = [
     "01_system_context",
     "02_use_cases",
@@ -318,7 +350,7 @@ def eap_export_text() -> str:
     if not shutil.which("mdb-export"):
         return ""
     pieces = []
-    for table in ["t_package", "t_object", "t_attribute", "t_diagram"]:
+    for table in ["t_package", "t_object", "t_attribute", "t_connector", "t_diagram"]:
         result = subprocess.run(
             ["mdb-export", str(EAP), table],
             cwd=ROOT,
@@ -378,15 +410,65 @@ def validate_eap(failures: list[str]) -> None:
             fail(f"EAP missing {item}", failures)
 
     object_rows = eap_export_rows("t_object")
+    attribute_rows = eap_export_rows("t_attribute")
+    connector_rows = eap_export_rows("t_connector")
     stale_treening = [
         row for row in object_rows
-        if row.get("Object_Type") == "Class" and row.get("Name") == "treening"
+        if row.get("Object_Type") == "Class" and row.get("Name") in {"treening", "Treening"}
     ]
     if stale_treening:
-        ids = ", ".join(row.get("Object_ID", "?") for row in stale_treening)
-        fail(f"EAP still contains stale physical class/table named exactly treening (Object_ID: {ids})", failures)
+        names = ", ".join(f"{row.get('Name')}:{row.get('Object_ID', '?')}" for row in stale_treening)
+        fail(f"EAP still contains stale physical class/table named exactly treening/Treening ({names})", failures)
     else:
-        ok("EAP contains no stale physical class/table named exactly treening")
+        ok("EAP contains no stale physical class/table named exactly treening/Treening")
+
+    physical_objects = {
+        row.get("Name"): row
+        for row in object_rows
+        if row.get("Object_Type") == "Class" and row.get("Name") in REQUIRED_EAP_PHYSICAL_ATTRIBUTES
+    }
+    for table_name, required_attrs in REQUIRED_EAP_PHYSICAL_ATTRIBUTES.items():
+        row = physical_objects.get(table_name)
+        if row is None:
+            fail(f"EAP missing physical table class {table_name}", failures)
+            continue
+        stereotype = (row.get("Stereotype") or "").strip().lower()
+        if stereotype == "table":
+            ok(f"EAP physical class {table_name} has table stereotype")
+        else:
+            fail(f"EAP physical class {table_name} has invalid stereotype {row.get('Stereotype')!r}", failures)
+
+        object_id = row.get("Object_ID")
+        actual_attrs = {
+            attr.get("Name")
+            for attr in attribute_rows
+            if attr.get("Object_ID") == object_id
+        }
+        missing_attrs = [attr for attr in required_attrs if attr not in actual_attrs]
+        if missing_attrs:
+            fail(f"EAP physical class {table_name} missing attributes: {missing_attrs}", failures)
+        else:
+            ok(f"EAP physical class {table_name} contains required attributes")
+
+    object_ids_by_name = {
+        row.get("Name"): row.get("Object_ID")
+        for row in object_rows
+        if row.get("Object_Type") == "Class"
+    }
+    connector_pairs = {
+        frozenset((row.get("Start_Object_ID"), row.get("End_Object_ID")))
+        for row in connector_rows
+    }
+    for left, right in REQUIRED_EAP_CONNECTORS:
+        left_id = object_ids_by_name.get(left)
+        right_id = object_ids_by_name.get(right)
+        if not left_id or not right_id:
+            fail(f"EAP cannot validate connector {left}--{right}; missing endpoint object", failures)
+            continue
+        if frozenset((left_id, right_id)) in connector_pairs:
+            ok(f"EAP contains connector between {left} and {right}")
+        else:
+            fail(f"EAP missing connector between {left} and {right}", failures)
 
     old_fragments = [
         "hind_ei_kuulu_skoopi",

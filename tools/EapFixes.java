@@ -23,6 +23,8 @@ public class EapFixes {
     private static final int TEMPLATE_ACTOR = 16;
     private static final int TEMPLATE_USE_CASE = 23;
     private static final int TEMPLATE_CLASS = 53;
+    private static final int PHYSICAL_PACKAGE = 7;
+    private static final int PHYSICAL_DIAGRAM = 13;
 
     private final Database db;
 
@@ -61,6 +63,10 @@ public class EapFixes {
 
     private static String z() {
         return " ";
+    }
+
+    private static String duid() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
     }
 
     private static String s(Object value) {
@@ -391,13 +397,264 @@ public class EapFixes {
     }
 
     private void ensurePhysicalTables() throws Exception {
-        for (String tableName : new String[] {
-            "klient", "treeninguliigi_seisundi_liik", "treeninguliik", "ruum",
-            "treeneri_padevus", "treeningukorra_seisundi_liik", "treeningukord",
-            "registreeringu_seisundi_liik", "registreering", "osalemine"
-        }) {
-            ensureObject("Class", 7, TEMPLATE_CLASS, tableName, "PostgreSQL füüsiline tabel uues rühmatreeningute protsessimudelis.");
+        Map<String, Integer> ids = new LinkedHashMap<>();
+        ids.put("klient", ensurePhysicalTable("klient", "Kliendi osalejatabel. PK/FK: e_meil.", new String[][] {
+            {"e_meil", "e_meil_aadress", "PK, FK kasutajakonto.e_meil"},
+            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL"}
+        }));
+        ids.put("treeninguliigi_seisundi_liik", ensurePhysicalTable("treeninguliigi_seisundi_liik", "Treeninguliigi seisundite klassifikaator.", new String[][] {
+            {"kood", "kood_10", "PK"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL"}
+        }));
+        ids.put("treeninguliik", ensurePhysicalTable("treeninguliik", "Rühmatreeningu korduv mall. PK: treeninguliigi_kood.", new String[][] {
+            {"treeninguliigi_kood", "integer", "PK"},
+            {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
+            {"kirjeldus", "text", "nullable"},
+            {"kestus_minutites", "integer", "NOT NULL"},
+            {"vajalik_varustus", "text", "nullable"},
+            {"seisundi_kood", "kood_10", "FK treeninguliigi_seisundi_liik.kood"},
+            {"registreerija_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
+            {"viimase_muutja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
+            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"viimase_muutmise_aeg", "timestamp with time zone", "nullable"}
+        }));
+        ids.put("ruum", ensurePhysicalTable("ruum", "Jõusaali ruum või stuudio. PK: ruumi_kood.", new String[][] {
+            {"ruumi_kood", "kood_10", "PK"},
+            {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
+            {"asukoht", "varchar(300)", "nullable"},
+            {"mahutavus", "integer", "NOT NULL, CHECK > 0"},
+            {"on_aktiivne", "boolean", "NOT NULL"}
+        }));
+        ids.put("treeneri_padevus", ensurePhysicalTable("treeneri_padevus", "Treeneri lubatud treeninguliigid. PK: tootaja_e_meil + treeninguliigi_kood.", new String[][] {
+            {"tootaja_e_meil", "e_meil_aadress", "PK, FK tootaja.e_meil"},
+            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"alates", "date", "NOT NULL"},
+            {"kuni", "date", "nullable"}
+        }));
+        ids.put("treeningukorra_seisundi_liik", ensurePhysicalTable("treeningukorra_seisundi_liik", "Treeningukorra seisundite klassifikaator.", new String[][] {
+            {"kood", "kood_10", "PK"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL"},
+            {"kirjeldus", "text", "nullable"}
+        }));
+        ids.put("treeningukord", ensurePhysicalTable("treeningukord", "Ajakavas toimuv konkreetne rühmatreening. PK: treeningukorra_kood.", new String[][] {
+            {"treeningukorra_kood", "integer", "PK"},
+            {"treeninguliigi_kood", "integer", "FK treeninguliik.treeninguliigi_kood"},
+            {"treener_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
+            {"ruumi_kood", "kood_10", "FK ruum.ruumi_kood"},
+            {"alguse_aeg", "timestamp with time zone", "NOT NULL"},
+            {"lopu_aeg", "timestamp with time zone", "NOT NULL"},
+            {"registreerimise_lopp", "timestamp with time zone", "NOT NULL"},
+            {"tyhistamise_lopp", "timestamp with time zone", "NOT NULL"},
+            {"maksimaalne_osalejate_arv", "integer", "NOT NULL, CHECK > 0"},
+            {"seisundi_kood", "kood_10", "FK treeningukorra_seisundi_liik.kood"},
+            {"looja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
+            {"viimase_muutja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
+            {"loomise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"viimase_muutmise_aeg", "timestamp with time zone", "nullable"},
+            {"tyhistamise_pohjus", "text", "nullable"}
+        }));
+        ids.put("registreeringu_seisundi_liik", ensurePhysicalTable("registreeringu_seisundi_liik", "Registreeringu seisundite klassifikaator.", new String[][] {
+            {"kood", "kood_10", "PK"},
+            {"nimetus", "varchar(200)", "NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL"},
+            {"kirjeldus", "text", "nullable"}
+        }));
+        ids.put("registreering", ensurePhysicalTable("registreering", "Kliendi kinnitatud või ootejärjekorra registreering. PK: registreeringu_kood.", new String[][] {
+            {"registreeringu_kood", "integer", "PK"},
+            {"treeningukorra_kood", "integer", "FK treeningukord.treeningukorra_kood"},
+            {"klient_e_meil", "e_meil_aadress", "FK klient.e_meil"},
+            {"seisundi_kood", "kood_10", "FK registreeringu_seisundi_liik.kood"},
+            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"tyhistamise_aeg", "timestamp with time zone", "nullable"},
+            {"edendamise_aeg", "timestamp with time zone", "nullable"},
+            {"ootejarjekorra_nr", "integer", "nullable"},
+            {"tyhistamise_pohjus", "text", "nullable"}
+        }));
+        ids.put("osalemine", ensurePhysicalTable("osalemine", "Kohalolu tulemus kinnitatud registreeringule. PK/FK: registreeringu_kood.", new String[][] {
+            {"registreeringu_kood", "integer", "PK, FK registreering.registreeringu_kood"},
+            {"osales", "boolean", "NOT NULL"},
+            {"markija_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
+            {"markimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"markus", "text", "nullable"}
+        }));
+
+        ensurePhysicalDiagramObjects(ids);
+        ensurePhysicalForeignKeys(ids);
+    }
+
+    private int ensurePhysicalTable(String name, String note, String[][] columns) throws Exception {
+        int id = ensureObject("Class", PHYSICAL_PACKAGE, TEMPLATE_CLASS, name, note);
+        updateById("t_object", "Object_ID", id, Map.of(
+            "Package_ID", PHYSICAL_PACKAGE,
+            "Stereotype", "table",
+            "Note", note
+        ));
+        for (String[] column : columns) {
+            addAttributeIfMissing(id, column[0], column[1], column[2]);
         }
+        return id;
+    }
+
+    private int physicalObjectId(String name, Map<String, Integer> newIds) throws Exception {
+        if (newIds.containsKey(name)) {
+            return newIds.get(name);
+        }
+        return findObjectId("Class", name);
+    }
+
+    private void ensurePhysicalForeignKeys(Map<String, Integer> ids) throws Exception {
+        addConnectorIfMissing(ids.get("klient"), physicalObjectId("kasutajakonto", ids), "fk_klient_kasutajakonto", "e_meil -> kasutajakonto.e_meil");
+        addConnectorIfMissing(ids.get("treeninguliik"), ids.get("treeninguliigi_seisundi_liik"), "fk_treeninguliik_seisund", "seisundi_kood -> treeninguliigi_seisundi_liik.kood");
+        addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_registreerija", "registreerija_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_muutja", "viimase_muutja_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeneri_padevus"), physicalObjectId("tootaja", ids), "fk_treeneri_padevus_tootaja", "tootaja_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeneri_padevus"), ids.get("treeninguliik"), "fk_treeneri_padevus_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeninguliik"), "fk_treeningukord_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_treener", "treener_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeningukord"), ids.get("ruum"), "fk_treeningukord_ruum", "ruumi_kood -> ruum.ruumi_kood");
+        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeningukorra_seisundi_liik"), "fk_treeningukord_seisund", "seisundi_kood -> treeningukorra_seisundi_liik.kood");
+        addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_looja", "looja_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_muutja", "viimase_muutja_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("registreering"), ids.get("treeningukord"), "fk_registreering_kord", "treeningukorra_kood -> treeningukord.treeningukorra_kood");
+        addConnectorIfMissing(ids.get("registreering"), ids.get("klient"), "fk_registreering_klient", "klient_e_meil -> klient.e_meil");
+        addConnectorIfMissing(ids.get("registreering"), ids.get("registreeringu_seisundi_liik"), "fk_registreering_seisund", "seisundi_kood -> registreeringu_seisundi_liik.kood");
+        addConnectorIfMissing(ids.get("osalemine"), ids.get("registreering"), "fk_osalemine_registreering", "registreeringu_kood -> registreering.registreeringu_kood");
+        addConnectorIfMissing(ids.get("osalemine"), physicalObjectId("tootaja", ids), "fk_osalemine_markija", "markija_e_meil -> tootaja.e_meil");
+    }
+
+    private boolean connectorExists(int startObjectId, int endObjectId, String name) throws Exception {
+        for (Row row : db.getTable("t_connector")) {
+            if (name.equals(row.get("Name"))
+                && row.get("Start_Object_ID") instanceof Number
+                && ((Number) row.get("Start_Object_ID")).intValue() == startObjectId
+                && row.get("End_Object_ID") instanceof Number
+                && ((Number) row.get("End_Object_ID")).intValue() == endObjectId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int addConnectorIfMissing(int startObjectId, int endObjectId, String name, String note) throws Exception {
+        if (startObjectId == 0 || endObjectId == 0 || connectorExists(startObjectId, endObjectId, name)) {
+            return 0;
+        }
+        Table table = db.getTable("t_connector");
+        table.setAllowAutoNumberInsert(true);
+        Row template = table.iterator().next();
+        Map<String, Object> row = copy(template);
+        int id = maxLong(table, "Connector_ID") + 1;
+        row.put("Connector_ID", id);
+        row.put("Name", name);
+        row.put("Direction", "Source -> Destination");
+        row.put("Notes", note);
+        row.put("Connector_Type", "Association");
+        row.put("SourceCard", "0..*");
+        row.put("DestCard", "1");
+        row.put("SourceRole", note);
+        row.put("DestRole", name);
+        row.put("Start_Object_ID", startObjectId);
+        row.put("End_Object_ID", endObjectId);
+        row.put("Stereotype", "FK");
+        row.put("PDATA1", z());
+        row.put("PDATA2", z());
+        row.put("PDATA3", z());
+        row.put("PDATA4", z());
+        row.put("PDATA5", "SX=0;SY=0;EX=0;EY=0;");
+        row.put("DiagramID", PHYSICAL_DIAGRAM);
+        row.put("ea_guid", guid());
+        table.addRowFromMap(row);
+        addDiagramLinkIfMissing(id);
+        return id;
+    }
+
+    private boolean diagramObjectExists(int diagramId, int objectId) throws Exception {
+        for (Row row : db.getTable("t_diagramobjects")) {
+            if (row.get("Diagram_ID") instanceof Number
+                && ((Number) row.get("Diagram_ID")).intValue() == diagramId
+                && row.get("Object_ID") instanceof Number
+                && ((Number) row.get("Object_ID")).intValue() == objectId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void ensurePhysicalDiagramObjects(Map<String, Integer> ids) throws Exception {
+        int[][] layout = new int[][] {
+            {physicalObjectId("kasutajakonto", ids), 620, -50, 790, -115},
+            {physicalObjectId("tootaja", ids), 245, -215, 390, -280},
+            {ids.get("klient"), 855, -50, 1015, -115},
+            {ids.get("treeninguliigi_seisundi_liik"), 20, -380, 250, -445},
+            {ids.get("treeninguliik"), 295, -380, 470, -470},
+            {ids.get("ruum"), 510, -300, 670, -365},
+            {ids.get("treeneri_padevus"), 510, -440, 720, -525},
+            {ids.get("treeningukorra_seisundi_liik"), 20, -560, 260, -625},
+            {ids.get("treeningukord"), 300, -585, 520, -720},
+            {ids.get("registreeringu_seisundi_liik"), 570, -585, 830, -650},
+            {ids.get("registreering"), 860, -500, 1060, -620},
+            {ids.get("osalemine"), 860, -700, 1040, -790}
+        };
+        for (int[] item : layout) {
+            addDiagramObjectIfMissing(PHYSICAL_DIAGRAM, item[0], item[1], item[2], item[3], item[4]);
+        }
+    }
+
+    private void addDiagramObjectIfMissing(int diagramId, int objectId, int left, int top, int right, int bottom) throws Exception {
+        if (objectId == 0 || diagramObjectExists(diagramId, objectId)) {
+            return;
+        }
+        Table table = db.getTable("t_diagramobjects");
+        table.setAllowAutoNumberInsert(true);
+        Row template = table.iterator().next();
+        Map<String, Object> row = copy(template);
+        row.put("Diagram_ID", diagramId);
+        row.put("Object_ID", objectId);
+        row.put("RectTop", top);
+        row.put("RectLeft", left);
+        row.put("RectRight", right);
+        row.put("RectBottom", bottom);
+        row.put("Sequence", maxLong(table, "Sequence") + 1);
+        row.put("ObjectStyle", "DUID=" + duid() + ";");
+        row.put("Instance_ID", maxLong(table, "Instance_ID") + 1);
+        table.addRowFromMap(row);
+    }
+
+    private boolean diagramLinkExists(int connectorId) throws Exception {
+        Table table = db.getTable("t_diagramlinks");
+        if (table == null) {
+            return true;
+        }
+        for (Row row : table) {
+            if (row.get("ConnectorID") instanceof Number
+                && ((Number) row.get("ConnectorID")).intValue() == connectorId
+                && row.get("DiagramID") instanceof Number
+                && ((Number) row.get("DiagramID")).intValue() == PHYSICAL_DIAGRAM) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addDiagramLinkIfMissing(int connectorId) throws Exception {
+        if (diagramLinkExists(connectorId)) {
+            return;
+        }
+        Table table = db.getTable("t_diagramlinks");
+        table.setAllowAutoNumberInsert(true);
+        Row template = table.iterator().next();
+        Map<String, Object> row = copy(template);
+        row.put("DiagramID", PHYSICAL_DIAGRAM);
+        row.put("ConnectorID", connectorId);
+        row.put("Geometry", "SX=0;SY=0;EX=0;EY=0;EDGE=2;$LLB=;LLT=;LMT=;LMB=;LRT=;LRB=;IRHS=;ILHS=;");
+        row.put("Style", "Mode=3;Color=-1;LWidth=0;");
+        row.put("Hidden", 0);
+        row.put("Path", z());
+        row.put("Instance_ID", maxLong(table, "Instance_ID") + 1);
+        table.addRowFromMap(row);
     }
 
     private void ensureClassWithColumns(String name, String note, String[][] columns) throws Exception {

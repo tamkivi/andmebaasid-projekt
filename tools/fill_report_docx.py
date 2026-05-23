@@ -75,16 +75,30 @@ USE_CASES = [
 ]
 
 
+CRUD_MATRIX = [
+    ("Treeningukorra planeerimine", "R", "C", "R", "R", "-", "-", "-"),
+    ("Registreerimise avamine", "R", "U", "-", "-", "-", "-", "-"),
+    ("Kliendi registreerimine treeningukorrale", "R", "R", "R", "-", "R", "C", "-"),
+    ("Registreeringu tühistamine", "-", "R", "-", "-", "R", "U", "-"),
+    ("Ootejärjekorrast edendamine", "-", "R", "-", "-", "R", "U", "-"),
+    ("Osalemise märkimine", "-", "R", "-", "-", "R", "R", "C/U"),
+    ("Treeningukorra tühistamine", "-", "U", "-", "-", "-", "U", "-"),
+    ("Juhataja aruande vaatamine", "R", "R", "R", "R", "-", "R", "R"),
+    ("Treeneri tunniplaani vaatamine", "R", "R", "R", "R", "-", "R", "R"),
+    ("Kliendi registreeringute vaatamine", "R", "R", "R", "-", "R", "R", "R"),
+]
+
+
 ROUTINES = [
-    ("fn_planeeri_treeningukord", "Juhataja", "Loob KAVAND treeningukorra. Kontrollib juhataja rolli, aktiivset treeninguliiki, treeneri rolli ja pädevust, ruumi aktiivsust, ajavahemikku, mahutavust ning treeneri/ruumi kattuvusi."),
-    ("fn_ava_treeningukord", "Juhataja", "Muudab tulevase KAVAND treeningukorra seisundisse AVATUD. Ebaõnnestub, kui kirje puudub, pole kavandatud või algus on möödas."),
-    ("fn_sulge_treeningukord", "Juhataja või määratud treener", "Muudab AVATUD treeningukorra seisundisse SULETUD. Treener peab ootama registreerimise tähtaja möödumist; juhataja saab sulgeda vajadusel varem."),
-    ("fn_lopeta_treeningukord", "Juhataja või määratud treener", "Muudab lõppenud SULETUD treeningukorra seisundisse TOIMUNUD. Ei luba tulevast treeningukorda lõpetada."),
-    ("fn_registreeri_klient_treeningukorrale", "Klient", "Loob registreeringu. Kontrollib aktiivset klienti, AVATUD seisundit, tähtaega ja topeltaktiivse registreeringu puudumist. Tagastab seisundi ja teate."),
-    ("fn_tyhista_registreering", "Klient või juhataja", "Tühistab aktiivse registreeringu. Klient saab tühistada ainult enda registreeringu enne tähtaega. Kinnitatud koha vabanemisel kutsub edendamise funktsiooni."),
-    ("fn_edenda_ootejarjekorrast", "Süsteem", "Lukustab treeningukorra ja esimese OOTEJRK rea ning muudab selle seisundisse KINNIT, kui vaba koht on olemas."),
-    ("fn_marki_osalemine", "Treener või juhataja", "Lisab või uuendab osalemise tulemuse kinnitatud registreeringule. Kontrollid on osalemise triggeris."),
-    ("fn_tyhista_treeningukord", "Juhataja", "Muudab treeningukorra TYHIST seisundisse ja tühistab kõik aktiivsed registreeringud seisundisse TYH_SYS."),
+    ("fn_planeeri_treeningukord", "Juhataja", "Kasutus kasutusjuhtude poolt: Planeeri treeningukord. Eeltingimused: aktiivne treeninguliik, aktiivne ruum ja TREENER rolliga pädev treener. Järeltingimused: tekib KAVAND treeningukord. Tõrkeolukorrad: vale roll, kattuv aeg, ruumi mahu ületamine või pädevuse puudumine."),
+    ("fn_ava_treeningukord", "Juhataja", "Kasutus kasutusjuhtude poolt: Ava registreerimine. Eeltingimused: treeningukord on KAVAND ja tulevikus. Järeltingimused: seisund muutub AVATUD. Tõrkeolukorrad: kirje puudub, seisund pole KAVAND või algus on möödas."),
+    ("fn_sulge_treeningukord", "Juhataja või määratud treener", "Kasutus kasutusjuhtude poolt: Sulge registreerimine. Eeltingimused: treeningukord on AVATUD ja tegutseja on juhataja või määratud treener. Järeltingimused: seisund muutub SULETUD. Tõrkeolukorrad: vale roll või liiga varane sulgemine treeneri poolt."),
+    ("fn_lopeta_treeningukord", "Juhataja või määratud treener", "Kasutus kasutusjuhtude poolt: Lõpeta treeningukord. Eeltingimused: treeningukord on SULETUD ja lõpu aeg on möödas. Järeltingimused: seisund muutub TOIMUNUD. Tõrkeolukorrad: vale roll, vale seisund või tulevane treeningukord."),
+    ("fn_registreeri_klient_treeningukorrale", "Klient", "Kasutus kasutusjuhtude poolt: Registreeru treeningukorrale. Eeltingimused: aktiivne klient ja AVATUD treeningukord tähtaja sees. Järeltingimused: tekib KINNIT või OOTEJRK registreering. Tõrkeolukorrad: topeltaktiivne registreering, möödunud tähtaeg või mitteaktiivne klient."),
+    ("fn_tyhista_registreering", "Klient või juhataja", "Kasutus kasutusjuhtude poolt: Tühista registreering. Eeltingimused: aktiivne registreering; klient tegutseb enda nimel või tegutseja on juhataja. Järeltingimused: registreering muutub TYH_KL või TYH_SYS; kinnitatud koha vabanemisel edendatakse ootejärjekord. Tõrkeolukorrad: vale omanik, möödunud tähtaeg või lõpetatud treeningukord."),
+    ("fn_edenda_ootejarjekorrast", "Süsteem", "Kasutus kasutusjuhtude poolt: Ootejärjekorrast edendamine registreeringu tühistamise järel. Eeltingimused: AVATUD treeningukorral on vaba koht ja OOTEJRK rida. Järeltingimused: esimene ootel registreering muutub KINNIT. Tõrkeolukorrad: vaba kohta või ootel rida pole."),
+    ("fn_marki_osalemine", "Treener või juhataja", "Kasutus kasutusjuhtude poolt: Märgi osalemine. Eeltingimused: kinnitatud registreering, alanud SULETUD või TOIMUNUD treeningukord ning määratud treener või juhataja. Järeltingimused: osalemise rida lisatakse või uuendatakse. Tõrkeolukorrad: vale roll, vale seisund või liiga varane märkimine."),
+    ("fn_tyhista_treeningukord", "Juhataja", "Kasutus kasutusjuhtude poolt: Tühista treeningukord. Eeltingimused: treeningukord on KAVAND, AVATUD või SULETUD. Järeltingimused: treeningukord muutub TYHIST ning aktiivsed registreeringud TYH_SYS. Tõrkeolukorrad: vale roll, puuduv kirje või juba toimunud treeningukord."),
 ]
 
 
@@ -332,6 +346,14 @@ def add_report_content(doc: Document) -> None:
     doc.add_heading("Kasutusjuhud ja äriprotsessid", level=1)
     add_figure(doc, state, *DIAGRAMS[1])
     add_table(doc, state, "Olulisemad kasutusjuhud", ["Kasutusjuht", "Tegutseja", "Sisu"], USE_CASES)
+    doc.add_heading("CRUD-maatriks põhiobjektide ja kasutusjuhtude lõikes", level=2)
+    add_table(
+        doc,
+        state,
+        "CRUD-maatriks põhiobjektide ja kasutusjuhtude lõikes",
+        ["Kasutusjuht", "treeninguliik", "treeningukord", "ruum", "treeneri_padevus", "klient", "registreering", "osalemine"],
+        CRUD_MATRIX,
+    )
     add_figure(doc, state, *DIAGRAMS[3])
     add_figure(doc, state, *DIAGRAMS[6])
     add_paragraphs(doc, [
