@@ -1,135 +1,124 @@
--- Jõusaali infosüsteemi testandmete skript
--- Kasutage seda skripti andmebaasi testimiseks
+-- Jõusaali rühmatreeningute prototüübi demoandmed.
+-- Käivita pärast submission_files/skript.sql importimist, kui soovid demoandmed uuesti tagada.
 
--- Klassifikaatorite lisamine (kui pole veel)
 INSERT INTO riik (riigi_kood, nimetus) VALUES
-('EE', 'Eesti'),
-('LV', 'Läti'),
-('LT', 'Leedu')
+('EE', 'Eesti'), ('LV', 'Läti'), ('LT', 'Leedu')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO isiku_seisundi_liik (kood, nimetus) VALUES
-('KLIENT', 'Klient'),
-('TOOTAJA', 'Töötaja')
+('KLIENT', 'Klient'), ('TOOTAJA', 'Töötaja')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tootaja_seisundi_liik (kood, nimetus) VALUES
-('AKTIIVNE', 'Aktiivne'),
-('PUHKUSEL', 'Puhkusel'),
-('LAHKUNUD', 'Lahkunud')
+('AKTIIVNE', 'Aktiivne'), ('PUHKUSEL', 'Puhkusel'), ('LAHKUNUD', 'Lahkunud')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tootaja_roll (kood, nimetus, kirjeldus) VALUES
-('TREENER', 'Treener', 'Treener, kes registreerib ja juhendab treeninguid'),
-('JUHATAJA', 'Juhataja', 'Juhtkonna liige, kes jälgib treeningu portfelli'),
-('KL_HALDUR', 'Klassifikaatorite haldur', 'Klassifikaatorite haldur'),
-('TOO_HALD', 'Töötajate haldur', 'Töötajate andmete haldur')
+('TREENER', 'Treener', 'Treener märgib osalemist ja näeb enda tunniplaani.'),
+('JUHATAJA', 'Juhataja', 'Juhataja planeerib ja juhib treeningukordi.')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeningu_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
-('OOTEL', 'Ootel', TRUE),
-('AKTIIVNE', 'Aktiivne', TRUE),
-('MITTEAKT', 'Mitteaktiivne', TRUE),
-('LOPPENUD', 'Lõppenud', FALSE),
-('UNUSTATUD', 'Unustatud', FALSE)
+INSERT INTO treeninguliigi_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+('KOOST', 'Koostamisel', TRUE), ('AKTIIVNE', 'Aktiivne', TRUE),
+('MITTEAKT', 'Mitteaktiivne', TRUE), ('LOPETATUD', 'Lõpetatud', FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeningu_kategooria_tyyp (kood, nimetus, on_aktiivne) VALUES
-('GRUPP', 'Grupitreening', TRUE),
-('PERS', 'Personaaltreening', TRUE),
-('KARDIO', 'Kardiotreening', TRUE),
-('JÕUD', 'Jõutreening', TRUE)
+INSERT INTO treeningukorra_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+('KAVAND', 'Kavandatud', TRUE), ('AVATUD', 'Avatud', TRUE),
+('SULETUD', 'Suletud', TRUE), ('TOIMUNUD', 'Toimunud', FALSE), ('TYHIST', 'Tühistatud', FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeningu_kategooria (kood, treeningu_kategooria_tyyp_kood, nimetus, on_aktiivne) VALUES
-('GRUPP', 'GRUPP', 'Grupitreening', TRUE),
-('PERS', 'PERS', 'Personaaltreening', TRUE),
-('KARDIO', 'KARDIO', 'Kardiotreening', TRUE),
-('JÕUD', 'JÕUD', 'Jõutreening', TRUE)
+INSERT INTO registreeringu_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+('KINNIT', 'Kinnitatud', TRUE), ('OOTEJRK', 'Ootejärjekorras', TRUE),
+('TYH_KL', 'Kliendi poolt tühistatud', FALSE), ('TYH_SYS', 'Süsteemi poolt tühistatud', FALSE)
 ON CONFLICT DO NOTHING;
 
--- Testimiskasutajad - parooliräsid on näidisandmetes juba olemas.
--- Näide räsi loomiseks: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('treener123', method='pbkdf2:sha256'))"
-
--- Isikud
 INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, perenimi, e_meil)
 VALUES
-('12345678901', 'EE', 'TOOTAJA', '1990-01-01', 'Tristan', 'Treener', 'treener@jousaal.ee'),
-('12345678902', 'EE', 'TOOTAJA', '1985-06-15', 'Anna', 'Juhataja', 'juhataja@jousaal.ee'),
-('12345678903', 'EE', 'KLIENT', '1995-03-20', 'Andres', 'Klient', 'klient@jousaal.ee'),
-('12345678904', 'EE', 'KLIENT', '2000-12-10', 'Kärt', 'Uudistaja', 'uudistaja@jousaal.ee')
+('39001010001', 'EE', 'TOOTAJA', DATE '1990-01-01', 'Anna', 'Juhataja', 'juhataja@jousaal.ee'),
+('38802020002', 'EE', 'TOOTAJA', DATE '1988-02-02', 'Tristan', 'Treener', 'treener@jousaal.ee'),
+('39203030003', 'EE', 'TOOTAJA', DATE '1992-03-03', 'Liis', 'Treener', 'treener2@jousaal.ee'),
+('39504040004', 'EE', 'KLIENT', DATE '1995-04-04', 'Andres', 'Klient', 'klient@jousaal.ee'),
+('39605050005', 'EE', 'KLIENT', DATE '1996-05-05', 'Kärt', 'Klient', 'klient2@jousaal.ee'),
+('39706060006', 'EE', 'KLIENT', DATE '1997-06-06', 'Mati', 'Klient', 'klient3@jousaal.ee'),
+('39807070007', 'EE', 'KLIENT', DATE '1998-07-07', 'Mari', 'Klient', 'klient4@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
--- Kasutajakontod (paroolid: treener123, juhataja123, klient123, uudistaja123)
--- Parooliräsid on loodud portatiivse pbkdf2:sha256 meetodiga.
 INSERT INTO kasutajakonto (e_meil, parool, on_aktiivne)
 VALUES
-('treener@jousaal.ee', 'pbkdf2:sha256:600000$qGrjekABIBB0g8pG$4272ce1a72ccbac241b1495117c3d283d55c610f1bc07b94ac360f92fd46a5f8', TRUE),
 ('juhataja@jousaal.ee', 'pbkdf2:sha256:600000$NGnXTK9mS91J7f0j$584635e60de4cf6f7c5118e432d070a6c8637293d1d0e883f09804c42f947391', TRUE),
+('treener@jousaal.ee', 'pbkdf2:sha256:600000$qGrjekABIBB0g8pG$4272ce1a72ccbac241b1495117c3d283d55c610f1bc07b94ac360f92fd46a5f8', TRUE),
+('treener2@jousaal.ee', 'pbkdf2:sha256:600000$qGrjekABIBB0g8pG$4272ce1a72ccbac241b1495117c3d283d55c610f1bc07b94ac360f92fd46a5f8', TRUE),
 ('klient@jousaal.ee', 'pbkdf2:sha256:600000$B5iUw7q4jcv37X7p$4ed6374c3e1c0ef86063fa0a1033a4fcf780b5476a769a2b8bb19f89fbfbc1b2', TRUE),
-('uudistaja@jousaal.ee', 'pbkdf2:sha256:600000$LwatF4tC4eFejrx0$0ee7226e2c2a25ab2645c94db4f475e00e97cec4ac5aed69f270de751c5294b4', TRUE)
+('klient2@jousaal.ee', 'pbkdf2:sha256:600000$B5iUw7q4jcv37X7p$4ed6374c3e1c0ef86063fa0a1033a4fcf780b5476a769a2b8bb19f89fbfbc1b2', TRUE),
+('klient3@jousaal.ee', 'pbkdf2:sha256:600000$B5iUw7q4jcv37X7p$4ed6374c3e1c0ef86063fa0a1033a4fcf780b5476a769a2b8bb19f89fbfbc1b2', TRUE),
+('klient4@jousaal.ee', 'pbkdf2:sha256:600000$B5iUw7q4jcv37X7p$4ed6374c3e1c0ef86063fa0a1033a4fcf780b5476a769a2b8bb19f89fbfbc1b2', TRUE)
 ON CONFLICT DO NOTHING;
 
--- Töötajad
+INSERT INTO klient (e_meil)
+VALUES ('klient@jousaal.ee'), ('klient2@jousaal.ee'), ('klient3@jousaal.ee'), ('klient4@jousaal.ee')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO tootaja (e_meil, tootaja_seisundi_liik_kood)
-VALUES
-('treener@jousaal.ee', 'AKTIIVNE'),
-('juhataja@jousaal.ee', 'AKTIIVNE')
+VALUES ('juhataja@jousaal.ee', 'AKTIIVNE'), ('treener@jousaal.ee', 'AKTIIVNE'), ('treener2@jousaal.ee', 'AKTIIVNE')
 ON CONFLICT DO NOTHING;
 
--- Töötaja rollide omamine
 INSERT INTO tootaja_rolli_omamine (tootaja_e_meil, tootaja_roll_kood, alguse_aeg)
 VALUES
-('treener@jousaal.ee', 'TREENER', NOW()),
-('juhataja@jousaal.ee', 'JUHATAJA', NOW()),
-('juhataja@jousaal.ee', 'KL_HALDUR', NOW())
+('juhataja@jousaal.ee', 'JUHATAJA', TIMESTAMPTZ '2025-01-01 00:00:00+02'),
+('treener@jousaal.ee', 'TREENER', TIMESTAMPTZ '2025-01-01 00:00:00+02'),
+('treener2@jousaal.ee', 'TREENER', TIMESTAMPTZ '2025-01-01 00:00:00+02')
 ON CONFLICT DO NOTHING;
 
--- Näidistreeningud
-INSERT INTO treening (
-    treeningu_kood, treeningu_seisundi_liik_kood, registreerija_e_meil,
-    viimase_muutja_e_meil, nimetus, kirjeldus, kestus_minutites,
-    maksimaalne_osalejate_arv, vajalik_varustus, hind
+INSERT INTO treeninguliik (treeninguliigi_kood, nimetus, kirjeldus, kestus_minutites, vajalik_varustus, seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil)
+VALUES
+(1000, 'Jooga algajatele', 'Rahulik rühmatreening liikuvuse ja hingamise arendamiseks.', 60, 'Matid ja joogaplokid', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+(1001, 'HIIT rühmatreening', 'Kõrge intensiivsusega intervalltreening väikesele grupile.', 45, 'Matid, hantlid ja stopper', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+(1002, 'Jõutreeningu tehnika', 'Rühmatund jõusaali põhiharjutuste tehnika õppimiseks.', 75, 'Kangid ja kettad', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO ruum (ruumi_kood, nimetus, asukoht, mahutavus)
+VALUES ('SAAL_A', 'Väike stuudio', '1. korrus', 2), ('SAAL_B', 'Suur rühmatreeningute saal', '2. korrus', 12)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
+VALUES ('treener@jousaal.ee', 1000, DATE '2025-01-01'), ('treener@jousaal.ee', 1001, DATE '2025-01-01'), ('treener2@jousaal.ee', 1002, DATE '2025-01-01')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO treeningukord (
+    treeningukorra_kood, treeninguliigi_kood, treener_e_meil, ruumi_kood,
+    alguse_aeg, lopu_aeg, registreerimise_lopp, tyhistamise_lopp,
+    maksimaalne_osalejate_arv, seisundi_kood, looja_e_meil, viimase_muutja_e_meil
 )
 VALUES
-(
-    1, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
-    'Jõutreening algajatele',
-    'Põhiline jõutreening, mis keskendub tehnikale ja tugevuse arendamisele. Sobib algajatele ja kogenud treeninguharrastajatele.',
-    60, 12, 'Hantlid, ribad, matid', 15.00
-),
-(
-    2, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
-    'Jooga ja painduvus',
-    'Rahustav ja painduvust arendav treening, mis parandab keha valmisolekut ja vaimset heaolu.',
-    75, 15, 'Matid, plokid, rihmad', 12.00
-),
-(
-    3, 'OOTEL', 'treener@jousaal.ee', 'treener@jousaal.ee',
-    'HIIT treening',
-    'Intensiivne intervalltreening, mis parandab kardiovaskulaarset vormi ja kulutab palju kaloreid.',
-    45, 10, 'Hantlid, sangpommid, matid', 18.00
-)
+(2000, 1002, 'treener2@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '10 days', CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes', CURRENT_TIMESTAMP + INTERVAL '9 days', CURRENT_TIMESTAMP + INTERVAL '9 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+(2001, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes', CURRENT_TIMESTAMP + INTERVAL '6 days', CURRENT_TIMESTAMP + INTERVAL '6 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+(2002, 1001, 'treener@jousaal.ee', 'SAAL_A', CURRENT_TIMESTAMP + INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes', CURRENT_TIMESTAMP + INTERVAL '4 days', CURRENT_TIMESTAMP + INTERVAL '4 days', 2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+(2003, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '4 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
--- Treeningu kategooriad
-INSERT INTO treeningu_kategooria_omamine (treeningu_kood, treeningu_kategooria_kood)
+UPDATE treeningukord SET seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
+WHERE treeningukorra_kood IN (2001, 2002) AND seisundi_kood = 'KAVAND';
+UPDATE treeningukord SET seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
+WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'KAVAND';
+UPDATE treeningukord SET seisundi_kood = 'SULETUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
+WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'AVATUD';
+UPDATE treeningukord SET seisundi_kood = 'TOIMUNUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
+WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'SULETUD';
+
+INSERT INTO registreering (registreeringu_kood, treeningukorra_kood, klient_e_meil, seisundi_kood, ootejarjekorra_nr)
 VALUES
-(1, 'JÕUD'),
-(2, 'GRUPP'),
-(3, 'KARDIO')
+(3000, 2002, 'klient@jousaal.ee', 'KINNIT', NULL),
+(3001, 2002, 'klient2@jousaal.ee', 'KINNIT', NULL),
+(3002, 2002, 'klient3@jousaal.ee', 'OOTEJRK', 1),
+(3003, 2003, 'klient@jousaal.ee', 'KINNIT', NULL),
+(3004, 2003, 'klient2@jousaal.ee', 'KINNIT', NULL)
 ON CONFLICT DO NOTHING;
 
-UPDATE treening
-SET treeningu_seisundi_liik_kood = 'AKTIIVNE',
-    viimase_muutja_e_meil = 'treener@jousaal.ee',
-    viimase_muutm_aeg = CURRENT_TIMESTAMP
-WHERE treeningu_kood IN (1, 2)
-  AND treeningu_seisundi_liik_kood = 'OOTEL';
+INSERT INTO osalemine (registreeringu_kood, osales, markija_e_meil, markus)
+VALUES
+(3003, TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
+(3004, FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
+ON CONFLICT DO NOTHING;
 
--- Näita testandmeid
-SELECT 'Testandmed on lisatud edukalt.';
-SELECT 'Kasutajad:';
-SELECT e_meil, COUNT(*) FROM kasutajakonto GROUP BY e_meil;
-SELECT 'Treeningud:';
-SELECT treeningu_kood, nimetus, hind FROM treening;
+SELECT 'Demoandmed on olemas: üks kavandatud treeningukord, üks avatud vabade kohtadega treeningukord, üks täis avatud treeningukord ootejärjekorraga ja üks toimunud treeningukord osalemistega.';

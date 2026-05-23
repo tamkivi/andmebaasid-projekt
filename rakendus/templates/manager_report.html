@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Täituvuse aruanne - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <h1 class="h3 mb-1">Juhataja täituvuse aruanne</h1>
+    <p class="text-muted">Aruanne loeb PostgreSQL vaateid, mitte rakenduse enda koondloogikat.</p>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% else %}
+        <div class="card mb-4">
+            <div class="card-header">Täituvus treeninguliigi kaupa</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Treeninguliik</th>
+                                <th>Treeningukordi</th>
+                                <th>Avatud</th>
+                                <th>Toimunud</th>
+                                <th>Kohad</th>
+                                <th>Kinnitatud</th>
+                                <th>Ootel</th>
+                                <th>Täituvus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in occupancy %}
+                                <tr>
+                                    <td><strong>{{ row.treeninguliik }}</strong></td>
+                                    <td>{{ row.treeningukordade_arv }}</td>
+                                    <td>{{ row.avatud_arv }}</td>
+                                    <td>{{ row.toimunud_arv }}</td>
+                                    <td>{{ row.kohti_kokku }}</td>
+                                    <td>{{ row.kinnitatud_arv }}</td>
+                                    <td>{{ row.ootejarjekorra_arv }}</td>
+                                    <td>{{ row.taituvus_protsent }}%</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Viimased treeningukorrad</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Aeg</th>
+                                <th>Treening</th>
+                                <th>Ruum</th>
+                                <th>Treener</th>
+                                <th>Täituvus</th>
+                                <th>Seisund</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in sessions %}
+                                <tr>
+                                    <td>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</td>
+                                    <td>{{ row.treeninguliik }}</td>
+                                    <td>{{ row.ruum }}</td>
+                                    <td>{{ row.treener_nimi }}</td>
+                                    <td>{{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootejarjekorra_arv }} ootel</td>
+                                    <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

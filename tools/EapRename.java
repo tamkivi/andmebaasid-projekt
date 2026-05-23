@@ -17,33 +17,33 @@ public class EapRename {
 
     static {
         REPLACEMENTS.put("Y infosüsteem", "Jõusaali infosüsteem");
-        REPLACEMENTS.put("X funktsionaalne allsüsteem", "treeningute funktsionaalne allsüsteem");
-        REPLACEMENTS.put("X register", "treeningute register");
-        REPLACEMENTS.put("X elutsüklid", "treeningute elutsüklid");
-        REPLACEMENTS.put("X haldur", "treener");
-        REPLACEMENTS.put("Registreeri X", "Registreeri treening");
-        REPLACEMENTS.put("Unusta X", "Unusta ootel treening");
-        REPLACEMENTS.put("Muuda X mittaktiivseks", "Muuda treening mitteaktiivseks");
-        REPLACEMENTS.put("Muuda X mitteaktiivseks", "Muuda treening mitteaktiivseks");
-        REPLACEMENTS.put("Muuda X", "Muuda treeningu andmeid");
-        REPLACEMENTS.put("Aktiveeri X", "Aktiveeri treening");
-        REPLACEMENTS.put("Lõpeta X", "Lõpeta treening");
-        REPLACEMENTS.put("Lõpeta valitud X", "Lõpeta valitud treening");
-        REPLACEMENTS.put("Otsi X", "Otsi treeningut");
-        REPLACEMENTS.put("Vali X", "Vali treening");
-        REPLACEMENTS.put("Vaata aktiivseid X", "Vaata aktiivseid treeninguid");
-        REPLACEMENTS.put("Vaata kõiki X", "Vaata kõiki treeninguid");
-        REPLACEMENTS.put("Vaata kõiki X, mida saab lõpetada", "Vaata kõiki treeninguid, mida saab lõpetada");
-        REPLACEMENTS.put("Vaata kõiki ootel või mitteaktiivseid X", "Vaata kõiki ootel või mitteaktiivseid treeninguid");
-        REPLACEMENTS.put("Vaata X koondaruannet", "Vaata treeningute koondaruannet");
-        REPLACEMENTS.put("X lõpetamise tegevusdiagramm", "treeningu lõpetamise tegevusdiagramm");
-        REPLACEMENTS.put("X seisundidiagramm", "treeningu seisundidiagramm");
-        REPLACEMENTS.put("X FASiga seotud pädevusalad ja registrid", "treeningute FASiga seotud pädevusalad ja registrid");
-        REPLACEMENTS.put("X_kategooria_omamine", "treeningu_kategooria_omamine");
-        REPLACEMENTS.put("X_kategooria_tüüp", "treeningu_kategooria_tüüp");
+        REPLACEMENTS.put("X funktsionaalne allsüsteem", "rühmatreeningute ajakava, registreerimise ja osalemise funktsionaalne allsüsteem");
+        REPLACEMENTS.put("X register", "rühmatreeningute ajakava ja registreeringute register");
+        REPLACEMENTS.put("X elutsüklid", "treeningukorra ja registreeringu elutsüklid");
+        REPLACEMENTS.put("X haldur", "juhataja");
+        REPLACEMENTS.put("Registreeri X", "Planeeri treeningukord");
+        REPLACEMENTS.put("Unusta X", "Tühista treeningukord");
+        REPLACEMENTS.put("Muuda X mittaktiivseks", "Sulge treeningukord");
+        REPLACEMENTS.put("Muuda X mitteaktiivseks", "Sulge treeningukord");
+        REPLACEMENTS.put("Muuda X", "Muuda treeningukorra andmeid");
+        REPLACEMENTS.put("Aktiveeri X", "Ava registreerimine");
+        REPLACEMENTS.put("Lõpeta X", "Lõpeta treeningukord");
+        REPLACEMENTS.put("Lõpeta valitud X", "Lõpeta valitud treeningukord");
+        REPLACEMENTS.put("Otsi X", "Otsi treeningukorda");
+        REPLACEMENTS.put("Vali X", "Vali treeningukord");
+        REPLACEMENTS.put("Vaata aktiivseid X", "Vaata avatud rühmatreeningute ajakava");
+        REPLACEMENTS.put("Vaata kõiki X", "Vaata kõiki treeningukordi");
+        REPLACEMENTS.put("Vaata kõiki X, mida saab lõpetada", "Vaata treeningukordi, mida saab lõpetada");
+        REPLACEMENTS.put("Vaata kõiki ootel või mitteaktiivseid X", "Vaata kavandatud või suletud treeningukordi");
+        REPLACEMENTS.put("Vaata X koondaruannet", "Vaata täituvuse statistikat");
+        REPLACEMENTS.put("X lõpetamise tegevusdiagramm", "treeningukorra lõpetamise tegevusdiagramm");
+        REPLACEMENTS.put("X seisundidiagramm", "treeningukorra seisundidiagramm");
+        REPLACEMENTS.put("X FASiga seotud pädevusalad ja registrid", "rühmatreeningute FASiga seotud pädevusalad ja registrid");
+        REPLACEMENTS.put("X_kategooria_omamine", "treeninguliigi_kategooria_omamine");
+        REPLACEMENTS.put("X_kategooria_tüüp", "treeningu_kategooria_tyyp");
         REPLACEMENTS.put("X_kategooria", "treeningu_kategooria");
-        REPLACEMENTS.put("X_seisundi_liik", "treeningu_seisundi_liik");
-        REPLACEMENTS.put("X_kood", "treeningu_kood");
+        REPLACEMENTS.put("X_seisundi_liik", "treeningukorra_seisundi_liik");
+        REPLACEMENTS.put("X_kood", "treeningukorra_kood");
     }
 
     private static String rename(String value) {
@@ -55,9 +55,9 @@ public class EapRename {
             result = result.replace(entry.getKey(), entry.getValue());
         }
         if (result.equals("X")) {
-            return "Treening";
+            return "Treeningukord";
         }
-        result = result.replaceAll("\\bX\\b", "treening");
+        result = result.replaceAll("\\bX\\b", "treeningukord");
         return result;
     }
 

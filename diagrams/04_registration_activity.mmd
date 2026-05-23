@@ -1,0 +1,35 @@
+flowchart LR
+    START([Klient valib avatud treeningukorra])
+    ROUTE["Flask POST /client/sessions/&lt;kood&gt;/register"]
+    FN["fn_registreeri_klient_treeningukorrale"]
+
+    subgraph "Andmebaasi kontrollid"
+        ACTIVE{"Klient aktiivne?"}
+        OPEN{"Kord AVATUD?"}
+        DEADLINE{"Tähtaeg kehtib?"}
+        DUP{"Aktiivne registreering puudub?"}
+        COUNT["Loenda KINNIT registreeringud"]
+        SEAT{"Vaba koht?"}
+    end
+
+    CONF["Loo KINNIT registreering"]
+    WAIT["Loo OOTEJRK rida\nja ootejärjekorra nr"]
+    ERR["Tõsta eestikeelne DB viga"]
+    VIEW["Vaated näitavad kinnitatud,\nootel ja vabu kohti"]
+
+    START --> ROUTE --> FN --> ACTIVE
+    ACTIVE -- jah --> OPEN
+    OPEN -- jah --> DEADLINE
+    DEADLINE -- jah --> DUP
+    DUP -- jah --> COUNT --> SEAT
+    SEAT -- jah --> CONF --> VIEW
+    SEAT -- ei --> WAIT --> VIEW
+
+    ACTIVE -- ei --> ERR
+    OPEN -- ei --> ERR
+    DEADLINE -- ei --> ERR
+    DUP -- ei --> ERR
+
+    CANCEL["Klient tühistab KINNIT registreeringu"]
+    PROMOTE["fn_tyhista_registreering\nkutsub fn_edenda_ootejarjekorrast"]
+    CANCEL --> PROMOTE --> VIEW

@@ -1,0 +1,31 @@
+flowchart LR
+    JUH["Juhataja"] --> MGR["Juhataja töövood"]
+    TRE["Treener"] --> TRN["Treeneri töövood"]
+    KLI["Klient"] --> CLI["Kliendi töövood"]
+
+    MGR --> FP["fn_planeeri_treeningukord"]
+    MGR --> FA["fn_ava_treeningukord"]
+    MGR --> FS["fn_sulge_treeningukord"]
+    MGR --> FL["fn_lopeta_treeningukord"]
+    MGR --> FT["fn_tyhista_treeningukord"]
+    MGR --> STAT["statistikavaated"]
+
+    TRN --> TV["v_treeneri_tunniplaan"]
+    TRN --> RO["v_treeningukorra_osalejad"]
+    TRN --> FO["fn_marki_osalemine"]
+
+    CLI --> AV["v_avalikud_treeningukorrad"]
+    CLI --> FR["fn_registreeri_klient_treeningukorrale"]
+    CLI --> FC["fn_tyhista_registreering"]
+    CLI --> KV["v_kliendi_registreeringud"]
+
+    FP --> DBVAL["DB kontrollib rolli ja ärireegleid"]
+    FA --> DBVAL
+    FS --> DBVAL
+    FL --> DBVAL
+    FT --> DBVAL
+    FO --> DBVAL
+    FR --> DBVAL
+    FC --> DBVAL
+
+    DBVAL --> INV["triggerid ja indeksid:\nmahutavus, kattuvused,\npädevus, seisundid,\ntopeltregistreering"]

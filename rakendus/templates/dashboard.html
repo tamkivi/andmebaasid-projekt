@@ -1,157 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Jõusaali Infosüsteem{% endblock %}
+{% block title %}Avaleht - Jõusaali rühmatreeningud{% endblock %}
 
 {% block content %}
 <div class="container-lg">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="mb-1">
-                <i class="bi bi-speedometer2"></i> Dashboard
-            </h1>
-            <p class="text-muted">Tere tulemast, <strong>{{ user.name }}</strong>!</p>
-        </div>
-        <div class="col-md-4 text-md-end">
-            <span class="badge bg-primary p-2">
-                <i class="bi bi-tag"></i>
-                {{ user.display_role }}
-            </span>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h3 mb-1">Avaleht</h1>
+            <p class="text-muted mb-0">Tere, <strong>{{ user.name }}</strong>. Roll: {{ user.display_role }}.</p>
         </div>
     </div>
 
     {% if error %}
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> {{ error }}
-        </div>
+        <div class="alert alert-danger">{{ error }}</div>
     {% else %}
-        <!-- Statistika -->
-        <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body py-4">
-                        <div class="display-5 text-primary mb-3">
-                            <i class="bi bi-lightning-fill"></i>
-                        </div>
-                        <h6 class="card-title text-muted">Aktiivsed treeningud</h6>
-                        <h2 class="display-6 text-primary">{{ stats.active_trainings }}</h2>
+        <div class="row g-3 mb-4">
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted small">Avatud treeningukordi</div>
+                        <div class="stat">{{ stats.avatud_kordi }}</div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body py-4">
-                        <div class="display-5 text-success mb-3">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <h6 class="card-title text-muted">Kokku kasutajaid</h6>
-                        <h2 class="display-6 text-success">{{ stats.total_users }}</h2>
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted small">Kavandatud kordi</div>
+                        <div class="stat">{{ stats.kavandatud_kordi }}</div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body py-4">
-                        <div class="display-5 text-info mb-3">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </div>
-                        <h6 class="card-title text-muted">Kokku treeninguid</h6>
-                        <h2 class="display-6 text-info">{{ stats.total_trainings }}</h2>
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted small">Kinnitatud registreeringuid</div>
+                        <div class="stat">{{ stats.kinnitatud_registreeringuid }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted small">Ootel registreeringuid</div>
+                        <div class="stat">{{ stats.ootel_registreeringuid }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tegevused -->
-        <div class="row">
-            <div class="col-lg-6">
+        <div class="row g-3">
+            <div class="col-lg-7">
                 <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-lightning"></i> Kiired tegevused
-                    </div>
+                    <div class="card-header">Töövood</div>
                     <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="/trainings" class="btn btn-outline-primary">
-                                <i class="bi bi-search"></i> Vaata treeninguid
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-outline-primary" href="{{ url_for('schedule') }}">
+                                <i class="bi bi-calendar-event"></i> Avatud ajakava
                             </a>
+                            {% if user.role == 'klient' %}
+                                <a class="btn btn-outline-success" href="{{ url_for('client_registrations') }}">
+                                    <i class="bi bi-person-check"></i> Minu registreeringud
+                                </a>
+                            {% endif %}
                             {% if 'TREENER' in user.roles %}
-                                <a href="/trainer/register-training" class="btn btn-outline-success">
-                                    <i class="bi bi-plus-circle"></i> Registreeri uus treening
+                                <a class="btn btn-outline-success" href="{{ url_for('trainer_sessions') }}">
+                                    <i class="bi bi-clipboard2-check"></i> Minu treeningukorrad
                                 </a>
                             {% endif %}
                             {% if 'JUHATAJA' in user.roles %}
-                                <a href="/manager/report" class="btn btn-outline-info">
-                                    <i class="bi bi-graph-up"></i> Vaata koondaruannet
+                                <a class="btn btn-outline-dark" href="{{ url_for('manager_sessions') }}">
+                                    <i class="bi bi-kanban"></i> Juhataja töölaud
                                 </a>
-                            {% endif %}
-                            {% if user.role != 'tootaja' %}
-                                <a href="/trainings" class="btn btn-outline-success">
-                                    <i class="bi bi-calendar-check"></i> Vaata aktiivseid treeninguid
+                                <a class="btn btn-outline-info" href="{{ url_for('manager_report') }}">
+                                    <i class="bi bi-bar-chart"></i> Täituvuse aruanne
                                 </a>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-6">
+            <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-info-circle"></i> Teave
-                    </div>
+                    <div class="card-header">Mida prototüüp näitab?</div>
                     <div class="card-body">
-                        <h6 class="card-title">Jõusaali Infosüsteem</h6>
-                        <p class="card-text small text-muted mb-3">
-                            Treeningute funktsionaalne allsüsteem, mis võimaldab:
-                        </p>
-                        <ul class="small text-muted">
-                            <li>Treeningu tööandmete registreerimist ja muutmist</li>
-                            <li>Treeningu seisundite juhtimist</li>
-                            <li>Aktiivsete treeningute avalikku vaatamist</li>
-                            <li>Juhtimise koondaruande kuvamist</li>
+                        <ul class="mb-0">
+                            <li>Juhataja planeerib konkreetse treeningukorra ja avab registreerimise.</li>
+                            <li>Klient saab kinnitatud koha või satub ootejärjekorda.</li>
+                            <li>Kliendi tühistamine edendab vajadusel esimese ootel kliendi.</li>
+                            <li>Treener märgib osalemise kinnitatud registreeringutele.</li>
+                            <li>Kirjutavad töövood kutsuvad PostgreSQL funktsioone.</li>
                         </ul>
-                        <small class="text-muted">
-                            <strong>Projekt:</strong> Andmebaasid I, ITI0206<br>
-                            <strong>Autorid:</strong> Tristan Aik Sild, Gustav Tamkivi<br>
-                            <strong>Semester:</strong> 2026 kevad
-                        </small>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rakenduse info -->
-        <div class="row mt-4">
-            <div class="col">
-                <div class="alert alert-info" role="alert">
-                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Rakenduse omadused</h6>
-                    <ul class="mb-0 small">
-                        <li><strong>Backend:</strong> Python Flask</li>
-                        <li><strong>Andmebaas:</strong> PostgreSQL</li>
-                        <li><strong>Frontend:</strong> Bootstrap 5, HTML/CSS/JavaScript</li>
-                        <li><strong>Autentimine:</strong> Sessioon ja paroolide räsimine</li>
-                        <li><strong>Rollid:</strong> Treener, Juhataja, Klient, Uudistaja</li>
-                    </ul>
                 </div>
             </div>
         </div>
     {% endif %}
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Laadige statistika AJAX-iga
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/api/stats')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Statistika:', data);
-                // Saate värskendada statistikat kui vaja
-            })
-            .catch(error => console.error('Viga:', error));
-    });
-</script>
 {% endblock %}

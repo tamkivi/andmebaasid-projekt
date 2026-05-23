@@ -1,25 +1,30 @@
-# Jõusaali infosüsteemi treeningute funktsionaalne allsüsteem
+# Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem
 
-See hoidla sisaldab ITI0206 andmebaaside projekti lõppartefakte ja nende taastootmiseks vajalikke lähtefaile.
+See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt ei käsitle enam treeningut kui töövihiku laadset kirjelduskaarti. Põhiobjekt on konkreetne `treeningukord` koos ruumi, treeneri, registreeringute, ootejärjekorra ja osalemisega.
 
 ## Lõppartefaktid
 
+Build toodab neli esitatavat faili kataloogi `submission_files/`:
+
+- `submission_files/dokument.docx`
+- `submission_files/skript.sql`
+- `submission_files/mudelid.eap`
+- `submission_files/rakendus.zip`
+
+Samad juurartefaktid on:
+
 - `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx`
 - `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap`
-- PostgreSQL DDL skript `jousaali_skript.sql`, mis genereeritakse lähtefailist `tools/sql_ddl.py`
-- rakenduse/prototüübi failid kataloogis `rakendus/`
+- `jousaali_skript.sql`
 
-## Juhendmaterjalid
-
-Kursuse juhendid ja näidisdokumendid asuvad kataloogis `instruction_guides/`. Need on hoidlasse lisatud tahtlikult, sest lõppdokumendi struktuuri ja kontrollreegleid võrreldakse nende materjalidega.
-
-## Taastootmine puhtast kloonist
+## Taastootmine
 
 Eeldused:
 
 - Java JDK koos käsuga `javac`
 - Python 3 koos mooduliga `venv`
-- internetiühendus esimesel käivitusel Java ja Python sõltuvuste allalaadimiseks
+- Mermaid CLI käsuna `mmdc` või kättesaadav `npx`
+- internetiühendus esimesel käivitusel Java, Python ja vajadusel Mermaid sõltuvuste allalaadimiseks
 
 macOS/Linux:
 
@@ -33,26 +38,14 @@ Windows:
 build_all.bat
 ```
 
-Build teeb järgmised sammud:
+Buildi järjekord:
 
-1. Loob vajaduse korral `.venv` virtuaalkeskkonna ja paigaldab `requirements.txt` sõltuvused.
-2. Laadib vajaduse korral `tools/` alla Jackcessi Java teegid.
-3. Kopeerib jälgitava Jackcessiga kirjutatava EAP lähtefaili `preset_files/EA_converted_source.eap` tööfailiks. Algne kursuse EA mall `preset_files/EA_mall_AB_projekt_Eeltaidetud_2026.eap` on jäetud võrdlusmaterjaliks.
-4. Rakendab EAP mudelile nime-, sisu- ja kvaliteediparandused.
-5. Genereerib DOCX dokumendi päris Wordi pealkirjade, tabelite, piltide ja pealdistega.
-6. Genereerib PostgreSQL DDL skripti `jousaali_skript.sql`.
-7. Värskendab `submission_files/` kataloogi esitusfailid: `dokument.docx`, `mudelid.eap`, `skript.sql` ja `rakendus.zip`.
-
-## Esitamiseks vajalikud failid
-
-Maurus/e-õppe keskkonna esitusvormi jaoks kasuta `submission_files/` kataloogis olevaid faile järgmiselt:
-
-- dokument: `submission_files/dokument.docx`
-- mudelid: `submission_files/mudelid.eap`
-- rakendus: `submission_files/rakendus.zip`
-- skript: `submission_files/skript.sql`
-
-`submission_files/` sisu taastoodetakse buildi käigus. Kui muudad lähtefaile, käivita enne esitamist uuesti `./build_all.sh` või `build_all.bat`, et esitusfailid ei jääks aegunuks.
+1. valmistab Python sõltuvused ette;
+2. renderdab `diagrams/*.mmd` Mermaid diagrammid PNG-failideks;
+3. uuendab EAP mudeli Jackcessi tööriistadega;
+4. genereerib DOCX aruande;
+5. genereerib PostgreSQL skripti lähtefailist `tools/sql_ddl.py`;
+6. värskendab `submission_files/` kataloogi ja pakib Flaski rakenduse.
 
 ## Kontroll
 
@@ -62,32 +55,44 @@ Pärast buildi:
 .venv/bin/python tools/validate_project.py
 ```
 
-Kui kasutad eraldi Pythonit, peab selles olema paigaldatud `python-docx` ja `Pillow`.
-
-SQL DDL on PostgreSQL süntaksiga. Kui kohalik PostgreSQL on olemas, saab DDL-i eraldi kontrollida näiteks nii:
+Valikuline live SQL kontroll disposable PostgreSQL andmebaasis:
 
 ```bash
-.venv/bin/python - <<'PY' > /tmp/jousaali_schema.sql
-from tools.sql_ddl import SQL_DDL
-print(SQL_DDL)
-PY
-createdb jousaali_ddl_check
-psql -v ON_ERROR_STOP=1 -d jousaali_ddl_check -f /tmp/jousaali_schema.sql
-dropdb jousaali_ddl_check
+createdb jousaali_live_check
+RUN_LIVE_SQL_TESTS=1 LIVE_SQL_DSN="dbname=jousaali_live_check" .venv/bin/python tools/validate_project.py
+dropdb jousaali_live_check
 ```
 
-## Sparx Enterprise Architecti visuaalne lõppkontroll
+Validaator kontrollib uue mudeli tabeleid, funktsioone, triggereid, vaateid, Mermaid diagramme, DOCX sisu, EAP sisu, rakenduse funktsioonikutseid ja esituspaketi hügieeni.
 
-Enne esitamist ava `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap` Sparx Enterprise Architectis ja kontrolli käsitsi:
+## Rakenduse demo
 
-- Package tree avaneb korrektselt ning peamised paketid on nähtavad.
-- Kõik oodatud diagrammid on olemas ja avanevad ilma veateadeteta.
-- Kasutusjuhtude diagrammil on õiged tegutsejad: Treener, Juhataja, Klient, Uudistaja, Klassifikaatorite haldur ja Töötajate haldur.
-- Kasutusjuhtude seosed on visuaalselt loogilised ning ei ole alles põhjendamata `extend` seoseid.
-- Klasside ja olemite diagrammid on loetavad.
-- Seisundi- ja tegevusdiagrammid ei ole tühjad.
-- Füüsilise disaini klassid vastavad SQL tabelitele.
-- Diagrammidel ja märkustes ei ole nähtavaid kohahoidjaid nagu `<Siia sündmus>`, `<täienda>`, `OP..`, `X` või `Y`.
-- Ei ole visuaalselt dubleerivaid tegutsejaid, klasse ega ühendusi.
-- Kasutusjuhtude notes/descriptions väljad on sisukad.
-- Diagrammide elemendid ei kattu ega ole lõuendi servast ära lõigatud.
+Rakendus on kataloogis `rakendus/`. Pärast PostgreSQL andmebaasi loomist impordi:
+
+```bash
+psql -v ON_ERROR_STOP=1 -d jousaali -f submission_files/skript.sql
+```
+
+Seejärel seadista `rakendus/.env` ning käivita:
+
+```bash
+cd rakendus
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+Vaikimisi töötab prototüüp aadressil `http://127.0.0.1:5001`.
+
+Demo kasutajad:
+
+- juhataja: `juhataja@jousaal.ee` / `juhataja123`
+- treener: `treener@jousaal.ee` / `treener123`
+- teine treener: `treener2@jousaal.ee` / `treener123`
+- klient: `klient@jousaal.ee` / `klient123`
+- lisakliendid: `klient2@jousaal.ee`, `klient3@jousaal.ee`, `klient4@jousaal.ee` / `klient123`
+
+## Kaitsmise põhisõnum
+
+Projekt ei ole enam vana `treening` kaardi CRUD. Andmebaas kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, registreerimise ja tühistamise tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist. Flaski tavapärased kirjutavad töövood kutsuvad PostgreSQL funktsioone ning loevad rollipõhiseid vaateid.

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Ajakava - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Avatud rühmatreeningute ajakava</h1>
+            <p class="text-muted mb-0">Registreerimine toimub andmebaasi funktsiooni kaudu ja täitumisel tekib ootejärjekord.</p>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Aeg</th>
+                        <th>Treening</th>
+                        <th>Treener ja ruum</th>
+                        <th>Kohad</th>
+                        <th>Minu seis</th>
+                        <th class="text-end">Tegevus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sessions %}
+                        {% set own = registrations.get(row.treeningukorra_kood) if registrations else none %}
+                        <tr>
+                            <td>
+                                <strong>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</strong><br>
+                                <small class="text-muted">kuni {{ row.lopu_aeg.strftime('%H:%M') if row.lopu_aeg else '' }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ row.treeninguliik }}</strong><br>
+                                <span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span>
+                            </td>
+                            <td>
+                                {{ row.treener_nimi }}<br>
+                                <small class="text-muted">{{ row.ruum }} · mahutavus {{ row.ruumi_mahutavus }}</small>
+                            </td>
+                            <td>
+                                {{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} kinnitatud<br>
+                                <small class="text-muted">{{ row.vabu_kohti }} vaba · {{ row.ootejarjekorra_arv }} ootel</small>
+                            </td>
+                            <td>
+                                {% if own %}
+                                    <span class="badge badge-{{ own.registreeringu_seisundi_kood }}">{{ registration_status_label(own.registreeringu_seisundi_kood) }}</span>
+                                    {% if own.ootejarjekorra_nr %}
+                                        <br><small class="text-muted">Ootejärjekorras #{{ own.ootejarjekorra_nr }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Puudub</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if user.role == 'klient' and not own %}
+                                    <form method="post" action="{{ url_for('client_register_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                        <button class="btn btn-sm btn-success" type="submit">
+                                            <i class="bi bi-check2-circle"></i> Registreeru
+                                        </button>
+                                    </form>
+                                {% elif user.role != 'klient' %}
+                                    <span class="text-muted small">Kliendi toiming</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">Avatud tulevasi treeningukordi ei ole.</div>
+    {% endif %}
+</div>
+{% endblock %}

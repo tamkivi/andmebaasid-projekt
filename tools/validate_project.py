@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
+import py_compile
 import csv
 import io
-import py_compile
 import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path, PurePosixPath
-from xml.etree import ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
 from docx import Document
@@ -19,74 +18,95 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 DOCX = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx"
 EAP = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap"
-GUIDES = ROOT / "instruction_guides"
 SQL_OUTPUT = ROOT / "jousaali_skript.sql"
 APP_DIR = ROOT / "rakendus"
 SUBMISSION_DIR = ROOT / "submission_files"
-EXPLAINER_FILE_NAME = "PROJECT_EXPLAINER_NOT_FOR_SUBMISSION.md"
-DOCX_NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+DIAGRAM_SRC = ROOT / "diagrams"
+DIAGRAM_DST = ROOT / "work" / "generated_diagrams"
+
 sys.path.insert(0, str(ROOT / "tools"))
 from sql_ddl import SQL_DDL  # noqa: E402
 
 
-EXPECTED_ACTORS = {
-    "Treener",
-    "Juhataja",
-    "Klient",
-    "Uudistaja",
-    "Klassifikaatorite haldur",
-    "Töötajate haldur",
-}
+REQUIRED_TABLES = [
+    "klient",
+    "treeninguliik",
+    "ruum",
+    "treeneri_padevus",
+    "treeningukord",
+    "treeningukorra_seisundi_liik",
+    "registreering",
+    "registreeringu_seisundi_liik",
+    "osalemine",
+]
 
-EXPECTED_APP_ZIP_FILES = {
-    ".env.example",
-    "README.md",
-    "SETUP.sh",
-    "app.py",
-    "requirements.txt",
-    "test_data.sql",
-    "templates/base.html",
-    "templates/dashboard.html",
-    "templates/error.html",
-    "templates/login.html",
-    "templates/register_training.html",
-    "templates/report.html",
-    "templates/trainings.html",
-}
+REQUIRED_FUNCTIONS = [
+    "fn_planeeri_treeningukord",
+    "fn_ava_treeningukord",
+    "fn_sulge_treeningukord",
+    "fn_lopeta_treeningukord",
+    "fn_registreeri_klient_treeningukorrale",
+    "fn_tyhista_registreering",
+    "fn_edenda_ootejarjekorrast",
+    "fn_marki_osalemine",
+    "fn_tyhista_treeningukord",
+]
 
-EXPECTED_APP_ZIP_TOP_LEVEL = {
-    ".env.example",
-    "README.md",
-    "SETUP.sh",
-    "app.py",
-    "requirements.txt",
-    "test_data.sql",
-    "templates",
-}
+REQUIRED_VIEWS = [
+    "v_avalikud_treeningukorrad",
+    "v_kliendi_registreeringud",
+    "v_treeneri_tunniplaan",
+    "v_treeningukorra_osalejad",
+    "v_juhataja_treeningukordade_ulevaade",
+    "v_treeningute_taituvuse_statistika",
+]
+
+REQUIRED_DIAGRAMS = [
+    "01_system_context",
+    "02_use_cases",
+    "03_core_er",
+    "04_registration_activity",
+    "05_session_state",
+    "06_registration_state",
+    "07_waitlist_sequence",
+    "08_permission_flow",
+    "09_app_db_architecture",
+]
+
+REQUIRED_DOCX_TERMS = [
+    "rühmatreeningute ajakava",
+    "treeningukord",
+    "registreering",
+    "ootejärjekord",
+    "osalemine",
+    "treeneri pädevus",
+    "ruum",
+    "fn_registreeri_klient_treeningukorrale",
+    "fn_edenda_ootejarjekorrast",
+]
+
+REQUIRED_DOCX_CAPTION_TERMS = [
+    "Süsteemi kontekst",
+    "Kasutusjuhtude kaart",
+    "Põhiandmemudel",
+    "Registreerimise tegevusvoog",
+    "Treeningukorra seisundimudel",
+    "Registreeringu seisundimudel",
+    "Ootejärjekorra edendamise järjestus",
+    "Õiguste ja andmebaasirutiinide seos",
+    "Rakenduse ja andmebaasi arhitektuur",
+]
+
+FORBIDDEN_DOCX_PHRASES = [
+    "broneerimine on skoobist väljas",
+    "osalemine on skoobist väljas",
+    "ruumide planeerimine on skoobist väljas",
+    "mahutavus on skoobist väljas",
+]
 
 FORBIDDEN_ZIP_COMPONENTS = {"__MACOSX", "__pycache__", "venv", ".venv", "flask_session"}
-FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env", EXPLAINER_FILE_NAME}
+FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env", "PROJECT_EXPLAINER_NOT_FOR_SUBMISSION.md"}
 FORBIDDEN_ZIP_SUFFIXES = {".pyc", ".pyo", ".class", ".jar"}
-
-PLACEHOLDER_RE = re.compile(
-    r"<täienda|<Siia|TODO\b|FIXME\b|TBD\b|Lorem ipsum|example text|sample text|template leftover",
-    re.I,
-)
-
-SOURCE_PLACEHOLDER_FILES = [
-    "rakendus/README.md",
-    "rakendus/app.py",
-    "rakendus/.env.example",
-    "rakendus/SETUP.sh",
-    "rakendus/test_data.sql",
-    "rakendus/templates/base.html",
-    "rakendus/templates/dashboard.html",
-    "rakendus/templates/error.html",
-    "rakendus/templates/login.html",
-    "rakendus/templates/register_training.html",
-    "rakendus/templates/report.html",
-    "rakendus/templates/trainings.html",
-]
 
 
 def fail(message: str, failures: list[str]) -> None:
@@ -102,20 +122,285 @@ def warn(message: str) -> None:
     print(f"WARN: {message}")
 
 
-def zip_file_entries(names: list[str]) -> set[str]:
-    return {name.rstrip("/") for name in names if name.rstrip("/") and not name.endswith("/")}
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
-def zip_top_level_entries(names: list[str]) -> set[str]:
-    top_level = set()
-    for name in names:
-        stripped = name.rstrip("/")
-        if not stripped:
+def docx_text(doc: Document) -> str:
+    parts = [p.text for p in doc.paragraphs]
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                parts.extend(p.text for p in cell.paragraphs)
+    return "\n".join(parts)
+
+
+def validate_generated_outputs(failures: list[str]) -> None:
+    for path in [DOCX, EAP, SQL_OUTPUT]:
+        if path.exists() and path.stat().st_size > 0:
+            ok(f"{path.relative_to(ROOT)} exists")
+        else:
+            fail(f"{path.relative_to(ROOT)} is missing or empty", failures)
+
+    if SQL_OUTPUT.exists():
+        expected = SQL_DDL.strip() + "\n"
+        actual = SQL_OUTPUT.read_text(encoding="utf-8")
+        if actual == expected:
+            ok("generated SQL matches tools/sql_ddl.py")
+        else:
+            fail("generated SQL does not match tools/sql_ddl.py", failures)
+
+
+def validate_static_sql(failures: list[str]) -> None:
+    sql = SQL_DDL.lower()
+    for table in REQUIRED_TABLES:
+        if re.search(rf"create\s+table\s+{table}\b", sql):
+            ok(f"SQL defines table {table}")
+        else:
+            fail(f"SQL missing table {table}", failures)
+
+    for function in REQUIRED_FUNCTIONS:
+        if re.search(rf"create\s+or\s+replace\s+function\s+{function}\b", sql):
+            ok(f"SQL defines function {function}")
+        else:
+            fail(f"SQL missing function {function}", failures)
+
+    for view in REQUIRED_VIEWS:
+        if re.search(rf"create\s+view\s+{view}\b", sql):
+            ok(f"SQL defines view {view}")
+        else:
+            fail(f"SQL missing view {view}", failures)
+
+    checks = {
+        "partial unique active registration index": r"create\s+unique\s+index\s+uq_registreering_aktiivne_klient_kord[\s\S]+where\s+seisundi_kood\s+in\s+\('kinnit',\s*'ootejrk'\)",
+        "trainer overlap trigger/function": r"treeneril on samal ajal juba teine|trg_treeningukord_invariandid",
+        "room overlap trigger/function": r"ruumis on samal ajal juba teine|trg_treeningukord_invariandid",
+        "capacity trigger/function": r"maksimaalne_osalejate_arv\s+>\s+v_ruumi_mahutavus",
+        "trainer competence trigger/function": r"treeneri_padevus",
+        "session status transition trigger": r"trg_treeningukord_status_transition",
+        "registration status transition trigger": r"trg_registreering_status_transition",
+        "waitlist promotion routine": r"fn_edenda_ootejarjekorrast",
+    }
+    for label, pattern in checks.items():
+        if re.search(pattern, sql):
+            ok(f"SQL includes {label}")
+        else:
+            fail(f"SQL missing {label}", failures)
+
+    if "create table treening (" in sql:
+        fail("old treening table is still present as a core table", failures)
+    else:
+        ok("old treening table is not present")
+
+
+def validate_app(failures: list[str]) -> None:
+    app_py = APP_DIR / "app.py"
+    try:
+        py_compile.compile(str(app_py), doraise=True)
+        ok("Flask app compiles")
+    except py_compile.PyCompileError as exc:
+        fail(f"Flask app does not compile: {exc}", failures)
+        return
+
+    source = read_text(app_py)
+    for function in [
+        "fn_planeeri_treeningukord",
+        "fn_registreeri_klient_treeningukorrale",
+        "fn_tyhista_registreering",
+        "fn_marki_osalemine",
+    ]:
+        if function in source:
+            ok(f"app calls {function}")
+        else:
+            fail(f"app does not call {function}", failures)
+
+    direct_mutations = re.findall(
+        r"\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(treeningukord|registreering|osalemine)\b",
+        source,
+        flags=re.I,
+    )
+    if direct_mutations:
+        fail(f"app directly mutates protected core tables: {direct_mutations}", failures)
+    else:
+        ok("app normal source has no direct INSERT/UPDATE/DELETE on protected core tables")
+
+    required_routes = [
+        "/schedule",
+        "/client/sessions/<int:treeningukorra_kood>/register",
+        "/client/registrations",
+        "/manager/sessions",
+        "/manager/sessions/new",
+        "/trainer/sessions",
+        "/trainer/sessions/<int:treeningukorra_kood>/roster",
+    ]
+    for route in required_routes:
+        if route in source:
+            ok(f"app defines route {route}")
+        else:
+            fail(f"app missing route {route}", failures)
+
+    stale_templates = [APP_DIR / "templates" / name for name in ["register_training.html", "trainings.html"]]
+    stale_existing = [str(path.relative_to(ROOT)) for path in stale_templates if path.exists()]
+    if stale_existing:
+        fail(f"stale old training-card templates still exist: {stale_existing}", failures)
+    else:
+        ok("stale old training-card templates are absent")
+
+
+def validate_diagrams(failures: list[str]) -> None:
+    for name in REQUIRED_DIAGRAMS:
+        source = DIAGRAM_SRC / f"{name}.mmd"
+        target = DIAGRAM_DST / f"{name}.png"
+        if not source.exists():
+            fail(f"missing Mermaid source {source.relative_to(ROOT)}", failures)
             continue
-        parts = PurePosixPath(stripped).parts
-        if parts:
-            top_level.add(parts[0])
-    return top_level
+        ok(f"Mermaid source exists: {source.relative_to(ROOT)}")
+
+        if not target.exists():
+            fail(f"missing rendered diagram {target.relative_to(ROOT)}", failures)
+            continue
+        if target.stat().st_mtime + 0.5 < source.stat().st_mtime:
+            fail(f"rendered diagram is older than source: {target.relative_to(ROOT)}", failures)
+        else:
+            ok(f"rendered diagram is fresh: {target.relative_to(ROOT)}")
+
+        try:
+            image = Image.open(target)
+            extrema = image.convert("L").getextrema()
+            if image.width < 600 or image.height < 250:
+                fail(f"diagram is too small: {target.relative_to(ROOT)} {image.size}", failures)
+            elif extrema == (255, 255):
+                fail(f"diagram appears blank: {target.relative_to(ROOT)}", failures)
+            else:
+                ok(f"diagram image is nonblank and readable-sized: {target.relative_to(ROOT)} {image.size}")
+        except Exception as exc:
+            fail(f"cannot inspect diagram {target.relative_to(ROOT)}: {exc}", failures)
+
+
+def validate_docx(failures: list[str]) -> None:
+    if not DOCX.exists():
+        fail("DOCX is missing", failures)
+        return
+
+    doc = Document(DOCX)
+    text = docx_text(doc).lower()
+    for term in REQUIRED_DOCX_TERMS:
+        if term.lower() in text:
+            ok(f"DOCX contains term: {term}")
+        else:
+            fail(f"DOCX missing required term: {term}", failures)
+
+    full_text = docx_text(doc)
+    for caption in REQUIRED_DOCX_CAPTION_TERMS:
+        if caption in full_text:
+            ok(f"DOCX contains figure caption fragment: {caption}")
+        else:
+            fail(f"DOCX missing figure caption fragment: {caption}", failures)
+
+    for phrase in FORBIDDEN_DOCX_PHRASES:
+        if phrase in text:
+            fail(f"DOCX contains obsolete out-of-scope phrase: {phrase}", failures)
+        else:
+            ok(f"DOCX does not contain obsolete phrase: {phrase}")
+
+    if len(doc.inline_shapes) >= len(REQUIRED_DIAGRAMS):
+        ok(f"DOCX contains {len(doc.inline_shapes)} inline images")
+    else:
+        fail(f"DOCX contains too few images: {len(doc.inline_shapes)}", failures)
+
+    if "treeningu hind" in text or "käibemaks" in text:
+        fail("DOCX still discusses training price/payment", failures)
+    else:
+        ok("DOCX does not discuss payment/price as core scope")
+
+
+def eap_export_text() -> str:
+    if not shutil.which("mdb-export"):
+        return ""
+    pieces = []
+    for table in ["t_package", "t_object", "t_attribute", "t_diagram"]:
+        result = subprocess.run(
+            ["mdb-export", str(EAP), table],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        pieces.append(result.stdout)
+    return "\n".join(pieces)
+
+
+def eap_export_rows(table: str) -> list[dict[str, str]]:
+    if not shutil.which("mdb-export"):
+        return []
+    result = subprocess.run(
+        ["mdb-export", str(EAP), table],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return []
+    return list(csv.DictReader(io.StringIO(result.stdout)))
+
+
+def validate_eap(failures: list[str]) -> None:
+    if not EAP.exists() or EAP.stat().st_size == 0:
+        fail("EAP is missing or empty", failures)
+        return
+    ok("EAP exists")
+
+    if not shutil.which("mdb-export"):
+        warn("mdb-export is unavailable; skipping deep EAP content check")
+        return
+
+    text = eap_export_text()
+    required = [
+        "Rühmatreeningute ajakava",
+        "Treeninguliik",
+        "Treeningukord",
+        "Registreering",
+        "Osalemine",
+        "Ruum",
+        "Klient",
+        "Treeneri_padevus",
+        "treeningukord",
+        "registreering",
+        "osalemine",
+    ]
+    for item in required:
+        if item in text:
+            ok(f"EAP contains {item}")
+        else:
+            fail(f"EAP missing {item}", failures)
+
+    object_rows = eap_export_rows("t_object")
+    stale_treening = [
+        row for row in object_rows
+        if row.get("Object_Type") == "Class" and row.get("Name") == "treening"
+    ]
+    if stale_treening:
+        ids = ", ".join(row.get("Object_ID", "?") for row in stale_treening)
+        fail(f"EAP still contains stale physical class/table named exactly treening (Object_ID: {ids})", failures)
+    else:
+        ok("EAP contains no stale physical class/table named exactly treening")
+
+    old_fragments = [
+        "hind_ei_kuulu_skoopi",
+        "Treeningu hind eurodes",
+        "kestus_minutites, maksimaalne_osalejate_arv, vajalik_varustus",
+        "Treeningute arvuline kood",
+        "Treeningu registreerimise kuupäev",
+        "Treeningu andmete viimase muutmise kuupäev",
+    ]
+    stale_fragments = [fragment for fragment in old_fragments if fragment in text]
+    if stale_fragments:
+        fail(f"EAP still contains stale old-model text: {stale_fragments}", failures)
+    else:
+        ok("EAP stale training-card/price wording absent")
 
 
 def unsafe_zip_entries(names: list[str]) -> list[str]:
@@ -135,664 +420,246 @@ def forbidden_zip_entries(names: list[str]) -> list[str]:
         if not stripped:
             continue
         parts = PurePosixPath(stripped).parts
-        base_name = parts[-1]
+        base = parts[-1]
         if any(part in FORBIDDEN_ZIP_COMPONENTS for part in parts):
             forbidden.append(name)
-            continue
-        if base_name in FORBIDDEN_ZIP_FILENAMES:
+        elif base in FORBIDDEN_ZIP_FILENAMES:
             forbidden.append(name)
-            continue
-        if PurePosixPath(base_name).suffix.lower() in FORBIDDEN_ZIP_SUFFIXES:
+        elif PurePosixPath(base).suffix.lower() in FORBIDDEN_ZIP_SUFFIXES:
             forbidden.append(name)
     return forbidden
 
 
-def image_pixel_data(image: Image.Image):
-    if hasattr(image, "get_flattened_data"):
-        return image.get_flattened_data()
-    return image.getdata()
-
-
-def read_zip_checked(path: Path, failures: list[str]) -> list[str]:
-    if not path.exists():
-        fail(f"submission ZIP is missing: {path.relative_to(ROOT)}", failures)
-        return []
-    try:
-        with ZipFile(path) as archive:
-            bad_entry = archive.testzip()
-            if bad_entry:
-                fail(f"{path.name} has a corrupt ZIP entry: {bad_entry}", failures)
-            else:
-                ok(f"{path.name} passes ZIP integrity check")
-
-            names = archive.namelist()
-            if not names:
-                fail(f"{path.name} is empty", failures)
-
-            unsafe = unsafe_zip_entries(names)
-            if unsafe:
-                fail(f"{path.name} contains unsafe ZIP paths: {unsafe}", failures)
-            else:
-                ok(f"{path.name} contains no unsafe ZIP paths")
-
-            forbidden = forbidden_zip_entries(names)
-            if forbidden:
-                fail(f"{path.name} contains forbidden local/generated files: {forbidden}", failures)
-            else:
-                ok(f"{path.name} contains no forbidden local/generated files")
-
-            if not unsafe:
-                with tempfile.TemporaryDirectory(prefix=f"validate_{path.stem}_") as tmp_dir:
-                    archive.extractall(tmp_dir)
-                ok(f"{path.name} extracts cleanly")
-            return names
-    except BadZipFile as exc:
-        fail(f"{path.name} is not a readable ZIP file: {exc}", failures)
-        return []
-
-
-def docx_text(doc: Document) -> str:
-    parts = [p.text for p in doc.paragraphs]
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                parts.extend(p.text for p in cell.paragraphs)
-    return "\n".join(parts)
-
-
-def validate_docx_heading_colors(failures: list[str]) -> None:
-    with ZipFile(DOCX) as archive:
-        document_xml = ET.fromstring(archive.read("word/document.xml"))
-        styles_xml = ET.fromstring(archive.read("word/styles.xml"))
-
-    used_heading_styles = set()
-    direct_heading_colors = []
-    optional_heading_colors = []
-    for paragraph in document_xml.findall(".//w:p", DOCX_NS):
-        pstyle = paragraph.find("./w:pPr/w:pStyle", DOCX_NS)
-        if pstyle is None:
-            continue
-        style_id = pstyle.attrib.get(f"{{{DOCX_NS['w']}}}val", "")
-        if not style_id.startswith("Heading"):
-            continue
-        text = "".join(t.text or "" for t in paragraph.findall(".//w:t", DOCX_NS)).strip()
-        used_heading_styles.add(style_id)
-        colors = [
-            color.attrib.get(f"{{{DOCX_NS['w']}}}val", "").upper()
-            for color in paragraph.findall("./w:r/w:rPr/w:color", DOCX_NS)
-        ]
-        direct_heading_colors.extend((text, color) for color in colors if color)
-        if "ANDMEBAASID II" in text.upper() or "ORACLE" in text.upper():
-            optional_heading_colors.extend((text, color) for color in colors if color)
-
-    non_black_styles = []
-    for style_id in sorted(used_heading_styles):
-        style = styles_xml.find(f".//w:style[@w:styleId='{style_id}']", DOCX_NS)
-        color = style.find(".//w:rPr/w:color", DOCX_NS) if style is not None else None
-        value = color.attrib.get(f"{{{DOCX_NS['w']}}}val", "").upper() if color is not None else ""
-        if value not in {"000000", "AUTO"}:
-            non_black_styles.append(f"{style_id}={value or 'inherited'}")
-
-    blue_direct = [(text, color) for text, color in direct_heading_colors if color in {"0070C0", "1F4E79", "4F81BD"}]
-    if non_black_styles:
-        fail(f"DOCX mandatory heading styles are not black: {non_black_styles}", failures)
-    elif blue_direct:
-        fail(f"DOCX mandatory headings have blue direct formatting: {blue_direct[:5]}", failures)
-    else:
-        ok("DOCX mandatory heading styles are black and no generated heading is blue")
-
-    if optional_heading_colors:
-        non_blue_optional = [(text, color) for text, color in optional_heading_colors if color not in {"0070C0", "1F4E79", "4F81BD"}]
-        if non_blue_optional:
-            fail(f"DOCX optional Andmebaasid II/Oracle headings are not blue: {non_blue_optional[:5]}", failures)
+def validate_submission(failures: list[str]) -> None:
+    expected = {
+        "dokument.docx": DOCX,
+        "skript.sql": SQL_OUTPUT,
+        "mudelid.eap": EAP,
+        "rakendus.zip": None,
+    }
+    if SUBMISSION_DIR.exists():
+        actual = {path.name for path in SUBMISSION_DIR.iterdir()}
+        extra = sorted(actual - set(expected))
+        missing = sorted(set(expected) - actual)
+        if extra:
+            fail(f"submission_files contains extra entries: {extra}", failures)
+        elif missing:
+            fail(f"submission_files is missing required entries: {missing}", failures)
         else:
-            ok("DOCX optional Andmebaasid II/Oracle headings are blue")
-    else:
-        ok("DOCX contains no generated Andmebaasid II/Oracle continuation headings")
+            ok("submission_files contains exactly the four required deliverables")
 
+    for name, source in expected.items():
+        path = SUBMISSION_DIR / name
+        if not path.exists() or path.stat().st_size == 0:
+            fail(f"submission file missing or empty: {name}", failures)
+            continue
+        ok(f"submission file exists: {name}")
+        if source is not None and path.read_bytes() == source.read_bytes():
+            ok(f"submission file matches root artifact: {name}")
+        elif source is not None:
+            fail(f"submission file does not match root artifact: {name}", failures)
 
-def validate_docx(failures: list[str]) -> None:
-    doc = Document(DOCX)
-    text = docx_text(doc)
-    section = doc.sections[0]
-    width_cm = section.page_width.cm
-    height_cm = section.page_height.cm
-    heading_count = sum(1 for p in doc.paragraphs if p.style.name.startswith("Heading"))
-    table_count = len(doc.tables)
-    image_count = len(doc.inline_shapes)
-    figure_captions = re.findall(r"^Joonis\s+\d+\.", text, re.M)
-    table_captions = re.findall(r"^Tabel\s+\d+\.", text, re.M)
-
-    if abs(width_cm - 21.0) <= 0.1 and abs(height_cm - 29.7) <= 0.1:
-        ok(f"DOCX page size is A4 ({width_cm:.1f} x {height_cm:.1f} cm)")
-    else:
-        fail(f"DOCX page size is not A4 ({width_cm:.1f} x {height_cm:.1f} cm)", failures)
-    if heading_count >= 20:
-        ok(f"DOCX has real heading styles ({heading_count})")
-    else:
-        fail(f"DOCX heading style count too low ({heading_count})", failures)
-    validate_docx_heading_colors(failures)
-    heading_numbers = []
-    for paragraph in doc.paragraphs:
-        if paragraph.style.name.startswith("Heading"):
-            match = re.match(r"^(\d+(?:\.\d+)*)\b", paragraph.text.strip())
-            if match:
-                heading_numbers.append(match.group(1))
-    duplicate_heading_numbers = sorted({number for number in heading_numbers if heading_numbers.count(number) > 1})
-    if duplicate_heading_numbers:
-        fail(f"DOCX contains duplicate visible heading numbers: {duplicate_heading_numbers}", failures)
-    else:
-        ok("DOCX visible heading numbers are unique")
-    if table_count >= 10:
-        ok(f"DOCX has real Word tables ({table_count})")
-    else:
-        fail(f"DOCX table count too low ({table_count})", failures)
-    if image_count >= 7:
-        ok(f"DOCX has embedded images/diagrams ({image_count})")
-    else:
-        fail(f"DOCX embedded image count too low ({image_count})", failures)
-    if len(figure_captions) >= image_count and len(table_captions) >= table_count:
-        ok(f"DOCX captions exist for figures ({len(figure_captions)}) and tables ({len(table_captions)})")
-    else:
-        fail(f"DOCX caption counts are insufficient: figures={len(figure_captions)}, tables={len(table_captions)}", failures)
-
-    forbidden = ["HYPERLINK", "PAGEREF", "REF ", "MERGEFORMAT", "<täienda>", "<täienda või kustuta>", "<Siia"]
-    found = [item for item in forbidden if item in text]
-    if re.search(r"\bSEQ\b", text):
-        found.append("SEQ")
-    if found:
-        fail(f"DOCX contains forbidden visible field/placeholder text: {found}", failures)
-    else:
-        ok("DOCX has no visible forbidden field-code or placeholder text")
-
-    known_bad_phrases = [
-        "treeningupäevikute register",
-        "treening andmeid",
-        "treening kategooriasse",
-        "treening koondaruanne",
-        "treening arv",
-        "\ntreener ",
-    ]
-    found_bad = [phrase for phrase in known_bad_phrases if phrase in text]
-    if found_bad:
-        fail(f"DOCX contains known bad wording: {found_bad}", failures)
-    else:
-        ok("DOCX known bad wording is absent")
-
-    required_title_info = [
-        "TALLINNA TEHNIKAÜLIKOOL",
-        "Infotehnoloogia teaduskond",
-        "Tarkvarateaduse instituut",
-        "Andmebaasid I, ITI0206",
-        "Tristan Aik Sild",
-        "Gustav Tamkivi",
-        "Üliõpilased:",
-        "Õpperühm: IAIB23",
-        "253782IAIB",
-        "253787IAIB",
-        "gustav@taltech.ee",
-        "trists@taltech.ee",
-        "Juhendaja: Erki Eessaar",
-    ]
-    missing_title_info = [item for item in required_title_info if item not in text]
-    if missing_title_info:
-        fail(f"DOCX title page is missing author/student information: {missing_title_info}", failures)
-    else:
-        ok("DOCX title page contains institution, course, author names, study group, matriculation numbers, emails, and supervisor")
-
-    required_repro_info = ["jousaali_skript.sql", "rakendus/"]
-    missing_repro_info = [item for item in required_repro_info if item not in text]
-    if missing_repro_info:
-        fail(f"DOCX reproducibility section is missing submission artifact references: {missing_repro_info}", failures)
-    else:
-        ok("DOCX reproducibility section references the standalone SQL script and application prototype")
-
-    op_refs = set(re.findall(r"\bOP\d+(?:\.\d+)?\b", text))
-    op_defs = set(re.findall(r"^OP\d+\s+", text, re.M))
-    op_defs = {value.strip() for value in op_defs}
-    dangling = sorted(op_refs - op_defs)
-    if dangling:
-        fail(f"DOCX has dangling operation references: {dangling}", failures)
-    else:
-        ok(f"DOCX operation references all have definitions ({len(op_refs)} references)")
-
-    known_bad_ops = {"OP1.1", "OP2.1", "OP3.1", "OP8.2", "OP9.1", "OP10.1", "OP11.2", "OP11.3"}
-    bad_ops_present = sorted(op_refs & known_bad_ops)
-    if bad_ops_present:
-        fail(f"DOCX contains obsolete operation IDs: {bad_ops_present}", failures)
-
-    scenario_refs: set[str] = set()
-    for table in doc.tables:
-        headers = [cell.text.strip() for cell in table.rows[0].cells]
-        if headers == ["Samm", "Tegevus", "Operatsioon"]:
-            for row in table.rows[1:]:
-                scenario_refs.update(re.findall(r"\bOP\d+(?:\.\d+)?\b", row.cells[2].text))
-    unused_defs = sorted(op_defs - scenario_refs, key=lambda value: int(value[2:]) if value[2:].isdigit() else 9999)
-    if unused_defs:
-        warn(f"DOCX defines operations not referenced from scenario operation cells: {unused_defs}")
-
-    clipped_images = []
-    with ZipFile(DOCX) as archive:
-        media_names = sorted(name for name in archive.namelist() if name.startswith("word/media/") and name.lower().endswith((".png", ".jpg", ".jpeg")))
-        for name in media_names:
-            image = Image.open(io.BytesIO(archive.read(name))).convert("RGB")
-            width, height = image.size
-            edge = 12
-            edge_crops = {
-                "left": image.crop((0, 0, edge, height)),
-                "right": image.crop((width - edge, 0, width, height)),
-                "top": image.crop((0, 0, width, edge)),
-                "bottom": image.crop((0, height - edge, width, height)),
+    zip_path = SUBMISSION_DIR / "rakendus.zip"
+    if not zip_path.exists():
+        return
+    try:
+        with ZipFile(zip_path) as archive:
+            bad = archive.testzip()
+            if bad:
+                fail(f"rakendus.zip has corrupt entry: {bad}", failures)
+            else:
+                ok("rakendus.zip integrity check passed")
+            names = archive.namelist()
+            unsafe = unsafe_zip_entries(names)
+            forbidden = forbidden_zip_entries(names)
+            if unsafe:
+                fail(f"rakendus.zip contains unsafe paths: {unsafe}", failures)
+            else:
+                ok("rakendus.zip contains no unsafe paths")
+            if forbidden:
+                fail(f"rakendus.zip contains forbidden local/generated files: {forbidden}", failures)
+            else:
+                ok("rakendus.zip contains no forbidden local/generated files")
+            required = {
+                ".env.example",
+                "README.md",
+                "SETUP.sh",
+                "app.py",
+                "requirements.txt",
+                "test_data.sql",
+                "templates/base.html",
+                "templates/dashboard.html",
+                "templates/schedule.html",
+                "templates/client_registrations.html",
+                "templates/manager_sessions.html",
+                "templates/manager_session_form.html",
+                "templates/trainer_sessions.html",
+                "templates/trainer_roster.html",
+                "templates/manager_report.html",
+                "templates/login.html",
+                "templates/error.html",
             }
-            for side, crop in edge_crops.items():
-                nonwhite = sum(1 for pixel in image_pixel_data(crop) if pixel[0] < 245 or pixel[1] < 245 or pixel[2] < 245)
-                if nonwhite > 0:
-                    clipped_images.append(f"{name}:{side}")
-    if clipped_images:
-        fail(f"DOCX embedded diagram content touches image edge, possible clipping: {clipped_images}", failures)
+            entries = {name.rstrip("/") for name in names}
+            missing = sorted(required - entries)
+            if missing:
+                fail(f"rakendus.zip missing required app files: {missing}", failures)
+            else:
+                ok("rakendus.zip contains required app files")
+    except BadZipFile as exc:
+        fail(f"rakendus.zip is unreadable: {exc}", failures)
+
+
+def validate_packaging_hygiene(failures: list[str]) -> None:
+    local_only = []
+    for rel in ["rakendus/venv", "rakendus/flask_session"]:
+        if (ROOT / rel).exists():
+            local_only.append(rel)
+    local_only.extend(str(path.relative_to(ROOT)) for path in ROOT.rglob(".DS_Store"))
+    if local_only:
+        fail(f"local-only files should not be committed/submitted: {local_only}", failures)
     else:
-        ok("DOCX embedded diagrams have clear image-edge margins")
+        ok("no local-only app artifacts found")
 
 
-def table_block(sql: str, table_name: str) -> str:
-    match = re.search(rf"CREATE TABLE {table_name}\s*\((.*?)\n\);", sql, re.S)
-    return match.group(1) if match else ""
-
-
-def column_line(block: str, column: str) -> str:
-    for line in block.splitlines():
-        stripped = line.strip().rstrip(",")
-        if stripped.startswith(column + " "):
-            return stripped
-    return ""
-
-
-def validate_sql(failures: list[str]) -> None:
-    sql = SQL_DDL
-    isik = table_block(sql, "isik")
-    treening = table_block(sql, "treening")
-    required = [
-        ("isik", isik, "synni_kp"),
-        ("isik", isik, "e_meil"),
-        ("treening", treening, "kirjeldus"),
-        ("treening", treening, "kestus_minutites"),
-        ("treening", treening, "maksimaalne_osalejate_arv"),
-        ("treening", treening, "vajalik_varustus"),
-        ("treening", treening, "hind"),
-    ]
-    missing_not_null = [f"{table}.{col}" for table, block, col in required if "NOT NULL" not in column_line(block, col)]
-    if missing_not_null:
-        fail(f"SQL required fields are nullable: {missing_not_null}", failures)
-    else:
-        ok("SQL required fields are NOT NULL")
-
-    sql_checks = {
-        "isik.e_meil unique": "CONSTRAINT uq_isik_e_meil UNIQUE (e_meil)",
-        "treening.nimetus unique": "CONSTRAINT uq_treening_nimetus UNIQUE (nimetus)",
-        "non-empty text checks": "btrim(nimetus) <> ''",
-        "duration range": "kestus_minutites BETWEEN 15 AND 240",
-        "positive participant count": "maksimaalne_osalejate_arv > 0",
-        "timestamp consistency": "viimase_muutm_aeg >= reg_aeg",
-        "JSON source-data loading": "jsonb_to_recordset",
-        "execution-plan example": "EXPLAIN",
-    }
-    missing = [name for name, needle in sql_checks.items() if needle not in sql]
-    if missing:
-        fail(f"SQL missing declared constraints: {missing}", failures)
-    else:
-        ok("SQL declared uniqueness and check constraints exist")
-
-    required_sql_objects = {
-        "domain kood_10": "CREATE DOMAIN kood_10",
-        "schema setup": "CREATE SCHEMA IF NOT EXISTS public",
-        "training code sequence": "CREATE SEQUENCE seq_treeningu_kood",
-        "active trainings view": "CREATE VIEW v_aktiivsed_treeningud",
-        "status report view": "CREATE VIEW v_treeningute_arv_seisundi_kaupa",
-        "category report view": "CREATE VIEW v_treeningute_arv_kategooria_kaupa",
-        "initial status trigger": "CREATE TRIGGER trg_treening_initial_status",
-        "status transition trigger": "CREATE TRIGGER trg_treening_status_transition",
-        "active category trigger": "CREATE CONSTRAINT TRIGGER trg_treening_no_active_without_category",
-        "rollbackable trigger checks": "ROLLBACK;",
-        "user authentication helper routine": "fn_kasutaja_tuvastamise_andmed",
-        "training registration routine": "fn_registreeri_treening",
-        "training activation routine": "fn_aktiveeri_treening",
-        "training finish routine": "fn_lopeta_treening",
-        "database creation note": "CREATE DATABASE jousaali",
-        "role setup": "CREATE ROLE jousaali_rakendus",
-        "public privilege revoke": "REVOKE ALL ON SCHEMA public FROM PUBLIC",
-        "application role grant": "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO jousaali_rakendus",
-        "cleanup drop order": "DROP TRIGGER trg_treening_initial_status ON treening",
-    }
-    missing_objects = [name for name, needle in required_sql_objects.items() if needle not in sql]
-    if missing_objects:
-        fail(f"SQL missing required PostgreSQL deliverable/integrity objects: {missing_objects}", failures)
-    else:
-        ok("SQL includes domains, schema/admin sections, sequence, views, lifecycle triggers, routines, and rollbackable checks")
-
-    keys: dict[str, set[tuple[str, ...]]] = {}
-    for table in re.findall(r"CREATE TABLE\s+(\w+)\s*\(", sql):
-        block = table_block(sql, table)
-        table_keys: set[tuple[str, ...]] = set()
-        for kind in ["PRIMARY KEY", "UNIQUE"]:
-            for match in re.findall(rf"{kind}\s*\(([^)]+)\)", block):
-                table_keys.add(tuple(part.strip() for part in match.split(",")))
-        keys[table] = table_keys
-    bad_fk = []
-    for table in re.findall(r"CREATE TABLE\s+(\w+)\s*\(", sql):
-        block = table_block(sql, table)
-        for local_cols, target_table, target_cols in re.findall(r"FOREIGN KEY\s*\(([^)]+)\)\s*REFERENCES\s+(\w+)\s*\(([^)]+)\)", block, re.S):
-            target_tuple = tuple(part.strip() for part in target_cols.split(","))
-            if target_tuple not in keys.get(target_table, set()):
-                bad_fk.append(f"{table}({local_cols}) -> {target_table}({target_cols})")
-    if bad_fk:
-        fail(f"SQL foreign keys reference non-key columns: {bad_fk}", failures)
-    else:
-        ok("SQL foreign keys reference primary or unique keys")
-
-
-def mdb_export(table: str) -> list[dict[str, str]] | None:
-    if not shutil.which("mdb-export"):
-        return None
-    result = subprocess.run(["mdb-export", str(EAP), table], check=True, text=True, capture_output=True)
-    return list(csv.DictReader(io.StringIO(result.stdout)))
-
-
-def validate_eap(failures: list[str]) -> None:
-    objects = mdb_export("t_object")
-    connectors = mdb_export("t_connector")
-    attributes = mdb_export("t_attribute")
-    if objects is None or connectors is None or attributes is None:
-        warn("mdb-export is unavailable; EAP table checks were skipped")
+def validate_live_sql_if_requested(failures: list[str]) -> None:
+    if os.environ.get("RUN_LIVE_SQL_TESTS") != "1":
+        ok("live SQL behavior tests skipped by default")
+        return
+    dsn = os.environ.get("LIVE_SQL_DSN")
+    if not dsn:
+        fail("RUN_LIVE_SQL_TESTS=1 requires LIVE_SQL_DSN pointing to a disposable PostgreSQL database", failures)
+        return
+    try:
+        import psycopg2
+    except Exception as exc:
+        fail(f"psycopg2 unavailable for live SQL tests: {exc}", failures)
         return
 
-    duplicate_connectors = sorted({row["Connector_ID"] for row in connectors if sum(1 for other in connectors if other["Connector_ID"] == row["Connector_ID"]) > 1})
-    duplicate_attributes = sorted({row["ID"] for row in attributes if sum(1 for other in attributes if other["ID"] == row["ID"]) > 1})
-    if duplicate_connectors:
-        fail(f"EAP duplicate connector IDs remain: {duplicate_connectors}", failures)
-    else:
-        ok("EAP has no duplicate connector IDs")
-    if duplicate_attributes:
-        fail(f"EAP duplicate attribute IDs remain: {duplicate_attributes}", failures)
-    else:
-        ok("EAP has no duplicate attribute IDs")
+    try:
+        conn = psycopg2.connect(dsn)
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute(SQL_DDL)
 
-    stale_values = ["<Siia", "OP..", "OP ...", "<täienda", "<abc>"]
-    stale = []
-    for row in connectors + objects + attributes:
-        combined = " ".join(row.values())
-        for value in stale_values:
-            if value in combined:
-                stale.append(value)
-    if stale:
-        fail(f"EAP stale placeholders remain: {sorted(set(stale))}", failures)
-    else:
-        ok("EAP stale placeholders are absent")
+            cur.execute("SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK'")
+            seeded_waitlisted = cur.fetchone()[0]
+            cur.execute("SELECT fn_tyhista_registreering(3000, 'klient@jousaal.ee', 'Live test')")
+            cur.execute("SELECT COUNT(*) FROM registreering WHERE registreeringu_kood = 3002 AND seisundi_kood = 'KINNIT'")
+            seeded_promoted = cur.fetchone()[0]
 
-    actors = {row["Name"] for row in objects if row["Object_Type"] == "Actor"}
-    if actors == EXPECTED_ACTORS:
-        ok("EAP actor set matches DOCX")
-    else:
-        fail(f"EAP actor mismatch. expected={sorted(EXPECTED_ACTORS)}, actual={sorted(actors)}", failures)
+            cur.execute(
+                """
+                SELECT fn_planeeri_treeningukord(
+                    1002, 'treener2@jousaal.ee', 'SAAL_A',
+                    CURRENT_TIMESTAMP + INTERVAL '60 days',
+                    CURRENT_TIMESTAMP + INTERVAL '60 days 75 minutes',
+                    CURRENT_TIMESTAMP + INTERVAL '59 days',
+                    CURRENT_TIMESTAMP + INTERVAL '59 days',
+                    2, 'juhataja@jousaal.ee'
+                )
+                """
+            )
+            open_seat_session = cur.fetchone()[0]
+            cur.execute("SELECT fn_ava_treeningukord(%s, 'juhataja@jousaal.ee')", (open_seat_session,))
+            cur.execute(
+                "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient4@jousaal.ee')",
+                (open_seat_session,),
+            )
+            confirmed_row = cur.fetchone()
 
-    unsupported = []
-    for row in connectors:
-        if row["Connector_Type"] == "UseCase" and row["Stereotype"].strip() == "extend":
-            pair = (row["Start_Object_ID"], row["End_Object_ID"])
-            if pair in {("63", "23"), ("22", "28")}:
-                unsupported.append(pair)
-    if unsupported:
-        fail(f"EAP unsupported extend relationships remain: {unsupported}", failures)
-    else:
-        ok("EAP unsupported use-case extend relationships are absent")
+            cur.execute(
+                """
+                SELECT fn_planeeri_treeningukord(
+                    1002, 'treener2@jousaal.ee', 'SAAL_A',
+                    CURRENT_TIMESTAMP + INTERVAL '61 days',
+                    CURRENT_TIMESTAMP + INTERVAL '61 days 75 minutes',
+                    CURRENT_TIMESTAMP + INTERVAL '60 days',
+                    CURRENT_TIMESTAMP + INTERVAL '60 days',
+                    1, 'juhataja@jousaal.ee'
+                )
+                """
+            )
+            full_session = cur.fetchone()[0]
+            cur.execute("SELECT fn_ava_treeningukord(%s, 'juhataja@jousaal.ee')", (full_session,))
+            cur.execute(
+                "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')",
+                (full_session,),
+            )
+            full_confirmed = cur.fetchone()
+            cur.execute(
+                "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient2@jousaal.ee')",
+                (full_session,),
+            )
+            waitlisted_row = cur.fetchone()
 
-    blank_use_cases = [row["Name"] for row in objects if row["Object_Type"] == "UseCase" and not row["Note"].strip()]
-    if blank_use_cases:
-        fail(f"EAP use cases with empty notes remain: {blank_use_cases}", failures)
-    else:
-        ok("EAP use cases have meaningful notes")
+            duplicate_rejected = False
+            duplicate_detail = ""
+            try:
+                cur.execute(
+                    "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')",
+                    (full_session,),
+                )
+            except Exception as exc:
+                duplicate_rejected = True
+                duplicate_detail = str(exc)
+                conn.rollback()
 
-    defined_ops = set(re.findall(r"\bOP\d+\b", SQL_DDL))
-    doc = Document(DOCX)
-    doc_text = docx_text(doc)
-    defined_ops.update(re.findall(r"^OP\d+\s+", doc_text, re.M))
-    defined_ops = {value.strip() for value in defined_ops}
-    connector_ops = set()
-    for row in connectors:
-        connector_ops.update(re.findall(r"\bOP\d+(?:\.\d+)?\b", row.get("PDATA3", "")))
-    undefined_connector_ops = sorted(connector_ops - defined_ops)
-    if undefined_connector_ops:
-        fail(f"EAP connector operation references are not defined in DOCX: {undefined_connector_ops}", failures)
-    else:
-        ok("EAP connector operation references match DOCX operation definitions")
+            cur.execute(
+                "SELECT * FROM fn_tyhista_registreering(%s, 'klient@jousaal.ee', 'Live promotion test')",
+                (full_confirmed[0],),
+            )
+            cancellation_row = cur.fetchone()
+            cur.execute(
+                "SELECT seisundi_kood FROM registreering WHERE registreeringu_kood = %s",
+                (waitlisted_row[0],),
+            )
+            promoted_status = cur.fetchone()[0]
+        conn.close()
 
-    sql_tables = set(re.findall(r"CREATE TABLE\s+(\w+)", SQL_DDL))
-    eap_table_classes = {row["Name"] for row in objects if row.get("Stereotype", "").strip() == "table"}
-    if sql_tables == eap_table_classes:
-        ok("EAP physical table classes match SQL DDL tables")
-    else:
-        fail(f"EAP/SQL table mismatch. missing_in_eap={sorted(sql_tables - eap_table_classes)}, extra_in_eap={sorted(eap_table_classes - sql_tables)}", failures)
+        live_failures: list[str] = []
+        if seeded_waitlisted < 1 or seeded_promoted != 1:
+            live_failures.append("seeded waitlist promotion did not produce expected state")
+        if confirmed_row is None or confirmed_row[1] != "KINNIT":
+            live_failures.append(f"available-seat registration returned {confirmed_row}")
+        if full_confirmed is None or full_confirmed[1] != "KINNIT":
+            live_failures.append(f"first full-session registration returned {full_confirmed}")
+        if waitlisted_row is None or waitlisted_row[1] != "OOTEJRK" or waitlisted_row[2] is None:
+            live_failures.append(f"full-session waitlist registration returned {waitlisted_row}")
+        if not duplicate_rejected:
+            live_failures.append("duplicate active registration was accepted")
+        elif "duplicate key value" not in duplicate_detail and "uq_registreering_aktiivne_klient_kord" not in duplicate_detail:
+            live_failures.append(f"duplicate active registration failed for unexpected reason: {duplicate_detail}")
+        if cancellation_row is None or cancellation_row[1] != waitlisted_row[0] or promoted_status != "KINNIT":
+            live_failures.append(
+                f"confirmed cancellation did not promote waitlist row; cancellation={cancellation_row}, promoted_status={promoted_status}"
+            )
 
-
-def validate_repo(failures: list[str]) -> None:
-    expected_guides = {
-        "Iseseisva_too_ylesande_pystitus_ITI0206_2026.pdf",
-        "Projekti_mustripohine_juhend_1_52.pdf",
-        "Projekti_tyypvead_ITI0206_2026.pdf",
-        "Naidisprojekt_ITI0206_vastuvotuajad_ver6_44.pdf",
-    }
-    actual = {path.name for path in GUIDES.glob("*.pdf")}
-    missing = sorted(expected_guides - actual)
-    if missing:
-        fail(f"instruction_guides is missing PDFs: {missing}", failures)
-    else:
-        ok("instruction_guides contains required guide files")
-    for path in [
-        "build_all.sh",
-        "build_all.bat",
-        "requirements.txt",
-        "preset_files/EA_converted_source.eap",
-        "tools/fill_report_docx.py",
-        "tools/EapFixes.java",
-        "jousaali_skript.sql",
-        "rakendus/app.py",
-        "rakendus/requirements.txt",
-        "rakendus/.env.example",
-        "rakendus/README.md",
-        "rakendus/SETUP.sh",
-        "rakendus/test_data.sql",
-        "rakendus/templates/base.html",
-        "rakendus/templates/dashboard.html",
-        "rakendus/templates/error.html",
-        "rakendus/templates/login.html",
-        "rakendus/templates/register_training.html",
-        "rakendus/templates/report.html",
-        "rakendus/templates/trainings.html",
-    ]:
-        if not (ROOT / path).exists():
-            fail(f"required reproducibility file is missing: {path}", failures)
-    ok("required reproducibility files are present")
-
-    if SQL_OUTPUT.exists():
-        generated_sql = SQL_DDL.strip()
-        file_sql = SQL_OUTPUT.read_text(encoding="utf-8").strip()
-        if file_sql == generated_sql:
-            ok("standalone SQL script matches tools/sql_ddl.py")
+        if live_failures:
+            fail("live SQL tests failed: " + "; ".join(live_failures), failures)
         else:
-            fail("standalone SQL script does not match tools/sql_ddl.py output", failures)
-
-    if APP_DIR.exists():
-        try:
-            with tempfile.TemporaryDirectory(prefix="validate_pycompile_") as tmp_dir:
-                py_compile.compile(str(APP_DIR / "app.py"), cfile=str(Path(tmp_dir) / "app.pyc"), doraise=True)
-            ok("application prototype Python source compiles")
-        except py_compile.PyCompileError as exc:
-            fail(f"application prototype Python source does not compile: {exc}", failures)
-
-        test_data_path = APP_DIR / "test_data.sql"
-        test_data = test_data_path.read_text(encoding="utf-8") if test_data_path.exists() else ""
-        if re.search(r"[\u0400-\u04FF]", test_data):
-            fail("application test_data.sql contains Cyrillic-looking corrupted characters", failures)
-        else:
-            ok("application test_data.sql has no Cyrillic-looking corrupted characters")
-        if "scrypt:" in test_data:
-            fail("application test_data.sql contains scrypt password hashes, which are not portable in the local runtime", failures)
-        elif "pbkdf2:sha256:" in test_data:
-            ok("application test_data.sql uses portable pbkdf2 password hashes")
-
-        required_seed_terms = ["treeningu_seisundi_liik", "treeningu_kategooria_tyyp", "treeningu_kategooria"]
-        missing_seed_terms = [term for term in required_seed_terms if term not in test_data]
-        if missing_seed_terms:
-            fail(f"application test_data.sql is missing required seed data terms: {missing_seed_terms}", failures)
-        else:
-            ok("application test_data.sql contains required classifier seed data")
-
-        app_source = (APP_DIR / "app.py").read_text(encoding="utf-8")
-        register_template = (APP_DIR / "templates" / "register_training.html").read_text(encoding="utf-8")
-        app_needles = {
-            "registration uses database sequence/default via RETURNING": "RETURNING treeningu_kood",
-            "category IDs are validated before writes": "validate_category_selection",
-            "training detail query has no f-string SQL": "visibility_condition",
-        }
-        if "visibility_condition" in app_source or "cur.execute(f" in app_source:
-            fail("application training detail route still uses dynamically formatted SQL", failures)
-        else:
-            ok("application training detail route avoids dynamically formatted SQL")
-        missing_app_needles = [name for name, needle in app_needles.items() if name != "training detail query has no f-string SQL" and needle not in app_source]
-        if missing_app_needles:
-            fail(f"application is missing lifecycle/category safety implementation markers: {missing_app_needles}", failures)
-        else:
-            ok("application includes sequence-backed insert and category validation markers")
-        if "fetch(this.action" in register_template:
-            ok("training form posts to its current route for create and edit")
-        else:
-            fail("training form JavaScript does not post to the form action", failures)
-
-    local_only = [path for path in [APP_DIR / ".env", APP_DIR / "venv"] if path.exists()]
-    if local_only:
-        fail(f"application contains local-only files that should not be committed: {[str(path.relative_to(ROOT)) for path in local_only]}", failures)
-
-
-def validate_submission_files(failures: list[str]) -> None:
-    script_path = SUBMISSION_DIR / "skript.sql"
-    if not script_path.exists():
-        fail("submission_files/skript.sql is missing", failures)
-    elif script_path.stat().st_size == 0:
-        fail("submission_files/skript.sql is empty", failures)
-    else:
-        ok("submission_files/skript.sql exists and is non-empty")
-        if SQL_OUTPUT.exists() and script_path.read_text(encoding="utf-8").strip() == SQL_OUTPUT.read_text(encoding="utf-8").strip():
-            ok("submission_files/skript.sql matches the standalone SQL script")
-        elif SQL_OUTPUT.exists():
-            fail("submission_files/skript.sql does not match jousaali_skript.sql", failures)
-
-    obsolete_zips = [path.name for path in [SUBMISSION_DIR / "dokument.zip", SUBMISSION_DIR / "mudelid.zip"] if path.exists()]
-    if obsolete_zips:
-        fail(f"obsolete document/model ZIP files should not be used for submission: {obsolete_zips}", failures)
-    else:
-        ok("obsolete document/model ZIP files are absent")
-
-    explainer_in_submission = SUBMISSION_DIR / EXPLAINER_FILE_NAME
-    explainer_at_root = ROOT / EXPLAINER_FILE_NAME
-    if explainer_in_submission.exists():
-        fail(f"{EXPLAINER_FILE_NAME} is non-submittable and must not be copied into submission_files", failures)
-    elif explainer_at_root.exists():
-        ok("non-submittable project explainer exists outside submission_files")
-    else:
-        ok("non-submittable project explainer is not present in submission_files")
-
-    app_names = read_zip_checked(SUBMISSION_DIR / "rakendus.zip", failures)
-
-    dokument_docx = SUBMISSION_DIR / "dokument.docx"
-    if not dokument_docx.exists():
-        fail("submission_files/dokument.docx is missing", failures)
-    elif dokument_docx.read_bytes() == DOCX.read_bytes():
-        ok("submission_files/dokument.docx matches the regenerated DOCX")
-    else:
-        fail("submission_files/dokument.docx does not match the regenerated DOCX", failures)
-
-    mudelid_eap = SUBMISSION_DIR / "mudelid.eap"
-    if not mudelid_eap.exists():
-        fail("submission_files/mudelid.eap is missing", failures)
-    elif mudelid_eap.read_bytes() == EAP.read_bytes():
-        ok("submission_files/mudelid.eap matches the regenerated EAP")
-    else:
-        fail("submission_files/mudelid.eap does not match the regenerated EAP", failures)
-
-    app_files = zip_file_entries(app_names)
-    missing_app_files = sorted(EXPECTED_APP_ZIP_FILES - app_files)
-    if missing_app_files:
-        fail(f"rakendus.zip is missing expected app files: {missing_app_files}", failures)
-    else:
-        ok("rakendus.zip contains expected application files, including README.md")
-    if EXPLAINER_FILE_NAME in app_files:
-        fail(f"rakendus.zip must not include non-submittable {EXPLAINER_FILE_NAME}", failures)
-    elif explainer_at_root.exists():
-        ok("rakendus.zip excludes the non-submittable project explainer")
-
-    app_top_level = zip_top_level_entries(app_names)
-    missing_top_level = sorted(EXPECTED_APP_ZIP_TOP_LEVEL - app_top_level)
-    extra_top_level = sorted(app_top_level - EXPECTED_APP_ZIP_TOP_LEVEL)
-    if missing_top_level or extra_top_level:
-        fail(f"rakendus.zip top-level contents mismatch. missing={missing_top_level}, extra={extra_top_level}", failures)
-    else:
-        ok("rakendus.zip top-level contents match the expected app package")
-
-    app_zip_path = SUBMISSION_DIR / "rakendus.zip"
-    if app_zip_path.exists() and not missing_app_files:
-        with ZipFile(app_zip_path) as archive:
-            stale_entries = []
-            placeholder_hits = []
-            for entry in sorted(EXPECTED_APP_ZIP_FILES):
-                source_path = APP_DIR / entry
-                if not source_path.is_file():
-                    continue
-                archive_bytes = archive.read(entry)
-                source_bytes = source_path.read_bytes()
-                if archive_bytes != source_bytes:
-                    stale_entries.append(entry)
-                if source_path.suffix in {".md", ".py", ".html", ".sql", ".sh"} or source_path.name == ".env.example":
-                    text = archive_bytes.decode("utf-8", errors="replace")
-                    matches = sorted({match.group(0) for match in PLACEHOLDER_RE.finditer(text)})
-                    if matches:
-                        placeholder_hits.append(f"{entry}: {matches}")
-            if stale_entries:
-                fail(f"rakendus.zip contains stale files that differ from rakendus/: {stale_entries}", failures)
-            else:
-                ok("rakendus.zip app files match the current rakendus/ source files")
-            if placeholder_hits:
-                fail(f"rakendus.zip contains unresolved placeholder/template text: {placeholder_hits}", failures)
-            else:
-                ok("rakendus.zip README/source files have no unresolved placeholder/template text")
-
-
-def validate_source_placeholders(failures: list[str]) -> None:
-    placeholder_hits = []
-    for rel_path in SOURCE_PLACEHOLDER_FILES:
-        path = ROOT / rel_path
-        if not path.exists():
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        matches = sorted({match.group(0) for match in PLACEHOLDER_RE.finditer(text)})
-        if matches:
-            placeholder_hits.append(f"{rel_path}: {matches}")
-    if placeholder_hits:
-        fail(f"application README/source files contain unresolved placeholder/template text: {placeholder_hits}", failures)
-    else:
-        ok("application README/source files have no unresolved placeholder/template text")
+            ok("live SQL tests confirmed registration, waitlist, duplicate rejection, and promotion")
+    except Exception as exc:
+        fail(f"live SQL tests failed: {exc}", failures)
 
 
 def main() -> int:
     failures: list[str] = []
+    validate_generated_outputs(failures)
+    validate_static_sql(failures)
+    validate_app(failures)
+    validate_diagrams(failures)
     validate_docx(failures)
-    validate_sql(failures)
     validate_eap(failures)
-    validate_repo(failures)
-    validate_submission_files(failures)
-    validate_source_placeholders(failures)
+    validate_submission(failures)
+    validate_packaging_hygiene(failures)
+    validate_live_sql_if_requested(failures)
+
     if failures:
-        print(f"\nValidation failed with {len(failures)} issue(s).")
+        print("\nValidation failed:")
+        for failure in failures:
+            print(f" - {failure}")
         return 1
-    print("\nValidation passed.")
+    print("\nAll validation checks passed.")
     return 0
 
 

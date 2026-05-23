@@ -1,834 +1,663 @@
 """
-Jõusaali infosüsteemi treeningute funktsionaalne allsüsteem
-Flask rakendus
+Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise
+funktsionaalne allsüsteem.
 
-Author: Tristan Aik Sild, Gustav Tamkivi
-Course: Andmebaasid I, ITI0206
+Flask prototüüp näitab kolme töövoogu:
+- juhataja planeerib ja juhib treeningukordi;
+- treener näeb enda tunniplaani ja märgib osalemist;
+- klient registreerub, satub vajadusel ootejärjekorda ja tühistab registreeringu.
 """
 
-from decimal import Decimal, InvalidOperation
+from __future__ import annotations
+
 from functools import wraps
 import logging
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_session import Session
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import check_password_hash
 
+
 load_dotenv()
 
-# Konfigureerimine
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'iti0206-local-prototype-secret')
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "iti0206-local-prototype-secret")
+app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Andmebaasi ühendus
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'port': os.environ.get('DB_PORT', '5432'),
-    'database': os.environ.get('DB_NAME', 'jousaali'),
-    'user': os.environ.get('DB_USER', 'postgres'),
-    'password': os.environ.get('DB_PASSWORD', 'postgres')
+    "host": os.environ.get("DB_HOST", "localhost"),
+    "port": os.environ.get("DB_PORT", "5432"),
+    "database": os.environ.get("DB_NAME", "jousaali"),
+    "user": os.environ.get("DB_USER", "postgres"),
+    "password": os.environ.get("DB_PASSWORD", "postgres"),
 }
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-TRAINING_EDITABLE_STATUSES = ('OOTEL', 'MITTEAKT')
-TRAINING_FINISHABLE_STATUSES = ('AKTIIVNE', 'MITTEAKT')
 ROLE_LABELS = {
-    'TREENER': 'Treener',
-    'JUHATAJA': 'Juhataja',
-    'KL_HALDUR': 'Klassifikaatorite haldur',
-    'TOO_HALD': 'Töötajate haldur',
+    "JUHATAJA": "Juhataja",
+    "TREENER": "Treener",
+    "KL_HALDUR": "Klassifikaatorite haldur",
+    "TOO_HALD": "Töötajate haldur",
 }
 
-# ============================================================================
-# ANDMEBAASI FUNKTSIOONID
-# ============================================================================
+SESSION_STATUS_LABELS = {
+    "KAVAND": "Kavandatud",
+    "AVATUD": "Avatud",
+    "SULETUD": "Suletud",
+    "TOIMUNUD": "Toimunud",
+    "TYHIST": "Tühistatud",
+}
+
+REGISTRATION_STATUS_LABELS = {
+    "KINNIT": "Kinnitatud",
+    "OOTEJRK": "Ootejärjekorras",
+    "TYH_KL": "Kliendi poolt tühistatud",
+    "TYH_SYS": "Süsteemi poolt tühistatud",
+}
+
 
 def get_db_connection():
-    """Loo andmebaasi ühendus"""
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
-        return conn
-    except psycopg2.Error as e:
-        logger.error(f"Andmebaasi ühenduse viga: {e}")
+        return psycopg2.connect(**DB_CONFIG)
+    except psycopg2.Error as exc:
+        logger.error("Andmebaasi ühenduse viga: %s", exc)
         return None
 
-def init_db():
-    """Initsialiseerige andmebaas (loo klassifikaatorid kui tühjad)"""
+
+def init_db() -> bool:
     conn = get_db_connection()
     if not conn:
         return False
-
     try:
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO treeningu_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
-            ('OOTEL', 'Ootel', TRUE),
-            ('AKTIIVNE', 'Aktiivne', TRUE),
-            ('MITTEAKT', 'Mitteaktiivne', TRUE),
-            ('LOPPENUD', 'Lõppenud', FALSE),
-            ('UNUSTATUD', 'Unustatud', FALSE)
-            ON CONFLICT (kood) DO NOTHING
-        """)
-
-        cur.execute("""
-            INSERT INTO treeningu_kategooria_tyyp (kood, nimetus, on_aktiivne) VALUES
-            ('GRUPP', 'Grupitreening', TRUE),
-            ('PERS', 'Personaaltreening', TRUE),
-            ('KARDIO', 'Kardiotreening', TRUE),
-            ('JÕUD', 'Jõutreening', TRUE)
-            ON CONFLICT (kood) DO NOTHING
-        """)
-
-        cur.execute("""
-            INSERT INTO treeningu_kategooria
-            (kood, treeningu_kategooria_tyyp_kood, nimetus, on_aktiivne) VALUES
-            ('GRUPP', 'GRUPP', 'Grupitreening', TRUE),
-            ('PERS', 'PERS', 'Personaaltreening', TRUE),
-            ('KARDIO', 'KARDIO', 'Kardiotreening', TRUE),
-            ('JÕUD', 'JÕUD', 'Jõutreening', TRUE)
-            ON CONFLICT (kood) DO NOTHING
-        """)
-
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
         return True
-    except psycopg2.Error as e:
-        logger.error(f"DB init viga: {e}")
-        conn.rollback()
-        return False
     finally:
-        cur.close()
         conn.close()
 
-# ============================================================================
-# AUTENTIMINE JA SESSIOON
-# ============================================================================
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Kasutaja sisselogimine"""
-    if request.method == 'GET':
-        return render_template('login.html')
+def db_error_message(exc: psycopg2.Error) -> str:
+    if getattr(exc, "diag", None) and exc.diag.message_primary:
+        return exc.diag.message_primary
+    return str(exc).strip() or "Andmebaasi toiming ebaõnnestus."
 
-    email = request.form.get('email')
-    password = request.form.get('password')
 
-    if not email or not password:
-        return render_template('login.html', error='E-mail ja parool nõutud'), 400
+def login_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return func(*args, **kwargs)
 
-    conn = get_db_connection()
-    if not conn:
-        return render_template('login.html', error='Andmebaasi viga'), 500
+    return wrapper
 
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Kontrollige kasutajakontot
-        cur.execute("""
-            SELECT k.e_meil, k.parool, k.on_aktiivne,
-                   i.eesnimi, i.perenimi,
-                   CASE WHEN t.e_meil IS NOT NULL THEN 'tootaja' ELSE 'klient' END as roll
-            FROM kasutajakonto k
-            JOIN isik i ON k.e_meil = i.e_meil
-            LEFT JOIN tootaja t ON k.e_meil = t.e_meil
-            WHERE k.e_meil = %s
-        """, (email,))
+def role_required(role_code: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if role_code not in session.get("roles", []):
+                return render_template("error.html", error="Ligipääs keelatud"), 403
+            return func(*args, **kwargs)
 
-        user = cur.fetchone()
+        return wrapper
 
-        if not user:
-            return render_template('login.html', error='Kasutajat ei leitud'), 401
+    return decorator
 
-        if not user['on_aktiivne']:
-            return render_template('login.html', error='Konto ei ole aktiivne'), 401
 
-        if not check_password_hash(user['parool'], password):
-            return render_template('login.html', error='Vale parool'), 401
+def client_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if session.get("role") != "klient":
+            return render_template("error.html", error="Ligipääs keelatud"), 403
+        return func(*args, **kwargs)
 
-        # Kontrollige töötaja rolle
-        roles = []
-        if user['roll'] == 'tootaja':
-            cur.execute("""
-                SELECT DISTINCT tr.kood
-                FROM tootaja_rolli_omamine tro
-                JOIN tootaja_roll tr ON tro.tootaja_roll_kood = tr.kood
-                WHERE tro.tootaja_e_meil = %s
-                AND tro.lopu_aeg IS NULL
-            """, (email,))
-            roles = [r['kood'] for r in cur.fetchall()]
+    return wrapper
 
-        # Seadista sessioon
-        session['user_id'] = email
-        session['name'] = f"{user['eesnimi']} {user['perenimi']}"
-        session['role'] = user['roll']
-        session['roles'] = roles
 
-        return redirect(url_for('dashboard'))
-
-    except psycopg2.Error as e:
-        logger.error(f"Login viga: {e}")
-        return render_template('login.html', error='Andmebaasi viga'), 500
-    finally:
-        cur.close()
-        conn.close()
-
-@app.route('/logout')
-def logout():
-    """Kasutaja väljalogimine"""
-    session.clear()
-    return redirect(url_for('login'))
-
-def login_required(f):
-    """Nõutakse sisselogimist"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def has_role(role_code):
-    """Kontrolli, kas sisselogitud kasutajal on konkreetne tööalane roll."""
-    return role_code in session.get('roles', [])
-
-def display_role(user_session):
-    """Tagasta kasutajale kuvatav rollinimetus."""
-    roles = user_session.get('roles', [])
-    for role in ('TREENER', 'JUHATAJA', 'KL_HALDUR', 'TOO_HALD'):
-        if role in roles:
+def display_role(user_session) -> str:
+    for role in ("JUHATAJA", "TREENER", "KL_HALDUR", "TOO_HALD"):
+        if role in user_session.get("roles", []):
             return ROLE_LABELS[role]
-    if user_session.get('role') == 'tootaja':
-        return 'Töötaja'
-    if user_session.get('role') == 'uudistaja':
-        return 'Uudistaja'
-    return 'Klient'
+    if user_session.get("role") == "klient":
+        return "Klient"
+    if user_session.get("role") == "tootaja":
+        return "Töötaja"
+    return "Uudistaja"
+
 
 def template_user():
-    if 'user_id' not in session:
-        return {'role': 'uudistaja', 'roles': [], 'name': 'Uudistaja', 'display_role': 'Uudistaja'}
+    if "user_id" not in session:
+        return {"role": "uudistaja", "roles": [], "name": "Uudistaja", "display_role": "Uudistaja"}
     user = dict(session)
-    user['display_role'] = display_role(user)
+    user["display_role"] = display_role(user)
     return user
 
-def load_training_categories(cur):
+
+def fetch_form_options(cur):
     cur.execute("""
-        SELECT kood, nimetus
-        FROM treeningu_kategooria
-        WHERE on_aktiivne = TRUE
+        SELECT treeninguliigi_kood, nimetus, kestus_minutites
+        FROM treeninguliik
+        WHERE seisundi_kood = 'AKTIIVNE'
         ORDER BY nimetus
     """)
-    return cur.fetchall()
+    training_types = cur.fetchall()
 
-def validate_training_form(form):
-    errors = []
+    cur.execute("""
+        SELECT ruumi_kood, nimetus, mahutavus
+        FROM ruum
+        WHERE on_aktiivne
+        ORDER BY nimetus
+    """)
+    rooms = cur.fetchall()
 
-    name = (form.get('name') or '').strip()
-    description = (form.get('description') or '').strip()
-    equipment = (form.get('equipment') or '').strip()
-    categories = list(dict.fromkeys(form.getlist('categories')))
+    cur.execute("""
+        SELECT t.e_meil, concat_ws(' ', i.eesnimi, i.perenimi) AS nimi
+        FROM tootaja t
+        JOIN isik i ON i.e_meil = t.e_meil
+        WHERE fn_on_treener(t.e_meil)
+        ORDER BY i.perenimi, i.eesnimi
+    """)
+    trainers = cur.fetchall()
+    return training_types, rooms, trainers
 
-    if not name:
-        errors.append('Treeningu nimetus on nõutud.')
-    if not description:
-        errors.append('Kirjeldus on nõutud.')
-    if not equipment:
-        errors.append('Vajalik varustus on nõutud.')
-    if not categories:
-        errors.append('Valige vähemalt üks kategooria.')
 
-    try:
-        duration = int(form.get('duration', ''))
-        if duration < 15 or duration > 240:
-            errors.append('Kestus peab olema vahemikus 15 kuni 240 minutit.')
-    except (TypeError, ValueError):
-        duration = None
-        errors.append('Kestus peab olema täisarv.')
-
-    try:
-        max_participants = int(form.get('max_participants', ''))
-        if max_participants <= 0:
-            errors.append('Maksimaalne osalejate arv peab olema positiivne täisarv.')
-    except (TypeError, ValueError):
-        max_participants = None
-        errors.append('Maksimaalne osalejate arv peab olema täisarv.')
-
-    try:
-        price = Decimal(form.get('price', '')).quantize(Decimal('0.01'))
-        if price < 0:
-            errors.append('Hind ei tohi olla negatiivne.')
-        if price > Decimal('999999.99'):
-            errors.append('Hind on andmebaasi välja jaoks liiga suur.')
-    except (InvalidOperation, TypeError, ValueError):
-        price = None
-        errors.append('Hind peab olema korrektne arv.')
-
+@app.context_processor
+def inject_template_helpers():
     return {
-        'name': name,
-        'description': description,
-        'duration': duration,
-        'max_participants': max_participants,
-        'equipment': equipment,
-        'price': price,
-        'categories': categories,
-    }, errors
+        "session_status_label": lambda code: SESSION_STATUS_LABELS.get(code, code),
+        "registration_status_label": lambda code: REGISTRATION_STATUS_LABELS.get(code, code),
+    }
 
-def validate_category_selection(cur, categories):
-    """Kontrolli, et kõik vormist tulnud kategooriad on aktiivsed klassifikaatori väärtused."""
-    if not categories:
-        return False
-    cur.execute("""
-        SELECT COUNT(*) AS arv
-        FROM treeningu_kategooria
-        WHERE kood::text = ANY(%s)
-          AND on_aktiivne = TRUE
-    """, (categories,))
-    return cur.fetchone()['arv'] == len(categories)
 
-def update_training_status(cur, training_id, next_status, allowed_statuses, changed_by):
-    cur.execute("""
-        UPDATE treening
-        SET treeningu_seisundi_liik_kood = %s,
-            viimase_muutja_e_meil = %s,
-            viimase_muutm_aeg = NOW()
-        WHERE treeningu_kood = %s
-          AND treeningu_seisundi_liik_kood::text = ANY(%s)
-    """, (next_status, changed_by, training_id, list(allowed_statuses)))
-    return cur.rowcount
-
-# ============================================================================
-# DASHBOARD JA PEALEHT
-# ============================================================================
-
-@app.route('/')
+@app.route("/")
 def index():
-    """Pealeht"""
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
-@app.route('/dashboard')
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "GET":
+        return render_template("login.html")
+
+    email = (request.form.get("email") or "").strip()
+    password = request.form.get("password") or ""
+    if not email or not password:
+        return render_template("login.html", error="E-post ja parool on nõutud."), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return render_template("login.html", error="Andmebaasi ühendus ebaõnnestus."), 500
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM fn_kasutaja_tuvastamise_andmed(%s)", (email,))
+            user = cur.fetchone()
+
+        if not user:
+            return render_template("login.html", error="Kasutajat ei leitud."), 401
+        if not user["on_aktiivne"]:
+            return render_template("login.html", error="Konto ei ole aktiivne."), 401
+        if not check_password_hash(user["parooli_rasi"], password):
+            return render_template("login.html", error="Vale parool."), 401
+
+        roles = list(user["rollid"] or [])
+        full_name = " ".join(part for part in [user["eesnimi"], user["perenimi"]] if part)
+        session.clear()
+        session["user_id"] = user["e_meil"]
+        session["name"] = full_name or user["e_meil"]
+        session["role"] = user["kasutaja_liik"]
+        session["roles"] = roles
+        return redirect(url_for("dashboard"))
+    except psycopg2.Error as exc:
+        logger.error("Login viga: %s", exc)
+        return render_template("login.html", error=db_error_message(exc)), 500
+    finally:
+        conn.close()
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/dashboard")
 @login_required
 def dashboard():
-    """Kasutaja dashboard"""
     conn = get_db_connection()
     if not conn:
-        return render_template('dashboard.html', error='Andmebaasi viga'), 500
-
+        return render_template("dashboard.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Aktiivsete treeningu arv
-        cur.execute("""
-            SELECT COUNT(*) as arv FROM treening
-            WHERE treeningu_seisundi_liik_kood = 'AKTIIVNE'
-        """)
-        active_count = cur.fetchone()['arv']
-
-        # Kasutajate arv
-        cur.execute("SELECT COUNT(*) as arv FROM isik")
-        users_count = cur.fetchone()['arv']
-
-        # Treeningute arv
-        cur.execute("SELECT COUNT(*) as arv FROM treening")
-        trainings_count = cur.fetchone()['arv']
-
-        stats = {
-            'active_trainings': active_count,
-            'total_users': users_count,
-            'total_trainings': trainings_count
-        }
-
-        return render_template('dashboard.html', stats=stats, user=template_user())
-
-    except psycopg2.Error as e:
-        logger.error(f"Dashboard viga: {e}")
-        return render_template('dashboard.html', error='Andmebaasi viga'), 500
-    finally:
-        cur.close()
-        conn.close()
-
-# ============================================================================
-# TREENINGU HALDUS
-# ============================================================================
-
-@app.route('/trainings')
-def trainings():
-    """Näita treeninguid"""
-    conn = get_db_connection()
-    if not conn:
-        return render_template('trainings.html', error='Andmebaasi viga'), 500
-
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Töötajad näevad tööalast terviknimekirja; kliendid ja uudistajad ainult aktiivseid.
-        if session.get('role') == 'tootaja':
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
-                SELECT treeningu_kood, nimetus, kirjeldus, kestus_minutites,
-                       maksimaalne_osalejate_arv, hind, seisundi_kood, seisund
-                FROM v_treeningud_kategooriatega
-                ORDER BY nimetus
+                SELECT
+                    (SELECT COUNT(*) FROM v_avalikud_treeningukorrad) AS avatud_kordi,
+                    (SELECT COUNT(*) FROM treeningukord WHERE seisundi_kood = 'KAVAND') AS kavandatud_kordi,
+                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
+                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid,
+                    (SELECT COUNT(*) FROM klient WHERE on_aktiivne) AS aktiivseid_kliente
             """)
-        else:
-            cur.execute("""
-                SELECT treeningu_kood, nimetus, kirjeldus, kestus_minutites,
-                       maksimaalne_osalejate_arv, hind, seisundi_kood, seisund
-                FROM v_aktiivsed_treeningud
-                ORDER BY nimetus
-            """)
-
-        trainings = cur.fetchall()
-        return render_template('trainings.html', trainings=trainings, user=template_user())
-
-    except psycopg2.Error as e:
-        logger.error(f"Trainings viga: {e}")
-        return render_template('trainings.html', error='Andmebaasi viga'), 500
+            stats = cur.fetchone()
+        return render_template("dashboard.html", stats=stats, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Dashboard viga: %s", exc)
+        return render_template("dashboard.html", error=db_error_message(exc), user=template_user()), 500
     finally:
-        cur.close()
         conn.close()
 
-@app.route('/training/<int:training_id>')
-def training_detail(training_id):
-    """Treeningu detailid"""
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
 
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Treeningu info
-        cur.execute("""
-            SELECT t.*, s.nimetus as seisund
-            FROM treening t
-            JOIN treeningu_seisundi_liik s ON t.treeningu_seisundi_liik_kood = s.kood
-            WHERE t.treeningu_kood = %s
-              AND (%s OR t.treeningu_seisundi_liik_kood = 'AKTIIVNE')
-        """, (training_id, session.get('role') == 'tootaja'))
-
-        training = cur.fetchone()
-        if not training:
-            return jsonify({'error': 'Treening ei leitud'}), 404
-
-        # Kategooriad
-        cur.execute("""
-            SELECT tk.kood, tk.nimetus
-            FROM treeningu_kategooria_omamine tko
-            JOIN treeningu_kategooria tk ON tko.treeningu_kategooria_kood = tk.kood
-            WHERE tko.treeningu_kood = %s
-        """, (training_id,))
-
-        categories = cur.fetchall()
-        training['categories'] = categories
-
-        return jsonify(training)
-
-    except psycopg2.Error as e:
-        logger.error(f"Training detail viga: {e}")
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-    finally:
-        cur.close()
-        conn.close()
-
-# ============================================================================
-# TREENER FUNKTSIOONID
-# ============================================================================
-
-@app.route('/trainer/register-training', methods=['GET', 'POST'])
+@app.route("/schedule")
 @login_required
-def register_training():
-    """Registreeri uus treening"""
-    if not has_role('TREENER'):
-        return render_template('error.html', error='Ligipääs keelatud'), 403
-
-    if request.method == 'GET':
-        conn = get_db_connection()
-        if not conn:
-            return render_template('register_training.html', error='Andmebaasi viga'), 500
-
-        try:
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-            categories = load_training_categories(cur)
-            return render_template(
-                'register_training.html',
-                categories=categories,
-                selected_categories=[],
-                training=None,
-                mode='create',
-                user=template_user(),
-            )
-        finally:
-            cur.close()
-            conn.close()
-
-    # POST
+def schedule():
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        return render_template("schedule.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        data, errors = validate_training_form(request.form)
-        if errors:
-            return jsonify({'error': ' '.join(errors)}), 400
-        if not validate_category_selection(cur, data['categories']):
-            return jsonify({'error': 'Valitud kategooria ei ole aktiivne või puudub.'}), 400
-
-        # Sisestage treening; koodi annab PostgreSQL sequence.
-        cur.execute("""
-            INSERT INTO treening
-            (treeningu_seisundi_liik_kood, registreerija_e_meil, viimase_muutja_e_meil,
-             nimetus, kirjeldus, kestus_minutites,
-             maksimaalne_osalejate_arv, vajalik_varustus, hind)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING treeningu_kood
-        """, (
-            'OOTEL', session['user_id'], session['user_id'],
-            data['name'],
-            data['description'],
-            data['duration'],
-            data['max_participants'],
-            data['equipment'],
-            data['price']
-        ))
-        next_id = cur.fetchone()['treeningu_kood']
-
-        for cat in data['categories']:
-            cur.execute("""
-                INSERT INTO treeningu_kategooria_omamine
-                (treeningu_kood, treeningu_kategooria_kood)
-                VALUES (%s, %s)
-            """, (next_id, cat))
-
-        conn.commit()
-        return jsonify({'success': True, 'id': next_id})
-
-    except psycopg2.Error as e:
-        logger.error(f"Register training viga: {e}")
-        conn.rollback()
-        return jsonify({'error': 'Registreerimise viga'}), 500
-    finally:
-        cur.close()
-        conn.close()
-
-@app.route('/trainer/edit-training/<int:training_id>', methods=['GET', 'POST'])
-@login_required
-def edit_training(training_id):
-    """Muuda ootel või mitteaktiivset treeningut"""
-    if not has_role('TREENER'):
-        return render_template('error.html', error='Ligipääs keelatud'), 403
-
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        if request.method == 'GET':
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM treening
-                WHERE treeningu_kood = %s
-                  AND treeningu_seisundi_liik_kood::text = ANY(%s)
-            """, (training_id, list(TRAINING_EDITABLE_STATUSES)))
-            training = cur.fetchone()
-            if not training:
-                return render_template('error.html', error='Muuta saab ainult ootel või mitteaktiivset treeningut.'), 404
-            categories = load_training_categories(cur)
-            cur.execute("""
-                SELECT treeningu_kategooria_kood
-                FROM treeningu_kategooria_omamine
-                WHERE treeningu_kood = %s
-            """, (training_id,))
-            selected_categories = [row['treeningu_kategooria_kood'] for row in cur.fetchall()]
-            return render_template(
-                'register_training.html',
-                categories=categories,
-                selected_categories=selected_categories,
-                training=training,
-                mode='edit',
-                user=template_user(),
+                FROM v_avalikud_treeningukorrad
+                ORDER BY alguse_aeg, treeninguliik
+            """)
+            sessions = cur.fetchall()
+
+            registrations = {}
+            if session.get("role") == "klient":
+                cur.execute("""
+                    SELECT treeningukorra_kood, registreeringu_kood, registreeringu_seisundi_kood, ootejarjekorra_nr
+                    FROM v_kliendi_registreeringud
+                    WHERE klient_e_meil = %s
+                      AND registreeringu_seisundi_kood IN ('KINNIT', 'OOTEJRK')
+                """, (session["user_id"],))
+                registrations = {row["treeningukorra_kood"]: row for row in cur.fetchall()}
+
+        return render_template("schedule.html", sessions=sessions, registrations=registrations, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Schedule viga: %s", exc)
+        return render_template("schedule.html", error=db_error_message(exc), user=template_user()), 500
+    finally:
+        conn.close()
+
+
+@app.route("/client/sessions/<int:treeningukorra_kood>/register", methods=["POST"])
+@login_required
+@client_required
+def client_register_session(treeningukorra_kood):
+    conn = get_db_connection()
+    if not conn:
+        flash("Andmebaasi ühendus ebaõnnestus.", "danger")
+        return redirect(url_for("schedule"))
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, %s)",
+                (treeningukorra_kood, session["user_id"]),
             )
+            result = cur.fetchone()
+        conn.commit()
+        flash(result["teade"], "success")
+    except psycopg2.Error as exc:
+        conn.rollback()
+        flash(db_error_message(exc), "danger")
+    finally:
+        conn.close()
+    return redirect(url_for("schedule"))
 
-        data, errors = validate_training_form(request.form)
-        if errors:
-            return jsonify({'error': ' '.join(errors)}), 400
-        if not validate_category_selection(cur, data['categories']):
-            return jsonify({'error': 'Valitud kategooria ei ole aktiivne või puudub.'}), 400
 
-        cur.execute("""
-            UPDATE treening
-            SET nimetus = %s,
-                kirjeldus = %s,
-                kestus_minutites = %s,
-                maksimaalne_osalejate_arv = %s,
-                vajalik_varustus = %s,
-                hind = %s,
-                viimase_muutja_e_meil = %s,
-                viimase_muutm_aeg = NOW()
-            WHERE treeningu_kood = %s
-              AND treeningu_seisundi_liik_kood::text = ANY(%s)
-        """, (
-            data['name'],
-            data['description'],
-            data['duration'],
-            data['max_participants'],
-            data['equipment'],
-            data['price'],
-            session['user_id'],
-            training_id,
-            list(TRAINING_EDITABLE_STATUSES),
-        ))
-        if cur.rowcount == 0:
-            conn.rollback()
-            return jsonify({'error': 'Muuta saab ainult ootel või mitteaktiivset treeningut.'}), 400
-
-        cur.execute("""
-            DELETE FROM treeningu_kategooria_omamine
-            WHERE treeningu_kood = %s
-        """, (training_id,))
-        for cat in data['categories']:
+@app.route("/client/registrations")
+@login_required
+@client_required
+def client_registrations():
+    conn = get_db_connection()
+    if not conn:
+        return render_template("client_registrations.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
-                INSERT INTO treeningu_kategooria_omamine
-                (treeningu_kood, treeningu_kategooria_kood)
-                VALUES (%s, %s)
-            """, (training_id, cat))
-
-        conn.commit()
-        return jsonify({'success': True, 'id': training_id})
-
-    except psycopg2.Error as e:
-        logger.error(f"Edit training viga: {e}")
-        conn.rollback()
-        return jsonify({'error': 'Muutmise viga'}), 500
+                SELECT *
+                FROM v_kliendi_registreeringud
+                WHERE klient_e_meil = %s
+                ORDER BY alguse_aeg DESC, registreeringu_kood DESC
+            """, (session["user_id"],))
+            registrations = cur.fetchall()
+        return render_template("client_registrations.html", registrations=registrations, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Client registrations viga: %s", exc)
+        return render_template("client_registrations.html", error=db_error_message(exc), user=template_user()), 500
     finally:
-        cur.close()
         conn.close()
 
-@app.route('/trainer/activate-training/<int:training_id>', methods=['POST'])
-@login_required
-def activate_training(training_id):
-    """Aktiveeri treening"""
-    if not has_role('TREENER'):
-        return jsonify({'error': 'Ligipääs keelatud'}), 403
 
+@app.route("/client/registrations/<int:registreeringu_kood>/cancel", methods=["POST"])
+@login_required
+def cancel_registration(registreeringu_kood):
+    if session.get("role") != "klient" and "JUHATAJA" not in session.get("roles", []):
+        return render_template("error.html", error="Ligipääs keelatud"), 403
+    reason = (request.form.get("reason") or "Kasutaja tühistas registreeringu.").strip()
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        flash("Andmebaasi ühendus ebaõnnestus.", "danger")
+        return redirect(request.referrer or url_for("dashboard"))
     try:
-        cur = conn.cursor()
-
-        # Kontrollige kategooriaid
-        cur.execute("""
-            SELECT COUNT(*) FROM treeningu_kategooria_omamine
-            WHERE treeningu_kood = %s
-        """, (training_id,))
-
-        if cur.fetchone()[0] == 0:
-            return jsonify({'error': 'Treening peab kuuluma vähemalt ühte kategooriasse'}), 400
-
-        updated = update_training_status(cur, training_id, 'AKTIIVNE', TRAINING_EDITABLE_STATUSES, session['user_id'])
-        if updated == 0:
-            conn.rollback()
-            return jsonify({'error': 'Aktiveerida saab ainult ootel või mitteaktiivset treeningut'}), 400
-
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM fn_tyhista_registreering(%s, %s, %s)",
+                (registreeringu_kood, session["user_id"], reason),
+            )
+            result = cur.fetchone()
         conn.commit()
-        return jsonify({'success': True})
-
-    except psycopg2.Error as e:
-        logger.error(f"Activate training viga: {e}")
+        flash(result["teade"], "success")
+    except psycopg2.Error as exc:
         conn.rollback()
-        return jsonify({'error': 'Aktiveerimise viga'}), 500
+        flash(db_error_message(exc), "danger")
     finally:
-        cur.close()
         conn.close()
+    return redirect(request.referrer or url_for("client_registrations"))
 
-@app.route('/trainer/deactivate-training/<int:training_id>', methods=['POST'])
+
+@app.route("/manager/sessions")
 @login_required
-def deactivate_training(training_id):
-    """Muuda aktiivne treening mitteaktiivseks"""
-    if not has_role('TREENER'):
-        return jsonify({'error': 'Ligipääs keelatud'}), 403
-
+@role_required("JUHATAJA")
+def manager_sessions():
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        return render_template("manager_sessions.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
-        cur = conn.cursor()
-        updated = update_training_status(cur, training_id, 'MITTEAKT', ('AKTIIVNE',), session['user_id'])
-        if updated == 0:
-            conn.rollback()
-            return jsonify({'error': 'Mitteaktiivseks saab muuta ainult aktiivset treeningut'}), 400
-        conn.commit()
-        return jsonify({'success': True})
-    except psycopg2.Error as e:
-        logger.error(f"Deactivate training viga: {e}")
-        conn.rollback()
-        return jsonify({'error': 'Seisundi muutmise viga'}), 500
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT *
+                FROM v_juhataja_treeningukordade_ulevaade
+                ORDER BY alguse_aeg DESC, treeningukorra_kood DESC
+            """)
+            sessions = cur.fetchall()
+        return render_template("manager_sessions.html", sessions=sessions, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Manager sessions viga: %s", exc)
+        return render_template("manager_sessions.html", error=db_error_message(exc), user=template_user()), 500
     finally:
-        cur.close()
         conn.close()
 
-@app.route('/trainer/forget-training/<int:training_id>', methods=['POST'])
-@login_required
-def forget_training(training_id):
-    """Unusta ootel treening"""
-    if not has_role('TREENER'):
-        return jsonify({'error': 'Ligipääs keelatud'}), 403
 
+@app.route("/manager/sessions/new", methods=["GET", "POST"])
+@login_required
+@role_required("JUHATAJA")
+def manager_new_session():
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        return render_template("manager_session_form.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
-        cur = conn.cursor()
-        updated = update_training_status(cur, training_id, 'UNUSTATUD', ('OOTEL',), session['user_id'])
-        if updated == 0:
-            conn.rollback()
-            return jsonify({'error': 'Unustada saab ainult ootel treeningut'}), 400
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if request.method == "GET":
+                training_types, rooms, trainers = fetch_form_options(cur)
+                return render_template(
+                    "manager_session_form.html",
+                    training_types=training_types,
+                    rooms=rooms,
+                    trainers=trainers,
+                    user=template_user(),
+                )
+
+            values = {
+                "treeninguliigi_kood": request.form.get("treeninguliigi_kood"),
+                "treener_e_meil": request.form.get("treener_e_meil"),
+                "ruumi_kood": request.form.get("ruumi_kood"),
+                "alguse_aeg": request.form.get("alguse_aeg"),
+                "lopu_aeg": request.form.get("lopu_aeg"),
+                "registreerimise_lopp": request.form.get("registreerimise_lopp"),
+                "tyhistamise_lopp": request.form.get("tyhistamise_lopp"),
+                "maksimaalne_osalejate_arv": request.form.get("maksimaalne_osalejate_arv"),
+            }
+            cur.execute(
+                """
+                SELECT fn_planeeri_treeningukord(%s, %s, %s, %s, %s, %s, %s, %s, %s) AS treeningukorra_kood
+                """,
+                (
+                    values["treeninguliigi_kood"],
+                    values["treener_e_meil"],
+                    values["ruumi_kood"],
+                    values["alguse_aeg"],
+                    values["lopu_aeg"],
+                    values["registreerimise_lopp"],
+                    values["tyhistamise_lopp"],
+                    values["maksimaalne_osalejate_arv"],
+                    session["user_id"],
+                ),
+            )
+            new_id = cur.fetchone()["treeningukorra_kood"]
         conn.commit()
-        return jsonify({'success': True})
-    except psycopg2.Error as e:
-        logger.error(f"Forget training viga: {e}")
+        flash(f"Treeningukord #{new_id} planeeriti.", "success")
+        return redirect(url_for("manager_sessions"))
+    except psycopg2.Error as exc:
         conn.rollback()
-        return jsonify({'error': 'Unustamise viga'}), 500
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            training_types, rooms, trainers = fetch_form_options(cur)
+        return render_template(
+            "manager_session_form.html",
+            error=db_error_message(exc),
+            training_types=training_types,
+            rooms=rooms,
+            trainers=trainers,
+            user=template_user(),
+            form=request.form,
+        ), 400
     finally:
-        cur.close()
         conn.close()
 
-@app.route('/manager/finish-training/<int:training_id>', methods=['POST'])
-@login_required
-def finish_training(training_id):
-    """Lõpeta aktiivne või mitteaktiivne treening"""
-    if not has_role('JUHATAJA'):
-        return jsonify({'error': 'Ligipääs keelatud'}), 403
 
+def call_session_function(function_name: str, treeningukorra_kood: int, *extra_args):
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        flash("Andmebaasi ühendus ebaõnnestus.", "danger")
+        return redirect(url_for("manager_sessions"))
     try:
-        cur = conn.cursor()
-        updated = update_training_status(cur, training_id, 'LOPPENUD', TRAINING_FINISHABLE_STATUSES, session['user_id'])
-        if updated == 0:
-            conn.rollback()
-            return jsonify({'error': 'Lõpetada saab ainult aktiivset või mitteaktiivset treeningut'}), 400
+        placeholders = ", ".join(["%s"] * (2 + len(extra_args)))
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT {function_name}({placeholders})",
+                (treeningukorra_kood, session["user_id"], *extra_args),
+            )
         conn.commit()
-        return jsonify({'success': True})
-    except psycopg2.Error as e:
-        logger.error(f"Finish training viga: {e}")
+        flash("Toiming õnnestus.", "success")
+    except psycopg2.Error as exc:
         conn.rollback()
-        return jsonify({'error': 'Lõpetamise viga'}), 500
+        flash(db_error_message(exc), "danger")
     finally:
-        cur.close()
         conn.close()
+    return redirect(request.referrer or url_for("manager_sessions"))
 
-@app.route('/manager/report')
+
+@app.route("/manager/sessions/<int:treeningukorra_kood>/open", methods=["POST"])
 @login_required
+@role_required("JUHATAJA")
+def manager_open_session(treeningukorra_kood):
+    return call_session_function("fn_ava_treeningukord", treeningukorra_kood)
+
+
+@app.route("/manager/sessions/<int:treeningukorra_kood>/close", methods=["POST"])
+@login_required
+@role_required("JUHATAJA")
+def manager_close_session(treeningukorra_kood):
+    return call_session_function("fn_sulge_treeningukord", treeningukorra_kood)
+
+
+@app.route("/manager/sessions/<int:treeningukorra_kood>/complete", methods=["POST"])
+@login_required
+@role_required("JUHATAJA")
+def manager_complete_session(treeningukorra_kood):
+    return call_session_function("fn_lopeta_treeningukord", treeningukorra_kood)
+
+
+@app.route("/manager/sessions/<int:treeningukorra_kood>/cancel", methods=["POST"])
+@login_required
+@role_required("JUHATAJA")
+def manager_cancel_session(treeningukorra_kood):
+    reason = (request.form.get("reason") or "Juhataja tühistas treeningukorra.").strip()
+    return call_session_function("fn_tyhista_treeningukord", treeningukorra_kood, reason)
+
+
+@app.route("/manager/report")
+@login_required
+@role_required("JUHATAJA")
 def manager_report():
-    """Treeningute koondaruanne juhatajale"""
-    if not has_role('JUHATAJA'):
-        return render_template('error.html', error='Ligipääs keelatud'), 403
-
     conn = get_db_connection()
     if not conn:
-        return render_template('report.html', error='Andmebaasi viga', user=template_user()), 500
-
+        return render_template("manager_report.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("""
-            SELECT kood, nimetus, arv
-            FROM v_treeningute_arv_seisundi_kaupa
-            ORDER BY nimetus
-        """)
-        by_status = cur.fetchall()
-
-        cur.execute("""
-            SELECT kategooria, tyyp, arv
-            FROM v_treeningute_arv_kategooria_kaupa
-            ORDER BY tyyp, kategooria
-        """)
-        by_category = cur.fetchall()
-        return render_template('report.html', by_status=by_status, by_category=by_category, user=template_user())
-    except psycopg2.Error as e:
-        logger.error(f"Report viga: {e}")
-        return render_template('report.html', error='Andmebaasi viga', user=template_user()), 500
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM v_treeningute_taituvuse_statistika ORDER BY treeninguliik")
+            occupancy = cur.fetchall()
+            cur.execute("""
+                SELECT *
+                FROM v_juhataja_treeningukordade_ulevaade
+                ORDER BY alguse_aeg DESC
+                LIMIT 20
+            """)
+            sessions = cur.fetchall()
+        return render_template("manager_report.html", occupancy=occupancy, sessions=sessions, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Manager report viga: %s", exc)
+        return render_template("manager_report.html", error=db_error_message(exc), user=template_user()), 500
     finally:
-        cur.close()
         conn.close()
 
-# ============================================================================
-# API LÕPP-PUNKTID
-# ============================================================================
 
-@app.route('/api/stats')
+@app.route("/trainer/sessions")
+@login_required
+@role_required("TREENER")
+def trainer_sessions():
+    conn = get_db_connection()
+    if not conn:
+        return render_template("trainer_sessions.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT *
+                FROM v_treeneri_tunniplaan
+                WHERE treener_e_meil = %s
+                ORDER BY alguse_aeg DESC, treeningukorra_kood DESC
+            """, (session["user_id"],))
+            sessions = cur.fetchall()
+        return render_template("trainer_sessions.html", sessions=sessions, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Trainer sessions viga: %s", exc)
+        return render_template("trainer_sessions.html", error=db_error_message(exc), user=template_user()), 500
+    finally:
+        conn.close()
+
+
+@app.route("/trainer/sessions/<int:treeningukorra_kood>/roster")
+@login_required
+@role_required("TREENER")
+def trainer_roster(treeningukorra_kood):
+    conn = get_db_connection()
+    if not conn:
+        return render_template("trainer_roster.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT *
+                FROM v_treeneri_tunniplaan
+                WHERE treeningukorra_kood = %s
+                  AND treener_e_meil = %s
+            """, (treeningukorra_kood, session["user_id"]))
+            session_row = cur.fetchone()
+            if not session_row and "JUHATAJA" not in session.get("roles", []):
+                return render_template("error.html", error="Seda treeningukorda ei leitud sinu tunniplaanist."), 404
+            if not session_row:
+                cur.execute("""
+                    SELECT *
+                    FROM v_juhataja_treeningukordade_ulevaade
+                    WHERE treeningukorra_kood = %s
+                """, (treeningukorra_kood,))
+                session_row = cur.fetchone()
+
+            cur.execute("""
+                SELECT *
+                FROM v_treeningukorra_osalejad
+                WHERE treeningukorra_kood = %s
+                ORDER BY
+                    CASE registreeringu_seisundi_kood WHEN 'KINNIT' THEN 1 WHEN 'OOTEJRK' THEN 2 ELSE 3 END,
+                    ootejarjekorra_nr NULLS LAST,
+                    registreerimise_aeg
+            """, (treeningukorra_kood,))
+            roster = cur.fetchall()
+        return render_template("trainer_roster.html", session_row=session_row, roster=roster, user=template_user())
+    except psycopg2.Error as exc:
+        logger.error("Trainer roster viga: %s", exc)
+        return render_template("trainer_roster.html", error=db_error_message(exc), user=template_user()), 500
+    finally:
+        conn.close()
+
+
+@app.route("/trainer/sessions/<int:treeningukorra_kood>/attendance", methods=["POST"])
+@login_required
+@role_required("TREENER")
+def trainer_mark_attendance(treeningukorra_kood):
+    conn = get_db_connection()
+    if not conn:
+        flash("Andmebaasi ühendus ebaõnnestus.", "danger")
+        return redirect(url_for("trainer_roster", treeningukorra_kood=treeningukorra_kood))
+    try:
+        registration_ids = request.form.getlist("registreeringu_kood")
+        with conn.cursor() as cur:
+            for raw_id in registration_ids:
+                osales = request.form.get(f"osales_{raw_id}") == "on"
+                markus = (request.form.get(f"markus_{raw_id}") or "").strip() or None
+                cur.execute(
+                    "SELECT fn_marki_osalemine(%s, %s, %s, %s)",
+                    (raw_id, session["user_id"], osales, markus),
+                )
+        conn.commit()
+        flash("Osalemised salvestati.", "success")
+    except psycopg2.Error as exc:
+        conn.rollback()
+        flash(db_error_message(exc), "danger")
+    finally:
+        conn.close()
+    return redirect(url_for("trainer_roster", treeningukorra_kood=treeningukorra_kood))
+
+
+@app.route("/api/stats")
 @login_required
 def api_stats():
-    """Statistika API"""
     conn = get_db_connection()
     if not conn:
-        return jsonify({'error': 'Andmebaasi viga'}), 500
-
+        return jsonify({"error": "Andmebaasi ühendus ebaõnnestus."}), 500
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        cur.execute("""
-            SELECT
-                (SELECT COUNT(*) FROM treening WHERE treeningu_seisundi_liik_kood = 'AKTIIVNE') as active,
-                (SELECT COUNT(*) FROM treening WHERE treeningu_seisundi_liik_kood = 'OOTEL') as pending,
-                (SELECT COUNT(*) FROM treening WHERE treeningu_seisundi_liik_kood = 'MITTEAKT') as inactive,
-                (SELECT COUNT(*) FROM treening WHERE treeningu_seisundi_liik_kood = 'LOPPENUD') as finished,
-                (SELECT COUNT(*) FROM treening WHERE treeningu_seisundi_liik_kood = 'UNUSTATUD') as forgotten
-        """)
-
-        stats = cur.fetchone()
-        return jsonify(stats)
-
-    except psycopg2.Error as e:
-        logger.error(f"Stats API viga: {e}")
-        return jsonify({'error': 'Andmebaasi viga'}), 500
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT
+                    (SELECT COUNT(*) FROM v_avalikud_treeningukorrad) AS avatud_kordi,
+                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
+                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid
+            """)
+            return jsonify(cur.fetchone())
+    except psycopg2.Error as exc:
+        return jsonify({"error": db_error_message(exc)}), 500
     finally:
-        cur.close()
         conn.close()
 
-# ============================================================================
-# VEAPARANDUS
-# ============================================================================
 
 @app.errorhandler(404)
-def not_found(e):
-    """404 viga"""
-    return render_template('error.html', error='Lehekülge ei leitud'), 404
+def not_found(_error):
+    return render_template("error.html", error="Lehte ei leitud."), 404
+
 
 @app.errorhandler(500)
-def server_error(e):
-    """500 viga"""
-    logger.error(f"Server error: {e}")
-    return render_template('error.html', error='Serveri viga'), 500
+def internal_error(_error):
+    return render_template("error.html", error="Sisemine serveri viga."), 500
 
-# ============================================================================
-# RAKENDUSE KÄIVITAMINE
-# ============================================================================
 
-if __name__ == '__main__':
-    # Initsialiseerige andmebaas
+if __name__ == "__main__":
     init_db()
-
-    # Käivitage rakendus
-    app.run(
-        host='0.0.0.0',
-        port=int(os.environ.get('PORT', 5000)),
-        debug=os.environ.get('FLASK_ENV') == 'development'
-    )
+    app.run(debug=True, host="0.0.0.0", port=5001)

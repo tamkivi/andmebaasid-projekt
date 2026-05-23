@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Juhataja töölaud - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Juhataja treeningukorrad</h1>
+            <p class="text-muted mb-0">Planeerimine ja seisundimuudatused toimuvad PostgreSQL funktsioonide kaudu.</p>
+        </div>
+        <a class="btn btn-success" href="{{ url_for('manager_new_session') }}">
+            <i class="bi bi-plus-circle"></i> Planeeri treeningukord
+        </a>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Aeg ja treening</th>
+                        <th>Treener / ruum</th>
+                        <th>Täituvus</th>
+                        <th>Seisund</th>
+                        <th class="text-end">Toimingud</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sessions %}
+                        <tr>
+                            <td><code>#{{ row.treeningukorra_kood }}</code></td>
+                            <td>
+                                <strong>{{ row.treeninguliik }}</strong><br>
+                                {{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}
+                            </td>
+                            <td>{{ row.treener_nimi }}<br><small class="text-muted">{{ row.ruum }}</small></td>
+                            <td>
+                                {{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }}<br>
+                                <small class="text-muted">{{ row.ootejarjekorra_arv }} ootel · {{ row.vabu_kohti }} vaba</small>
+                            </td>
+                            <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                    {% if row.seisundi_kood == 'KAVAND' %}
+                                        <form method="post" action="{{ url_for('manager_open_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                            <button class="btn btn-sm btn-outline-success" type="submit">Ava</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if row.seisundi_kood == 'AVATUD' %}
+                                        <form method="post" action="{{ url_for('manager_close_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                            <button class="btn btn-sm btn-outline-primary" type="submit">Sulge</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if row.seisundi_kood == 'SULETUD' %}
+                                        <form method="post" action="{{ url_for('manager_complete_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                            <button class="btn btn-sm btn-outline-dark" type="submit">Toimunud</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if row.seisundi_kood in ['KAVAND', 'AVATUD', 'SULETUD'] %}
+                                        <form method="post" action="{{ url_for('manager_cancel_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                            <input type="hidden" name="reason" value="Juhataja tühistas treeningukorra prototüübis.">
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">Tühista</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">Treeningukordi ei ole.</div>
+    {% endif %}
+</div>
+{% endblock %}

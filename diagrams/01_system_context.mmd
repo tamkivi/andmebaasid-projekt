@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph "Jõusaali rühmatreeningute allsüsteem"
+        APP["Flask prototüüp\nrollipõhised töövood"]
+        DB[("PostgreSQL andmebaas\nreeglid, rutiinid, vaated")]
+        APP -->|"loeb vaateid"| DB
+        APP -->|"kutsub kirjutusfunktsioone"| DB
+    end
+
+    JUH["Juhataja"] -->|"planeerib, avab, tühistab,\nvaatab statistikat"| APP
+    TRE["Treener"] -->|"näeb tunniplaani,\nmärgib osalemist"| APP
+    KLI["Klient"] -->|"vaatab ajakava,\nregistreerub, tühistab"| APP
+
+    DOC["dokument.docx\nselgitused ja diagrammid"]
+    SQL["skript.sql\nfüüsiline mudel"]
+    EAP["mudelid.eap\nmudelid"]
+    ZIP["rakendus.zip\nFlask prototüüp"]
+
+    DB -.-> SQL
+    APP -.-> ZIP
+    DB -.-> DOC
+    DB -.-> EAP

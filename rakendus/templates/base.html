@@ -3,314 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Jõusaali Infosüsteem{% endblock %}</title>
-
-    <!-- Bootstrap CSS -->
+    <title>{% block title %}Jõusaali rühmatreeningud{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-
     <style>
-        :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --success-color: #198754;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            min-height: 100vh;
-        }
-
-        /* Navigatsioon */
-        .navbar {
-            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-link {
-            color: rgba(255,255,255,0.8) !important;
-            transition: color 0.3s;
-            margin-left: 0.5rem;
-        }
-
-        .nav-link:hover {
-            color: white !important;
-        }
-
-        .nav-link.active {
-            color: white !important;
-            border-bottom: 3px solid white;
-        }
-
-        /* Peakonteneri stiil */
-        .container-main {
-            padding: 2rem 0;
-        }
-
-        /* Kaardi stiil */
-        .card {
-            border: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 12px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-bottom: 1.5rem;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-            border: none;
-            font-weight: 600;
-        }
-
-        /* Vorm */
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            padding: 0.75rem 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-
-        /* Nupud */
-        .btn {
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 0.6rem 1.5rem;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
-        }
-
-        /* Tabel */
-        .table {
-            background: white;
-        }
-
-        .table thead {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .table tbody tr {
-            transition: background-color 0.3s;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Staatused */
-        .badge-aktiivne {
-            background-color: #198754;
-        }
-
-        .badge-ootel {
-            background-color: #ffc107;
-            color: #333;
-        }
-
-        .badge-mitteakt,
-        .badge-mitteaktiivne {
-            background-color: #6c757d;
-        }
-
-        .badge-loppenud,
-        .badge-unustatud {
-            background-color: #dc3545;
-        }
-
-        /* Footer */
-        footer {
-            background-color: #343a40;
-            color: #adb5bd;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
-
-        footer a {
-            color: #0d6efd;
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsiivsus */
-        @media (max-width: 768px) {
-            .container-main {
-                padding: 1rem 0;
-            }
-
-            .navbar-brand {
-                font-size: 1.2rem;
-            }
-        }
-
-        /* Alert stilidid */
-        .alert {
-            border-radius: 8px;
-            border: none;
-        }
-
-        /* Spinner */
-        .spinner-custom {
-            color: #0d6efd;
-        }
+        body { background: #f6f7f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .navbar { background: #1f2937; }
+        .navbar-brand, .nav-link { color: #fff !important; }
+        .nav-link { opacity: .84; }
+        .nav-link:hover { opacity: 1; }
+        .container-main { padding: 1.5rem 0 2.5rem; }
+        .card { border-radius: .5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+        .card-header { background: #fff; border-bottom: 1px solid #e5e7eb; font-weight: 700; }
+        .table thead th { background: #f3f4f6; color: #374151; font-size: .875rem; }
+        .badge-KAVAND { background: #6b7280; }
+        .badge-AVATUD { background: #198754; }
+        .badge-SULETUD { background: #0d6efd; }
+        .badge-TOIMUNUD { background: #111827; }
+        .badge-TYHIST { background: #dc3545; }
+        .badge-KINNIT { background: #198754; }
+        .badge-OOTEJRK { background: #f59e0b; color: #111827; }
+        .badge-TYH_KL, .badge-TYH_SYS { background: #6b7280; }
+        .stat { font-size: 1.9rem; font-weight: 700; }
+        footer { color: #6b7280; padding: 2rem 0; }
     </style>
-
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigatsioon -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
-        <div class="container-lg">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-dumbbell"></i> Jõusaali Süsteem
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if session.user_id %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/dashboard">
-                                <i class="bi bi-house"></i> Avaleht
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/trainings">
-                                <i class="bi bi-list"></i> Treeningud
-                            </a>
-                        </li>
-                        {% if session.roles and 'TREENER' in session.roles %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-tools"></i> Treener
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    <li><a class="dropdown-item" href="/trainer/register-training">Registreeri treening</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/trainings">Treeningute töölaud</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                        {% if session.roles and 'JUHATAJA' in session.roles %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-graph-up"></i> Juhataja
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="managerDropdown">
-                                    <li><a class="dropdown-item" href="/manager/report">Koondaruanne</a></li>
-                                    <li><a class="dropdown-item" href="/trainings">Kõik treeningud</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <span class="nav-link">
-                                <i class="bi bi-person"></i> {{ session.name }}
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/logout">
-                                <i class="bi bi-box-arrow-right"></i> Väljalogimine
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/trainings">
-                                <i class="bi bi-list"></i> Treeningud
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/login">
-                                <i class="bi bi-box-arrow-in-right"></i> Sisselogimine
-                            </a>
-                        </li>
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container-lg">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <i class="bi bi-calendar2-week"></i> Rühmatreeningud
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto">
+                {% if session.user_id %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="bi bi-house"></i> Avaleht</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('schedule') }}"><i class="bi bi-calendar-event"></i> Ajakava</a></li>
+                    {% if session.role == 'klient' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('client_registrations') }}"><i class="bi bi-person-check"></i> Minu registreeringud</a></li>
                     {% endif %}
-                </ul>
-            </div>
+                    {% if session.roles and 'TREENER' in session.roles %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('trainer_sessions') }}"><i class="bi bi-clipboard2-check"></i> Treener</a></li>
+                    {% endif %}
+                    {% if session.roles and 'JUHATAJA' in session.roles %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_sessions') }}"><i class="bi bi-kanban"></i> Juhataja</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_report') }}"><i class="bi bi-bar-chart"></i> Aruanne</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Välju</a></li>
+                {% endif %}
+            </ul>
         </div>
-    </nav>
-
-    <!-- Peakontenr -->
-    <div class="container-lg container-main">
-        {% if error %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> {{ error }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endif %}
-
-        {% if success %}
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> {{ success }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endif %}
-
-        {% block content %}{% endblock %}
     </div>
+</nav>
 
-    <!-- Footer -->
-    <footer class="mt-5 py-4 border-top">
-        <div class="container-lg">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Jõusaali Infosüsteem</h5>
-                    <p class="text-muted">Treeningute funktsionaalne allsüsteem<br>Andmebaasid I, ITI0206</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-muted">
-                        © 2026 Tristan Aik Sild, Gustav Tamkivi<br>
-                        <small>Flask + PostgreSQL</small>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </footer>
+<main class="container-main">
+    <div class="container-lg">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    {% block content %}{% endblock %}
+</main>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<footer>
+    <div class="container-lg small">
+        Andmebaasid I, ITI0206 · Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem
+    </div>
+</footer>
 
-    {% block extra_js %}{% endblock %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

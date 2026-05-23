@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Minu registreeringud - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <h1 class="h3 mb-1">Minu registreeringud</h1>
+    <p class="text-muted">Siin on kinnitatud kohad, ootejärjekorra read ja tühistatud registreeringud.</p>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif registrations %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Aeg</th>
+                        <th>Treening</th>
+                        <th>Ruum ja treener</th>
+                        <th>Registreering</th>
+                        <th>Osalemine</th>
+                        <th class="text-end">Tegevus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in registrations %}
+                        <tr>
+                            <td>
+                                {{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}<br>
+                                <small class="text-muted">{{ session_status_label(row.treeningukorra_seisundi_kood) }}</small>
+                            </td>
+                            <td><strong>{{ row.treeninguliik }}</strong></td>
+                            <td>{{ row.ruum }}<br><small class="text-muted">{{ row.treener_nimi }}</small></td>
+                            <td>
+                                <span class="badge badge-{{ row.registreeringu_seisundi_kood }}">{{ registration_status_label(row.registreeringu_seisundi_kood) }}</span>
+                                {% if row.ootejarjekorra_nr %}
+                                    <br><small class="text-muted">Ootejärjekorras #{{ row.ootejarjekorra_nr }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.osales is sameas true %}
+                                    <span class="text-success">Osales</span>
+                                {% elif row.osales is sameas false %}
+                                    <span class="text-danger">Ei osalenud</span>
+                                {% else %}
+                                    <span class="text-muted">Märkimata</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if row.registreeringu_seisundi_kood in ['KINNIT', 'OOTEJRK'] %}
+                                    <form method="post" action="{{ url_for('cancel_registration', registreeringu_kood=row.registreeringu_kood) }}">
+                                        <input type="hidden" name="reason" value="Klient tühistas registreeringu prototüübis.">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">
+                                            <i class="bi bi-x-circle"></i> Tühista
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">Registreeringuid ei ole.</div>
+    {% endif %}
+</div>
+{% endblock %}

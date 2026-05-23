@@ -1,0 +1,19 @@
+stateDiagram-v2
+    [*] --> KINNIT: klient registreerub ja koht on olemas
+    [*] --> OOTEJRK: klient registreerub ja treeningukord on täis
+    OOTEJRK --> KINNIT: süsteem edendab pärast vaba koha tekkimist
+    KINNIT --> TYH_KL: klient tühistab enne tähtaega
+    OOTEJRK --> TYH_KL: klient tühistab enne tähtaega
+    KINNIT --> TYH_SYS: treeningukord tühistatakse
+    OOTEJRK --> TYH_SYS: treeningukord tühistatakse
+    TYH_KL --> [*]
+    TYH_SYS --> [*]
+
+    note right of KINNIT
+        Kehtib osalejana.
+        Topeltaktiivne registreering on keelatud.
+    end note
+    note right of OOTEJRK
+        Säilitatakse järjekorranumber.
+        Edendamine toimub DB funktsioonis.
+    end note

@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant K as Klient
+    participant F as Flask route
+    participant T as fn_tyhista_registreering
+    participant E as fn_edenda_ootejarjekorrast
+    participant R as registreering
+    participant V as vaated
+
+    K->>F: POST /client/registrations/{id}/cancel
+    F->>T: registreeringu kood, kliendi e-post, põhjus
+    T->>R: lukusta tühistatav registreering ja treeningukord
+    T->>R: muuda KINNIT või OOTEJRK -> TYH_KL
+    alt tühistati kinnitatud koht
+        T->>E: treeningukorra kood
+        E->>R: lukusta esimene OOTEJRK rida
+        E->>R: muuda OOTEJRK -> KINNIT, märgi edendamise aeg
+        E-->>T: edendatud registreeringu kood
+    else tühistati ootejärjekorra rida
+        T-->>F: edendamist ei ole
+    end
+    T-->>F: eestikeelne tulemuseteade
+    F->>V: loe kliendi registreeringud ja ajakava
+    V-->>K: näita uut kinnitatud/ootejärjekorra seisu

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Osalejate nimekiri - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif session_row %}
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="h3 mb-1">{{ session_row.treeninguliik }}</h1>
+                <p class="text-muted mb-0">
+                    {{ session_row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if session_row.alguse_aeg else '' }}
+                    · {{ session_row.ruum }}
+                    · <span class="badge badge-{{ session_row.seisundi_kood }}">{{ session_status_label(session_row.seisundi_kood) }}</span>
+                </p>
+            </div>
+            <a class="btn btn-outline-secondary" href="{{ url_for('trainer_sessions') }}">Tagasi</a>
+        </div>
+
+        <form method="post" action="{{ url_for('trainer_mark_attendance', treeningukorra_kood=session_row.treeningukorra_kood) }}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Klient</th>
+                            <th>Registreering</th>
+                            <th>Ootejärjekord</th>
+                            <th>Osales</th>
+                            <th>Märkus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in roster %}
+                            <tr>
+                                <td>{{ row.klient_nimi }}<br><small class="text-muted">{{ row.klient_e_meil }}</small></td>
+                                <td><span class="badge badge-{{ row.registreeringu_seisundi_kood }}">{{ registration_status_label(row.registreeringu_seisundi_kood) }}</span></td>
+                                <td>{{ row.ootejarjekorra_nr or '' }}</td>
+                                <td>
+                                    {% if row.registreeringu_seisundi_kood == 'KINNIT' %}
+                                        <input type="hidden" name="registreeringu_kood" value="{{ row.registreeringu_kood }}">
+                                        <input class="form-check-input" type="checkbox" name="osales_{{ row.registreeringu_kood }}" {% if row.osales is sameas true %}checked{% endif %}>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if row.registreeringu_seisundi_kood == 'KINNIT' %}
+                                        <input class="form-control form-control-sm" name="markus_{{ row.registreeringu_kood }}" value="{{ row.markus or '' }}">
+                                    {% else %}
+                                        <span class="text-muted">Ei märgita</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-success" type="submit">
+                <i class="bi bi-save"></i> Salvesta osalemine
+            </button>
+        </form>
+    {% else %}
+        <div class="alert alert-info">Treeningukorda ei leitud.</div>
+    {% endif %}
+</div>
+{% endblock %}

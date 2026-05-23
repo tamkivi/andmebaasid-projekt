@@ -33,21 +33,25 @@ if errorlevel 1 (
 )
 if not exist "work\eap_edit" mkdir "work\eap_edit"
 
-echo [1/7] Compiling Java tools...
+echo [1/8] Rendering Mermaid diagrams...
+"%PYTHON%" tools\render_diagrams.py
+if errorlevel 1 goto :error
+
+echo [2/8] Compiling Java tools...
 javac -cp "%CP%" tools\EapConvert.java tools\EapRename.java tools\EapFixes.java tools\EapDedupe.java
 if errorlevel 1 goto :error
 
-echo [2/7] Copying tracked EAP source...
+echo [3/8] Copying tracked EAP source...
 if not exist "%EAP_SOURCE%" (
     echo Missing %EAP_SOURCE%. The original EA template is kept for reference, but the build requires the tracked Jackcess-compatible EAP source.
     goto :error
 )
 copy /Y "%EAP_SOURCE%" "%EAP_BASE%" >nul
 
-echo [3/7] Preparing EAP from converted base...
+echo [4/8] Preparing EAP from converted base...
 copy /Y "%EAP_BASE%" "%EAP_OUTPUT%" >nul
 
-echo [4/7] Running EAP rename + fixes...
+echo [5/8] Running EAP rename + fixes...
 java -cp "tools;%CP%" EapRename "%EAP_OUTPUT%"
 if errorlevel 1 goto :error
 java -cp "tools;%CP%" EapFixes "%EAP_OUTPUT%"
@@ -56,16 +60,17 @@ java -cp "tools;%CP%" EapDedupe "%EAP_OUTPUT%" "%EAP_CLEAN%"
 if errorlevel 1 goto :error
 copy /Y "%EAP_CLEAN%" "%EAP_OUTPUT%" >nul
 
-echo [5/7] Generating structured DOCX...
+echo [6/8] Generating structured DOCX...
 "%PYTHON%" tools\fill_report_docx.py
 if errorlevel 1 goto :error
 
-echo [6/7] Generating SQL script...
+echo [7/8] Generating SQL script...
 "%PYTHON%" -c "from tools.sql_ddl import SQL_DDL; print(SQL_DDL.strip())" > "%SQL_OUTPUT%"
 if errorlevel 1 goto :error
 
-echo [7/7] Refreshing submission_files artifacts...
+echo [8/8] Refreshing submission_files artifacts...
 if not exist "submission_files" mkdir "submission_files"
+if exist submission_files\rakendus rmdir /S /Q submission_files\rakendus
 copy /Y "%DOCX_OUTPUT%" submission_files\dokument.docx >nul
 copy /Y "%SQL_OUTPUT%" submission_files\skript.sql >nul
 copy /Y "%EAP_OUTPUT%" submission_files\mudelid.eap >nul

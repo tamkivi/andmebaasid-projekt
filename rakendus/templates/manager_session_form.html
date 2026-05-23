@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Planeeri treeningukord - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header">Planeeri uus treeningukord</div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    <form method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Treeninguliik</label>
+                                <select class="form-select" name="treeninguliigi_kood" required>
+                                    {% for row in training_types %}
+                                        <option value="{{ row.treeninguliigi_kood }}" {% if form and form.treeninguliigi_kood == row.treeninguliigi_kood|string %}selected{% endif %}>
+                                            {{ row.nimetus }} ({{ row.kestus_minutites }} min)
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Treener</label>
+                                <select class="form-select" name="treener_e_meil" required>
+                                    {% for row in trainers %}
+                                        <option value="{{ row.e_meil }}" {% if form and form.treener_e_meil == row.e_meil %}selected{% endif %}>
+                                            {{ row.nimi }} · {{ row.e_meil }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ruum</label>
+                                <select class="form-select" name="ruumi_kood" required>
+                                    {% for row in rooms %}
+                                        <option value="{{ row.ruumi_kood }}" {% if form and form.ruumi_kood == row.ruumi_kood %}selected{% endif %}>
+                                            {{ row.nimetus }} · mahutavus {{ row.mahutavus }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Maksimaalne osalejate arv</label>
+                                <input class="form-control" name="maksimaalne_osalejate_arv" type="number" min="1" required value="{{ form.maksimaalne_osalejate_arv if form else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Alguse aeg</label>
+                                <input class="form-control" name="alguse_aeg" type="datetime-local" required value="{{ form.alguse_aeg if form else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Lõpu aeg</label>
+                                <input class="form-control" name="lopu_aeg" type="datetime-local" required value="{{ form.lopu_aeg if form else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Registreerimise lõpp</label>
+                                <input class="form-control" name="registreerimise_lopp" type="datetime-local" required value="{{ form.registreerimise_lopp if form else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tühistamise lõpp</label>
+                                <input class="form-control" name="tyhistamise_lopp" type="datetime-local" required value="{{ form.tyhistamise_lopp if form else '' }}">
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2">
+                            <button class="btn btn-success" type="submit">
+                                <i class="bi bi-check2-circle"></i> Planeeri
+                            </button>
+                            <a class="btn btn-outline-secondary" href="{{ url_for('manager_sessions') }}">Tagasi</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

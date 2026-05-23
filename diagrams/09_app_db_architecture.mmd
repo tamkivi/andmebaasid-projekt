@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph "Flask rakendus"
+        LOGIN["/login\nfn_kasutaja_tuvastamise_andmed"]
+        SCH["/schedule\nloeb v_avalikud_treeningukorrad"]
+        CRE["/manager/sessions/new\nkutsub fn_planeeri_treeningukord"]
+        ACT["olekutoimingud\nopen/close/complete/cancel"]
+        REG["/client/register ja cancel\nkutsub registreeringu funktsioone"]
+        ATT["/trainer/attendance\nkutsub fn_marki_osalemine"]
+    end
+
+    subgraph "PostgreSQL kaitstud tuum"
+        VIEWS["vaated\nrollipõhised lugemised"]
+        FUNCS["funktsioonid\nkõik tavapärased kirjutused"]
+        TRIG["triggerid\ninvariantide kontroll"]
+        IDX["unikaalsed ja osalised indeksid"]
+        TABLES["tabelid\ntreeningukord, registreering,\nosalemine, ruum, pädevus"]
+    end
+
+    LOGIN --> FUNCS
+    SCH --> VIEWS
+    CRE --> FUNCS
+    ACT --> FUNCS
+    REG --> FUNCS
+    ATT --> FUNCS
+
+    FUNCS --> TABLES
+    VIEWS --> TABLES
+    TRIG --> TABLES
+    IDX --> TABLES
+    FUNCS --> TRIG
+    TABLES --> VIEWS

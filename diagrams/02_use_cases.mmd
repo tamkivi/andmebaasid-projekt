@@ -1,0 +1,41 @@
+flowchart TB
+    JUH["Juhataja"]
+    TRE["Treener"]
+    KLI["Klient"]
+
+    subgraph "Juhataja töövoog"
+        P["Planeeri treeningukord"]
+        A["Ava registreerimine"]
+        C["Tühista treeningukord"]
+        S["Vaata täituvust ja statistikat"]
+        P --> A --> S
+        C --> S
+    end
+
+    subgraph "Treeneri töövoog"
+        TT["Vaata enda treeningukordi"]
+        R["Vaata osalejate nimekirja"]
+        O["Märgi osalemine"]
+        TT --> R --> O
+    end
+
+    subgraph "Kliendi töövoog"
+        AJ["Vaata avatud ajakava"]
+        REG["Registreeru treeningukorrale"]
+        KIN["KINNIT kui koht on olemas"]
+        OOT["OOTEJRK kui kohad on täis"]
+        TYH["Tühista registreering"]
+        ED["fn_edenda_ootejarjekorrast"]
+        MINU["Vaata enda registreeringuid"]
+        AJ --> REG
+        REG --> KIN
+        REG --> OOT
+        KIN --> TYH --> ED --> MINU
+        OOT --> MINU
+    end
+
+    JUH --> P
+    JUH --> C
+    JUH --> S
+    TRE --> TT
+    KLI --> AJ

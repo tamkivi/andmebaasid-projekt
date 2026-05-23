@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Treeneri tunniplaan - Jõusaali rühmatreeningud{% endblock %}
+
+{% block content %}
+<div class="container-lg">
+    <h1 class="h3 mb-1">Minu treeningukorrad</h1>
+    <p class="text-muted">Treener näeb ainult enda määratud treeningukordi.</p>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% elif sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Aeg</th>
+                        <th>Treening</th>
+                        <th>Ruum</th>
+                        <th>Osalejad</th>
+                        <th>Seisund</th>
+                        <th class="text-end">Tegevus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sessions %}
+                        <tr>
+                            <td>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</td>
+                            <td><strong>{{ row.treeninguliik }}</strong></td>
+                            <td>{{ row.ruum }}</td>
+                            <td>{{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootejarjekorra_arv }} ootel</td>
+                            <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('trainer_roster', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    <i class="bi bi-people"></i> Osalejad
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">Treeningukordi ei ole.</div>
+    {% endif %}
+</div>
+{% endblock %}

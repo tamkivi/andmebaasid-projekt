@@ -55,33 +55,37 @@ echo "=== ITI0206 Build Pipeline ==="
 ensure_python
 mkdir -p work/eap_edit
 
-echo "[1/7] Compiling Java tools..."
+echo "[1/8] Rendering Mermaid diagrams..."
+"$PYTHON" tools/render_diagrams.py
+
+echo "[2/8] Compiling Java tools..."
 javac -cp "$CP" tools/EapConvert.java tools/EapRename.java tools/EapFixes.java tools/EapDedupe.java
 
-echo "[2/7] Copying tracked EAP source..."
+echo "[3/8] Copying tracked EAP source..."
 if [ ! -f "$EAP_SOURCE" ]; then
     echo "Missing $EAP_SOURCE. The original EA template is kept for reference, but the build requires the tracked Jackcess-compatible EAP source."
     exit 1
 fi
 cp "$EAP_SOURCE" "$EAP_BASE"
 
-echo "[3/7] Preparing EAP from converted base..."
+echo "[4/8] Preparing EAP from converted base..."
 cp "$EAP_BASE" "$EAP_OUTPUT"
 
-echo "[4/7] Running EAP rename + fixes..."
+echo "[5/8] Running EAP rename + fixes..."
 java -cp "tools:$CP" EapRename "$EAP_OUTPUT"
 java -cp "tools:$CP" EapFixes "$EAP_OUTPUT"
 java -cp "tools:$CP" EapDedupe "$EAP_OUTPUT" "$EAP_CLEAN"
 mv "$EAP_CLEAN" "$EAP_OUTPUT"
 
-echo "[5/7] Generating structured DOCX..."
+echo "[6/8] Generating structured DOCX..."
 "$PYTHON" tools/fill_report_docx.py
 
-echo "[6/7] Generating SQL script..."
+echo "[7/8] Generating SQL script..."
 "$PYTHON" -c 'from tools.sql_ddl import SQL_DDL; print(SQL_DDL.strip())' > "$SQL_OUTPUT"
 
-echo "[7/7] Refreshing submission_files artifacts..."
+echo "[8/8] Refreshing submission_files artifacts..."
 mkdir -p submission_files
+rm -rf submission_files/rakendus
 cp "$DOCX_OUTPUT" submission_files/dokument.docx
 cp "$SQL_OUTPUT" submission_files/skript.sql
 cp "$EAP_OUTPUT" submission_files/mudelid.eap
