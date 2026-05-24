@@ -115,17 +115,35 @@ INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
 VALUES ('treener@jousaal.ee', 1000, DATE '2025-01-01'), ('treener@jousaal.ee', 1001, DATE '2025-01-01'), ('treener2@jousaal.ee', 1002, DATE '2025-01-01')
 ON CONFLICT DO NOTHING;
 
+-- Demo treeningukord rows use fixed IDs as stable seed identities. Avoid
+-- attempting duplicate inserts because BEFORE INSERT overlap triggers fire
+-- before ON CONFLICT can skip an existing row.
+WITH seeded_treeningukorrad (
+    treeningukorra_kood, treeninguliigi_kood, treener_e_meil, ruumi_kood,
+    alguse_aeg, lopu_aeg, registreerimise_lopp, tyhistamise_lopp,
+    maksimaalne_osalejate_arv, seisundi_kood, looja_e_meil, viimase_muutja_e_meil
+) AS (
+    VALUES
+    (2000, 1002, 'treener2@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '10 days', CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes', CURRENT_TIMESTAMP + INTERVAL '9 days', CURRENT_TIMESTAMP + INTERVAL '9 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2001, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes', CURRENT_TIMESTAMP + INTERVAL '6 days', CURRENT_TIMESTAMP + INTERVAL '6 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2002, 1001, 'treener@jousaal.ee', 'SAAL_A', CURRENT_TIMESTAMP + INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes', CURRENT_TIMESTAMP + INTERVAL '4 days', CURRENT_TIMESTAMP + INTERVAL '4 days', 2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2003, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '4 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
+)
 INSERT INTO treeningukord (
     treeningukorra_kood, treeninguliigi_kood, treener_e_meil, ruumi_kood,
     alguse_aeg, lopu_aeg, registreerimise_lopp, tyhistamise_lopp,
     maksimaalne_osalejate_arv, seisundi_kood, looja_e_meil, viimase_muutja_e_meil
 )
-VALUES
-(2000, 1002, 'treener2@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '10 days', CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes', CURRENT_TIMESTAMP + INTERVAL '9 days', CURRENT_TIMESTAMP + INTERVAL '9 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2001, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes', CURRENT_TIMESTAMP + INTERVAL '6 days', CURRENT_TIMESTAMP + INTERVAL '6 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2002, 1001, 'treener@jousaal.ee', 'SAAL_A', CURRENT_TIMESTAMP + INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes', CURRENT_TIMESTAMP + INTERVAL '4 days', CURRENT_TIMESTAMP + INTERVAL '4 days', 2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2003, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '4 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
-ON CONFLICT DO NOTHING;
+SELECT
+    s.treeningukorra_kood, s.treeninguliigi_kood, s.treener_e_meil, s.ruumi_kood,
+    s.alguse_aeg, s.lopu_aeg, s.registreerimise_lopp, s.tyhistamise_lopp,
+    s.maksimaalne_osalejate_arv, s.seisundi_kood, s.looja_e_meil, s.viimase_muutja_e_meil
+FROM seeded_treeningukorrad s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM treeningukord tk
+    WHERE tk.treeningukorra_kood = s.treeningukorra_kood
+);
 
 UPDATE treeningukord SET seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
 WHERE treeningukorra_kood IN (2001, 2002) AND seisundi_kood = 'KAVAND';

@@ -356,6 +356,8 @@ CREATE INDEX ix_isik_seisund ON isik (isiku_seisundi_liik_kood);
 CREATE INDEX ix_tootaja_seisund ON tootaja (tootaja_seisundi_liik_kood);
 CREATE INDEX ix_rolli_omamine_roll ON tootaja_rolli_omamine (tootaja_roll_kood);
 CREATE INDEX ix_treeninguliik_seisund ON treeninguliik (seisundi_kood);
+CREATE INDEX ix_treeninguliik_registreerija ON treeninguliik (registreerija_e_meil);
+CREATE INDEX ix_treeninguliik_viimase_muutja ON treeninguliik (viimase_muutja_e_meil);
 CREATE INDEX ix_treeninguliigi_kategooria_kategooria ON treeninguliigi_kategooria_omamine (treeningu_kategooria_kood);
 CREATE INDEX ix_treeninguliigi_varustuse_noue_varustus ON treeninguliigi_varustuse_noue (varustuse_kood);
 CREATE INDEX ix_ruumi_varustuse_omamine_varustus ON ruumi_varustuse_omamine (varustuse_kood);
@@ -364,9 +366,12 @@ CREATE INDEX ix_treeningukord_liik ON treeningukord (treeninguliigi_kood);
 CREATE INDEX ix_treeningukord_treener_aeg ON treeningukord (treener_e_meil, alguse_aeg, lopu_aeg);
 CREATE INDEX ix_treeningukord_ruum_aeg ON treeningukord (ruumi_kood, alguse_aeg, lopu_aeg);
 CREATE INDEX ix_treeningukord_seisund ON treeningukord (seisundi_kood);
+CREATE INDEX ix_treeningukord_looja ON treeningukord (looja_e_meil);
+CREATE INDEX ix_treeningukord_viimase_muutja ON treeningukord (viimase_muutja_e_meil);
 CREATE INDEX ix_registreering_treeningukord ON registreering (treeningukorra_kood);
 CREATE INDEX ix_registreering_klient ON registreering (klient_e_meil);
 CREATE INDEX ix_registreering_seisund ON registreering (seisundi_kood);
+CREATE INDEX ix_osalemine_markija ON osalemine (markija_e_meil);
 
 CREATE UNIQUE INDEX uq_registreering_aktiivne_klient_kord
 ON registreering (treeningukorra_kood, klient_e_meil)
@@ -715,6 +720,8 @@ CREATE OR REPLACE FUNCTION fn_planeeri_treeningukord(
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_treeningukorra_kood INTEGER;
@@ -761,6 +768,8 @@ CREATE OR REPLACE FUNCTION fn_ava_treeningukord(
 )
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_updated INTEGER;
@@ -790,6 +799,8 @@ CREATE OR REPLACE FUNCTION fn_sulge_treeningukord(
 )
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_treener_e_meil e_meil_aadress;
@@ -833,6 +844,8 @@ CREATE OR REPLACE FUNCTION fn_lopeta_treeningukord(
 )
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_treener_e_meil e_meil_aadress;
@@ -877,6 +890,8 @@ RETURNS TABLE (
     teade TEXT
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_kord treeningukord%ROWTYPE;
@@ -956,6 +971,8 @@ CREATE OR REPLACE FUNCTION fn_edenda_ootejarjekorrast(
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_kord treeningukord%ROWTYPE;
@@ -1016,6 +1033,8 @@ RETURNS TABLE (
     teade TEXT
 )
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_reg registreering%ROWTYPE;
@@ -1089,6 +1108,8 @@ CREATE OR REPLACE FUNCTION fn_marki_osalemine(
 )
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
     INSERT INTO osalemine (
@@ -1119,6 +1140,8 @@ CREATE OR REPLACE FUNCTION fn_tyhista_treeningukord(
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_affected INTEGER;
@@ -1507,6 +1530,49 @@ VALUES
 ('treener2@jousaal.ee', 1002, DATE '2025-01-01')
 ON CONFLICT DO NOTHING;
 
+-- Demo treeningukord rows use fixed IDs as stable seed identities. Avoid
+-- attempting duplicate inserts because BEFORE INSERT overlap triggers fire
+-- before ON CONFLICT can skip an existing row.
+WITH seeded_treeningukorrad (
+    treeningukorra_kood,
+    treeninguliigi_kood,
+    treener_e_meil,
+    ruumi_kood,
+    alguse_aeg,
+    lopu_aeg,
+    registreerimise_lopp,
+    tyhistamise_lopp,
+    maksimaalne_osalejate_arv,
+    seisundi_kood,
+    looja_e_meil,
+    viimase_muutja_e_meil
+) AS (
+    VALUES
+    (2000, 1002, 'treener2@jousaal.ee', 'SAAL_B',
+        CURRENT_TIMESTAMP + INTERVAL '10 days',
+        CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes',
+        CURRENT_TIMESTAMP + INTERVAL '9 days',
+        CURRENT_TIMESTAMP + INTERVAL '9 days',
+        8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2001, 1000, 'treener@jousaal.ee', 'SAAL_B',
+        CURRENT_TIMESTAMP + INTERVAL '7 days',
+        CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes',
+        CURRENT_TIMESTAMP + INTERVAL '6 days',
+        CURRENT_TIMESTAMP + INTERVAL '6 days',
+        8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2002, 1001, 'treener@jousaal.ee', 'SAAL_A',
+        CURRENT_TIMESTAMP + INTERVAL '5 days',
+        CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes',
+        CURRENT_TIMESTAMP + INTERVAL '4 days',
+        CURRENT_TIMESTAMP + INTERVAL '4 days',
+        2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2003, 1000, 'treener@jousaal.ee', 'SAAL_B',
+        CURRENT_TIMESTAMP - INTERVAL '3 days',
+        CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes',
+        CURRENT_TIMESTAMP - INTERVAL '4 days',
+        CURRENT_TIMESTAMP - INTERVAL '4 days',
+        8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
+)
 INSERT INTO treeningukord (
     treeningukorra_kood,
     treeninguliigi_kood,
@@ -1521,32 +1587,25 @@ INSERT INTO treeningukord (
     looja_e_meil,
     viimase_muutja_e_meil
 )
-VALUES
-(2000, 1002, 'treener2@jousaal.ee', 'SAAL_B',
-    CURRENT_TIMESTAMP + INTERVAL '10 days',
-    CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes',
-    CURRENT_TIMESTAMP + INTERVAL '9 days',
-    CURRENT_TIMESTAMP + INTERVAL '9 days',
-    8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2001, 1000, 'treener@jousaal.ee', 'SAAL_B',
-    CURRENT_TIMESTAMP + INTERVAL '7 days',
-    CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes',
-    CURRENT_TIMESTAMP + INTERVAL '6 days',
-    CURRENT_TIMESTAMP + INTERVAL '6 days',
-    8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2002, 1001, 'treener@jousaal.ee', 'SAAL_A',
-    CURRENT_TIMESTAMP + INTERVAL '5 days',
-    CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes',
-    CURRENT_TIMESTAMP + INTERVAL '4 days',
-    CURRENT_TIMESTAMP + INTERVAL '4 days',
-    2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-(2003, 1000, 'treener@jousaal.ee', 'SAAL_B',
-    CURRENT_TIMESTAMP - INTERVAL '3 days',
-    CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes',
-    CURRENT_TIMESTAMP - INTERVAL '4 days',
-    CURRENT_TIMESTAMP - INTERVAL '4 days',
-    8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
-ON CONFLICT DO NOTHING;
+SELECT
+    s.treeningukorra_kood,
+    s.treeninguliigi_kood,
+    s.treener_e_meil,
+    s.ruumi_kood,
+    s.alguse_aeg,
+    s.lopu_aeg,
+    s.registreerimise_lopp,
+    s.tyhistamise_lopp,
+    s.maksimaalne_osalejate_arv,
+    s.seisundi_kood,
+    s.looja_e_meil,
+    s.viimase_muutja_e_meil
+FROM seeded_treeningukorrad s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM treeningukord tk
+    WHERE tk.treeningukorra_kood = s.treeningukorra_kood
+);
 
 SELECT setval('seq_treeningukorra_kood', GREATEST((SELECT COALESCE(MAX(treeningukorra_kood), 1999) FROM treeningukord), 1999), TRUE);
 
@@ -1708,16 +1767,45 @@ BEGIN
         RAISE NOTICE 'Public skeemi CREATE õiguse eemaldamiseks puudub õigus.';
     END;
 
+    BEGIN
+        ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Funktsioonide vaikimisi PUBLIC EXECUTE õiguse eemaldamiseks puudub õigus.';
+    END;
+
+    BEGIN
+        REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Funktsioonide PUBLIC EXECUTE õiguse eemaldamiseks puudub õigus.';
+    END;
+
     IF to_regrole('jousaali_rakendus') IS NOT NULL THEN
         GRANT USAGE ON SCHEMA public TO jousaali_rakendus;
         GRANT SELECT ON ALL TABLES IN SCHEMA public TO jousaali_rakendus;
-        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO jousaali_rakendus;
-        GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO jousaali_rakendus;
+        REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM jousaali_rakendus;
 
-        -- Prototüübi lihtsustamiseks jääb rakenduse rollile tabelite kirjutusõigus,
-        -- kuid tavapärased töövood kasutavad funktsioone ning ärireeglid on
-        -- dubleeritult kaitstud triggerite ja indeksitega.
-        GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_kasutajal_on_roll(e_meil_aadress, kood_10) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_on_juhataja(e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_on_treener(e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_kasutaja_tuvastamise_andmed(e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_planeeri_treeningukord(
+            INTEGER,
+            e_meil_aadress,
+            kood_10,
+            TIMESTAMP WITH TIME ZONE,
+            TIMESTAMP WITH TIME ZONE,
+            TIMESTAMP WITH TIME ZONE,
+            TIMESTAMP WITH TIME ZONE,
+            INTEGER,
+            e_meil_aadress
+        ) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_ava_treeningukord(INTEGER, e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_sulge_treeningukord(INTEGER, e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_lopeta_treeningukord(INTEGER, e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_registreeri_klient_treeningukorrale(INTEGER, e_meil_aadress) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_tyhista_registreering(INTEGER, e_meil_aadress, TEXT) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_marki_osalemine(INTEGER, e_meil_aadress, BOOLEAN, TEXT) TO jousaali_rakendus;
+        GRANT EXECUTE ON FUNCTION public.fn_tyhista_treeningukord(INTEGER, e_meil_aadress, TEXT) TO jousaali_rakendus;
     END IF;
 
     IF to_regrole('jousaali_vaatleja') IS NOT NULL THEN
