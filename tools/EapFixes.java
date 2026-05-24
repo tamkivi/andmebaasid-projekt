@@ -50,6 +50,7 @@ public class EapFixes {
         replaceOldProjectText();
         neutralizeTemplateClass();
         removeStaleTreeningPhysicalClass();
+        removeStaleWorkbookObjects();
         ensureActors();
         ensureUseCases();
         ensureCoreClasses();
@@ -230,6 +231,72 @@ public class EapFixes {
         }
     }
 
+    private boolean containsAny(String value, Set<String> fragments) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        for (String fragment : fragments) {
+            if (value.contains(fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void removeStaleWorkbookObjects() throws Exception {
+        Set<String> staleObjectNames = Set.of(
+            "Muuda treening mitteaktiivseks",
+            "Unusta treening",
+            "Vali treening",
+            "Lõpeta valitud treening",
+            "Aktiveeri valitud treening",
+            "Kas treening kuulub kategooriasse?"
+        );
+        Table objects = db.getTable("t_object");
+        Set<Integer> staleObjectIds = new HashSet<>();
+        for (Row row : objects) {
+            Object id = row.get("Object_ID");
+            Object name = row.get("Name");
+            if (id instanceof Number && name instanceof String && staleObjectNames.contains(name)) {
+                staleObjectIds.add(((Number) id).intValue());
+            }
+        }
+        for (int objectId : staleObjectIds) {
+            deleteObjectAndDependencies(objectId);
+        }
+
+        Set<String> staleConnectorFragments = Set.of(
+            "treeningu unustada",
+            "treening sellisel kujul ei realiseeru",
+            "treening kuulub kategooriasse"
+        );
+        Table connectors = db.getTable("t_connector");
+        if (connectors == null) {
+            return;
+        }
+        Set<Integer> staleConnectorIds = new HashSet<>();
+        Cursor cursor = CursorBuilder.createCursor(connectors);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            boolean stale = false;
+            for (Column column : connectors.getColumns()) {
+                Object value = row.get(column.getName());
+                if (value instanceof String && containsAny((String) value, staleConnectorFragments)) {
+                    stale = true;
+                    break;
+                }
+            }
+            if (stale) {
+                Object connectorId = row.get("Connector_ID");
+                if (connectorId instanceof Number) {
+                    staleConnectorIds.add(((Number) connectorId).intValue());
+                }
+                cursor.deleteCurrentRow();
+            }
+        }
+        deleteConnectorDependencies(staleConnectorIds);
+    }
+
     private int ensureObject(String type, int packageId, int templateId, String name, String note) throws Exception {
         int existing = findObjectId(type, name);
         if (existing != 0) {
@@ -384,6 +451,22 @@ public class EapFixes {
             {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
             {"mahutavus", "integer", "CHECK > 0"}
         });
+        ensureClassWithColumns("Varustus", "Toetav põhiandmete objekt, mille abil kontrollitakse ruumi sobivust treeninguliigile.", new String[][] {
+            {"varustuse_kood", "varchar(10)", "PK"},
+            {"nimetus", "varchar(100)", "UNIQUE, NOT NULL"},
+            {"on_aktiivne", "boolean", "NOT NULL"}
+        });
+        ensureClassWithColumns("Ruumi_varustuse_omamine", "Seos ruumi ja olemasoleva varustuse koguse vahel.", new String[][] {
+            {"ruumi_kood", "varchar(10)", "PK, FK ruum.ruumi_kood"},
+            {"varustuse_kood", "varchar(10)", "PK, FK varustus.varustuse_kood"},
+            {"kogus", "integer", "CHECK > 0"}
+        });
+        ensureClassWithColumns("Treeninguliigi_varustuse_noue", "Treeninguliigi kohustuslik või soovituslik varustuse nõue.", new String[][] {
+            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"varustuse_kood", "varchar(10)", "PK, FK varustus.varustuse_kood"},
+            {"minimaalne_kogus", "integer", "CHECK > 0"},
+            {"on_kohustuslik", "boolean", "NOT NULL"}
+        });
         ensureClassWithColumns("Klient", "Kasutajakontoga seotud osaleja.", new String[][] {
             {"e_meil", "varchar(254)", "PK, FK kasutajakonto.e_meil"},
             {"on_aktiivne", "boolean", "NOT NULL"}
@@ -420,12 +503,35 @@ public class EapFixes {
             {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
             {"viimase_muutmise_aeg", "timestamp with time zone", "nullable"}
         }));
+        ids.put("treeninguliigi_kategooria_omamine", ensurePhysicalTable("treeninguliigi_kategooria_omamine", "Treeninguliigi ja kategooria seos. PK: treeninguliigi_kood + treeningu_kategooria_kood.", new String[][] {
+            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"treeningu_kategooria_kood", "kood_10", "PK, FK treeningu_kategooria.kood"}
+        }));
+        ids.put("varustus", ensurePhysicalTable("varustus", "Rühmatreeningu läbiviimiseks vajalik varustus. PK: varustuse_kood.", new String[][] {
+            {"varustuse_kood", "kood_10", "PK"},
+            {"nimetus", "varchar(100)", "UNIQUE, NOT NULL"},
+            {"kirjeldus", "text", "nullable"},
+            {"on_aktiivne", "boolean", "NOT NULL"}
+        }));
+        ids.put("treeninguliigi_varustuse_noue", ensurePhysicalTable("treeninguliigi_varustuse_noue", "Treeninguliigi varustuse nõue. PK: treeninguliigi_kood + varustuse_kood.", new String[][] {
+            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"varustuse_kood", "kood_10", "PK, FK varustus.varustuse_kood"},
+            {"minimaalne_kogus", "integer", "NOT NULL, CHECK > 0"},
+            {"on_kohustuslik", "boolean", "NOT NULL"},
+            {"markus", "text", "nullable"}
+        }));
         ids.put("ruum", ensurePhysicalTable("ruum", "Jõusaali ruum või stuudio. PK: ruumi_kood.", new String[][] {
             {"ruumi_kood", "kood_10", "PK"},
             {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
             {"asukoht", "varchar(300)", "nullable"},
             {"mahutavus", "integer", "NOT NULL, CHECK > 0"},
             {"on_aktiivne", "boolean", "NOT NULL"}
+        }));
+        ids.put("ruumi_varustuse_omamine", ensurePhysicalTable("ruumi_varustuse_omamine", "Ruumi olemasolev varustus ja kogus. PK: ruumi_kood + varustuse_kood.", new String[][] {
+            {"ruumi_kood", "kood_10", "PK, FK ruum.ruumi_kood"},
+            {"varustuse_kood", "kood_10", "PK, FK varustus.varustuse_kood"},
+            {"kogus", "integer", "NOT NULL, CHECK > 0"},
+            {"markus", "text", "nullable"}
         }));
         ids.put("treeneri_padevus", ensurePhysicalTable("treeneri_padevus", "Treeneri lubatud treeninguliigid. PK: tootaja_e_meil + treeninguliigi_kood.", new String[][] {
             {"tootaja_e_meil", "e_meil_aadress", "PK, FK tootaja.e_meil"},
@@ -510,6 +616,12 @@ public class EapFixes {
         addConnectorIfMissing(ids.get("treeninguliik"), ids.get("treeninguliigi_seisundi_liik"), "fk_treeninguliik_seisund", "seisundi_kood -> treeninguliigi_seisundi_liik.kood");
         addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_registreerija", "registreerija_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_muutja", "viimase_muutja_e_meil -> tootaja.e_meil");
+        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), ids.get("treeninguliik"), "fk_treeninguliigi_kategooria_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), physicalObjectId("treeningu_kategooria", ids), "fk_treeninguliigi_kategooria_kategooria", "treeningu_kategooria_kood -> treeningu_kategooria.kood");
+        addConnectorIfMissing(ids.get("treeninguliigi_varustuse_noue"), ids.get("treeninguliik"), "fk_treeninguliigi_varustuse_noue_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeninguliigi_varustuse_noue"), ids.get("varustus"), "fk_treeninguliigi_varustuse_noue_varustus", "varustuse_kood -> varustus.varustuse_kood");
+        addConnectorIfMissing(ids.get("ruumi_varustuse_omamine"), ids.get("ruum"), "fk_ruumi_varustuse_omamine_ruum", "ruumi_kood -> ruum.ruumi_kood");
+        addConnectorIfMissing(ids.get("ruumi_varustuse_omamine"), ids.get("varustus"), "fk_ruumi_varustuse_omamine_varustus", "varustuse_kood -> varustus.varustuse_kood");
         addConnectorIfMissing(ids.get("treeneri_padevus"), physicalObjectId("tootaja", ids), "fk_treeneri_padevus_tootaja", "tootaja_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("treeneri_padevus"), ids.get("treeninguliik"), "fk_treeneri_padevus_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
         addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeninguliik"), "fk_treeningukord_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
@@ -590,7 +702,12 @@ public class EapFixes {
             {ids.get("klient"), 855, -50, 1015, -115},
             {ids.get("treeninguliigi_seisundi_liik"), 20, -380, 250, -445},
             {ids.get("treeninguliik"), 295, -380, 470, -470},
+            {physicalObjectId("treeningu_kategooria", ids), 295, -250, 490, -315},
+            {ids.get("treeninguliigi_kategooria_omamine"), 520, -245, 775, -315},
             {ids.get("ruum"), 510, -300, 670, -365},
+            {ids.get("varustus"), 750, -300, 930, -365},
+            {ids.get("ruumi_varustuse_omamine"), 705, -385, 965, -455},
+            {ids.get("treeninguliigi_varustuse_noue"), 745, -465, 1035, -540},
             {ids.get("treeneri_padevus"), 510, -440, 720, -525},
             {ids.get("treeningukorra_seisundi_liik"), 20, -560, 260, -625},
             {ids.get("treeningukord"), 300, -585, 520, -720},

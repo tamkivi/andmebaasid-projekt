@@ -212,6 +212,33 @@ CREATE TABLE treeninguliigi_kategooria_omamine (
         REFERENCES treeningu_kategooria (kood)
 );
 
+CREATE TABLE varustus (
+    varustuse_kood kood_10 NOT NULL,
+    nimetus VARCHAR(100) NOT NULL,
+    kirjeldus TEXT,
+    on_aktiivne BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT pk_varustus PRIMARY KEY (varustuse_kood),
+    CONSTRAINT uq_varustus_nimetus UNIQUE (nimetus),
+    CONSTRAINT chk_varustus_kood_not_empty CHECK (btrim(varustuse_kood) <> ''),
+    CONSTRAINT chk_varustus_nimetus_not_empty CHECK (btrim(nimetus) <> ''),
+    CONSTRAINT chk_varustus_kirjeldus_not_empty CHECK (kirjeldus IS NULL OR btrim(kirjeldus) <> '')
+);
+
+CREATE TABLE treeninguliigi_varustuse_noue (
+    treeninguliigi_kood INTEGER NOT NULL,
+    varustuse_kood kood_10 NOT NULL,
+    minimaalne_kogus INTEGER NOT NULL,
+    on_kohustuslik BOOLEAN NOT NULL DEFAULT TRUE,
+    markus TEXT,
+    CONSTRAINT pk_treeninguliigi_varustuse_noue PRIMARY KEY (treeninguliigi_kood, varustuse_kood),
+    CONSTRAINT fk_treeninguliigi_varustuse_noue_liik FOREIGN KEY (treeninguliigi_kood)
+        REFERENCES treeninguliik (treeninguliigi_kood),
+    CONSTRAINT fk_treeninguliigi_varustuse_noue_varustus FOREIGN KEY (varustuse_kood)
+        REFERENCES varustus (varustuse_kood),
+    CONSTRAINT chk_treeninguliigi_varustuse_noue_kogus CHECK (minimaalne_kogus > 0),
+    CONSTRAINT chk_treeninguliigi_varustuse_noue_markus CHECK (markus IS NULL OR btrim(markus) <> '')
+);
+
 CREATE TABLE ruum (
     ruumi_kood kood_10 NOT NULL,
     nimetus VARCHAR(200) NOT NULL,
@@ -224,6 +251,20 @@ CREATE TABLE ruum (
     CONSTRAINT chk_ruum_nimetus_not_empty CHECK (btrim(nimetus) <> ''),
     CONSTRAINT chk_ruum_asukoht_not_empty CHECK (asukoht IS NULL OR btrim(asukoht) <> ''),
     CONSTRAINT chk_ruum_mahutavus_positive CHECK (mahutavus > 0)
+);
+
+CREATE TABLE ruumi_varustuse_omamine (
+    ruumi_kood kood_10 NOT NULL,
+    varustuse_kood kood_10 NOT NULL,
+    kogus INTEGER NOT NULL,
+    markus TEXT,
+    CONSTRAINT pk_ruumi_varustuse_omamine PRIMARY KEY (ruumi_kood, varustuse_kood),
+    CONSTRAINT fk_ruumi_varustuse_omamine_ruum FOREIGN KEY (ruumi_kood)
+        REFERENCES ruum (ruumi_kood),
+    CONSTRAINT fk_ruumi_varustuse_omamine_varustus FOREIGN KEY (varustuse_kood)
+        REFERENCES varustus (varustuse_kood),
+    CONSTRAINT chk_ruumi_varustuse_omamine_kogus CHECK (kogus > 0),
+    CONSTRAINT chk_ruumi_varustuse_omamine_markus CHECK (markus IS NULL OR btrim(markus) <> '')
 );
 
 CREATE TABLE treeneri_padevus (
@@ -317,6 +358,8 @@ CREATE INDEX ix_tootaja_seisund ON tootaja (tootaja_seisundi_liik_kood);
 CREATE INDEX ix_rolli_omamine_roll ON tootaja_rolli_omamine (tootaja_roll_kood);
 CREATE INDEX ix_treeninguliik_seisund ON treeninguliik (seisundi_kood);
 CREATE INDEX ix_treeninguliigi_kategooria_kategooria ON treeninguliigi_kategooria_omamine (treeningu_kategooria_kood);
+CREATE INDEX ix_treeninguliigi_varustuse_noue_varustus ON treeninguliigi_varustuse_noue (varustuse_kood);
+CREATE INDEX ix_ruumi_varustuse_omamine_varustus ON ruumi_varustuse_omamine (varustuse_kood);
 CREATE INDEX ix_treeneri_padevus_liik ON treeneri_padevus (treeninguliigi_kood);
 CREATE INDEX ix_treeningukord_liik ON treeningukord (treeninguliigi_kood);
 CREATE INDEX ix_treeningukord_treener_aeg ON treeningukord (treener_e_meil, alguse_aeg, lopu_aeg);
@@ -473,6 +516,31 @@ BEFORE UPDATE OF seisundi_kood ON treeningukord
 FOR EACH ROW
 EXECUTE FUNCTION fn_treeningukord_status_transition();
 
+CREATE OR REPLACE FUNCTION fn_ruum_sobib_treeninguliigile(
+    p_ruumi_kood kood_10,
+    p_treeninguliigi_kood INTEGER
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT NOT EXISTS (
+        SELECT 1
+        FROM treeninguliigi_varustuse_noue n
+        WHERE n.treeninguliigi_kood = p_treeninguliigi_kood
+          AND n.on_kohustuslik
+          AND NOT EXISTS (
+              SELECT 1
+              FROM ruumi_varustuse_omamine rvo
+              JOIN varustus v ON v.varustuse_kood = rvo.varustuse_kood
+              WHERE rvo.ruumi_kood = p_ruumi_kood
+                AND rvo.varustuse_kood = n.varustuse_kood
+                AND rvo.kogus >= n.minimaalne_kogus
+                AND v.on_aktiivne
+          )
+    );
+$$;
+
 CREATE OR REPLACE FUNCTION fn_kontrolli_treeningukorra_invariandid()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -521,6 +589,10 @@ BEGIN
           AND (tp.kuni IS NULL OR tp.kuni >= NEW.alguse_aeg::date)
     ) THEN
         RAISE EXCEPTION 'Treeneril puudub valitud treeninguliigi kehtiv pädevus.';
+    END IF;
+
+    IF NOT fn_ruum_sobib_treeninguliigile(NEW.ruumi_kood, NEW.treeninguliigi_kood) THEN
+        RAISE EXCEPTION 'Ruumis puudub treeninguliigi jaoks nõutav varustus.';
     END IF;
 
     IF EXISTS (
@@ -1096,6 +1168,32 @@ LEFT JOIN treeninguliigi_kategooria_omamine tlko ON tlko.treeninguliigi_kood = t
 LEFT JOIN treeningu_kategooria tk ON tk.kood = tlko.treeningu_kategooria_kood
 GROUP BY tl.treeninguliigi_kood, tl.nimetus, tl.kirjeldus, tl.kestus_minutites, tl.vajalik_varustus, tl.seisundi_kood;
 
+CREATE VIEW v_treeninguliigi_varustuse_nouded AS
+SELECT
+    tl.treeninguliigi_kood,
+    tl.nimetus AS treeninguliik,
+    n.varustuse_kood,
+    v.nimetus AS varustus,
+    n.minimaalne_kogus,
+    n.on_kohustuslik,
+    n.markus
+FROM treeninguliigi_varustuse_noue n
+JOIN treeninguliik tl ON tl.treeninguliigi_kood = n.treeninguliigi_kood
+JOIN varustus v ON v.varustuse_kood = n.varustuse_kood;
+
+CREATE VIEW v_ruumide_varustus AS
+SELECT
+    r.ruumi_kood,
+    r.nimetus AS ruum,
+    r.mahutavus,
+    v.varustuse_kood,
+    v.nimetus AS varustus,
+    rvo.kogus,
+    rvo.markus
+FROM ruumi_varustuse_omamine rvo
+JOIN ruum r ON r.ruumi_kood = rvo.ruumi_kood
+JOIN varustus v ON v.varustuse_kood = rvo.varustuse_kood;
+
 CREATE VIEW v_juhataja_treeningukordade_ulevaade AS
 SELECT
     tk.treeningukorra_kood,
@@ -1210,6 +1308,9 @@ COMMENT ON TABLE treeningukord IS 'Konkreetne kalendris toimuv rühmatreening ko
 COMMENT ON TABLE registreering IS 'Kliendi kinnitatud või ootejärjekorras registreering treeningukorrale.';
 COMMENT ON TABLE osalemine IS 'Treeningukorra kohalolu tulemus kinnitatud registreeringu kohta.';
 COMMENT ON TABLE treeneri_padevus IS 'Seos, mis määrab, milliseid treeninguliike treener võib juhendada.';
+COMMENT ON TABLE varustus IS 'Rühmatreeningu läbiviimiseks vajalik toetav põhiandmete tabel.';
+COMMENT ON TABLE ruumi_varustuse_omamine IS 'Seos, mis näitab, milline varustus ja millises koguses on ruumis olemas.';
+COMMENT ON TABLE treeninguliigi_varustuse_noue IS 'Treeninguliigi kohustuslikud ja soovituslikud varustuse nõuded.';
 
 INSERT INTO riik (riigi_kood, nimetus) VALUES
 ('EE', 'Eesti'),
@@ -1343,10 +1444,61 @@ VALUES
 (1002, 'ALG')
 ON CONFLICT DO NOTHING;
 
+INSERT INTO varustus (varustuse_kood, nimetus, kirjeldus, on_aktiivne)
+VALUES
+('MATID', 'Treeningmatid', 'Rühmatreeningu matid põrandaharjutusteks.', TRUE),
+('HANTLID', 'Hantlid', 'Väikese grupi jõuharjutuste hantlid.', TRUE),
+('KANGID', 'Kangid', 'Jõutreeningu tehnika harjutuste kangid.', TRUE),
+('EKRAAN', 'Ekraan või projektor', 'Juhendvideo või ajakava kuvamiseks kasutatav ekraan.', TRUE),
+('RATTAD', 'Spinningurattad', 'Statsionaarsed rattad rattatreeninguks.', TRUE),
+('PALLID', 'Võimlemispallid', 'Tasakaalu- ja kereharjutuste pallid.', TRUE)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO treeninguliigi_varustuse_noue (
+    treeninguliigi_kood,
+    varustuse_kood,
+    minimaalne_kogus,
+    on_kohustuslik,
+    markus
+)
+VALUES
+(1000, 'MATID', 6, TRUE, 'Joogatund vajab igale osalejale matti.'),
+(1000, 'EKRAAN', 1, FALSE, 'Soovituslik juhendmaterjali kuvamiseks.'),
+(1001, 'MATID', 2, TRUE, 'HIIT kasutab põrandaharjutusi.'),
+(1001, 'HANTLID', 2, TRUE, 'HIIT tunnis kasutatakse hantleid.'),
+(1002, 'KANGID', 4, TRUE, 'Jõutreeningu tehnika tunnis kasutatakse kange.')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO ruum (ruumi_kood, nimetus, asukoht, mahutavus)
 VALUES
 ('SAAL_A', 'Väike stuudio', '1. korrus', 2),
 ('SAAL_B', 'Suur rühmatreeningute saal', '2. korrus', 12)
+ON CONFLICT DO NOTHING;
+
+WITH json_ruumid AS (
+    SELECT *
+    FROM jsonb_to_recordset(
+        '[
+            {"ruumi_kood":"SAAL_C","nimetus":"Rahulik venitusstuudio","asukoht":"1. korrus","mahutavus":6}
+        ]'::jsonb
+    ) AS x(ruumi_kood kood_10, nimetus VARCHAR(100), asukoht VARCHAR(200), mahutavus INTEGER)
+)
+INSERT INTO ruum (ruumi_kood, nimetus, asukoht, mahutavus)
+SELECT jr.ruumi_kood, jr.nimetus, jr.asukoht, jr.mahutavus
+FROM json_ruumid jr
+ON CONFLICT DO NOTHING;
+
+INSERT INTO ruumi_varustuse_omamine (ruumi_kood, varustuse_kood, kogus, markus)
+VALUES
+('SAAL_A', 'MATID', 4, 'Väikese stuudio matid.'),
+('SAAL_A', 'HANTLID', 4, 'HIIT tunniks piisav hulk hantleid.'),
+('SAAL_A', 'PALLID', 2, 'Lisavarustus väikese grupi harjutusteks.'),
+('SAAL_B', 'MATID', 12, 'Suure saali matid.'),
+('SAAL_B', 'HANTLID', 10, 'Suure saali hantlid.'),
+('SAAL_B', 'KANGID', 6, 'Jõutreeningu tehnika varustus.'),
+('SAAL_B', 'EKRAAN', 1, 'Ekraan või projektor juhendmaterjaliks.'),
+('SAAL_C', 'MATID', 6, 'Venitusstuudio matid.'),
+('SAAL_C', 'PALLID', 6, 'Venitusstuudio võimlemispallid.')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
@@ -1481,12 +1633,12 @@ BEGIN
             seisundi_kood, looja_e_meil, viimase_muutja_e_meil
         )
         VALUES (
-            1002, 'treener2@jousaal.ee', 'SAAL_A',
-            CURRENT_TIMESTAMP + INTERVAL '5 days 5 minutes',
-            CURRENT_TIMESTAMP + INTERVAL '5 days 55 minutes',
-            CURRENT_TIMESTAMP + INTERVAL '4 days',
-            CURRENT_TIMESTAMP + INTERVAL '4 days',
-            2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'
+            1000, 'treener@jousaal.ee', 'SAAL_B',
+            CURRENT_TIMESTAMP + INTERVAL '10 days 5 minutes',
+            CURRENT_TIMESTAMP + INTERVAL '10 days 55 minutes',
+            CURRENT_TIMESTAMP + INTERVAL '9 days',
+            CURRENT_TIMESTAMP + INTERVAL '9 days',
+            8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'
         );
     EXCEPTION WHEN others THEN
         v_failed := TRUE;
@@ -1494,6 +1646,27 @@ BEGIN
     END;
     IF NOT v_failed THEN
         RAISE EXCEPTION 'Ruumi kattuvuse kontroll ei rakendunud.';
+    END IF;
+
+    v_failed := FALSE;
+    BEGIN
+        PERFORM fn_planeeri_treeningukord(
+            1002,
+            'treener2@jousaal.ee',
+            'SAAL_A',
+            CURRENT_TIMESTAMP + INTERVAL '12 days',
+            CURRENT_TIMESTAMP + INTERVAL '12 days 75 minutes',
+            CURRENT_TIMESTAMP + INTERVAL '11 days',
+            CURRENT_TIMESTAMP + INTERVAL '11 days',
+            2,
+            'juhataja@jousaal.ee'
+        );
+    EXCEPTION WHEN others THEN
+        v_failed := TRUE;
+        RAISE NOTICE 'Oodatud varustuse kontroll: %', SQLERRM;
+    END;
+    IF NOT v_failed THEN
+        RAISE EXCEPTION 'Varustuse kontroll ei rakendunud.';
     END IF;
 
     v_failed := FALSE;
@@ -1530,6 +1703,12 @@ END $$;
 
 DO $$
 BEGIN
+    BEGIN
+        REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Public skeemi CREATE õiguse eemaldamiseks puudub õigus.';
+    END;
+
     IF to_regrole('jousaali_rakendus') IS NOT NULL THEN
         GRANT USAGE ON SCHEMA public TO jousaali_rakendus;
         GRANT SELECT ON ALL TABLES IN SCHEMA public TO jousaali_rakendus;
@@ -1547,4 +1726,26 @@ BEGIN
         GRANT SELECT ON ALL TABLES IN SCHEMA public TO jousaali_vaatleja;
     END IF;
 END $$;
+
+ANALYZE;
+
+EXPLAIN SELECT *
+FROM v_avalikud_treeningukorrad
+WHERE vabu_kohti > 0;
+
+-- Andmebaasiobjektide kustutamiseks tuleb käske käivitada vastupidises
+-- sõltuvusjärjekorras. Esitatav loomisskript jätab need käsud kommentaaridesse,
+-- et käivitamine ei kustutaks loodud hindamisandmebaasi.
+-- DROP VIEW IF EXISTS v_treeninguliigid_kategooriatega CASCADE;
+-- DROP VIEW IF EXISTS v_treeninguliigi_varustuse_nouded CASCADE;
+-- DROP VIEW IF EXISTS v_ruumide_varustus CASCADE;
+-- DROP VIEW IF EXISTS v_treeningute_taituvuse_statistika CASCADE;
+-- DROP VIEW IF EXISTS v_juhataja_treeningukordade_ulevaade CASCADE;
+-- DROP VIEW IF EXISTS v_treeningukorra_osalejad CASCADE;
+-- DROP VIEW IF EXISTS v_treeneri_tunniplaan CASCADE;
+-- DROP VIEW IF EXISTS v_kliendi_registreeringud CASCADE;
+-- DROP VIEW IF EXISTS v_avalikud_treeningukorrad CASCADE;
+-- DROP TABLE IF EXISTS osalemine, registreering, treeningukord, treeneri_padevus,
+--     ruumi_varustuse_omamine, treeninguliigi_varustuse_noue, ruum, varustus,
+--     treeninguliigi_kategooria_omamine, treeninguliik, klient CASCADE;
 """

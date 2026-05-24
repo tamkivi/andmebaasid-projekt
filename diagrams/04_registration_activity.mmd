@@ -1,12 +1,12 @@
-flowchart LR
+flowchart TB
     START([Klient valib avatud treeningukorra])
     ROUTE["Flask POST /client/sessions/&lt;kood&gt;/register"]
     FN["fn_registreeri_klient_treeningukorrale"]
 
-    subgraph "Andmebaasi kontrollid"
+    subgraph "Registreerimise andmebaasikontrollid"
         ACTIVE{"Klient aktiivne?"}
         OPEN{"Kord AVATUD?"}
-        DEADLINE{"Tähtaeg kehtib?"}
+        DEADLINE{"Tahtaeg kehtib?"}
         DUP{"Aktiivne registreering puudub?"}
         COUNT["Loenda KINNIT registreeringud"]
         SEAT{"Vaba koht?"}
@@ -18,18 +18,28 @@ flowchart LR
     VIEW["Vaated näitavad kinnitatud,\nootel ja vabu kohti"]
 
     START --> ROUTE --> FN --> ACTIVE
-    ACTIVE -- jah --> OPEN
-    OPEN -- jah --> DEADLINE
-    DEADLINE -- jah --> DUP
-    DUP -- jah --> COUNT --> SEAT
-    SEAT -- jah --> CONF --> VIEW
-    SEAT -- ei --> WAIT --> VIEW
+    ACTIVE -->|"[aktiivne klient olemas]"| OPEN
+    OPEN -->|"[treeningukord on AVATUD]"| DEADLINE
+    DEADLINE -->|"[tahtaeg kehtib]"| DUP
+    DUP -->|"[aktiivne registreering puudub]"| COUNT
+    COUNT --> SEAT
+    SEAT -->|"[vabu kohti on]"| CONF --> VIEW
+    SEAT -->|"[vabu kohti ei ole]"| WAIT --> VIEW
 
-    ACTIVE -- ei --> ERR
-    OPEN -- ei --> ERR
-    DEADLINE -- ei --> ERR
-    DUP -- ei --> ERR
+    ACTIVE -->|"[aktiivne klient puudub]"| ERR
+    OPEN -->|"[treeningukord ei ole AVATUD]"| ERR
+    DEADLINE -->|"[tahtaeg moodas]"| ERR
+    DUP -->|"[aktiivne registreering juba olemas]"| ERR
 
-    CANCEL["Klient tühistab KINNIT registreeringu"]
-    PROMOTE["fn_tyhista_registreering\nkutsub fn_edenda_ootejarjekorrast"]
-    CANCEL --> PROMOTE --> VIEW
+    subgraph "Tühistamine ja ootejarjekorra edendamine"
+        CANCEL["Klient tühistab registreeringu"]
+        CANCEL_FN["fn_tyhista_registreering"]
+        WAS_CONF{"Tühistati kinnitatud registreering?"}
+        QUEUE{"Ootejarjekorras on klient?"}
+        PROMOTED["fn_edenda_ootejarjekorrast\nmuudab esimese OOTEJRK -> KINNIT"]
+        CANCEL --> CANCEL_FN --> WAS_CONF
+        WAS_CONF -->|"[tuhistatakse kinnitatud registreering]"| QUEUE
+        WAS_CONF -->|"[tuhistatakse ootejarjekorra rida]"| VIEW
+        QUEUE -->|"[ootejarjekorras on klient]"| PROMOTED --> VIEW
+        QUEUE -->|"[ootejarjekord puudub]"| VIEW
+    end

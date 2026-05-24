@@ -39,7 +39,7 @@
                                 <select class="form-select" name="ruumi_kood" required>
                                     {% for row in rooms %}
                                         <option value="{{ row.ruumi_kood }}" {% if form and form.ruumi_kood == row.ruumi_kood %}selected{% endif %}>
-                                            {{ row.nimetus }} · mahutavus {{ row.mahutavus }}
+                                            {{ row.nimetus }} · mahutavus {{ row.mahutavus }} · {{ row.varustuse_kokkuvote }}
                                         </option>
                                     {% endfor %}
                                 </select>
@@ -63,6 +63,32 @@
                             <div class="col-md-6">
                                 <label class="form-label">Tühistamise lõpp</label>
                                 <input class="form-control" name="tyhistamise_lopp" type="datetime-local" required value="{{ form.tyhistamise_lopp if form else '' }}">
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100 bg-light">
+                                    <div class="fw-semibold mb-2">Ruumi varustus</div>
+                                    <ul class="small mb-0">
+                                        {% for row in rooms %}
+                                            <li><strong>{{ row.nimetus }}</strong>: {{ row.varustuse_kokkuvote }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100 bg-light">
+                                    <div class="fw-semibold mb-2">Treeninguliigi varustuse nõuded</div>
+                                    <ul class="small mb-0">
+                                        {% for row in equipment_requirements %}
+                                            <li>
+                                                <strong>{{ row.treeninguliik }}</strong>:
+                                                {{ row.varustus }} vähemalt {{ row.minimaalne_kogus }} tk
+                                                {% if not row.on_kohustuslik %}(soovituslik){% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4 d-flex gap-2">

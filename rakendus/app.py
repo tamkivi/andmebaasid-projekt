@@ -151,12 +151,33 @@ def fetch_form_options(cur):
     training_types = cur.fetchall()
 
     cur.execute("""
-        SELECT ruumi_kood, nimetus, mahutavus
-        FROM ruum
-        WHERE on_aktiivne
-        ORDER BY nimetus
+        SELECT
+            r.ruumi_kood,
+            r.nimetus,
+            r.mahutavus,
+            COALESCE(
+                string_agg(rv.varustus || ' ' || rv.kogus::text || ' tk', ', ' ORDER BY rv.varustus),
+                'varustus märkimata'
+            ) AS varustuse_kokkuvote
+        FROM ruum r
+        LEFT JOIN v_ruumide_varustus rv ON rv.ruumi_kood = r.ruumi_kood
+        WHERE r.on_aktiivne
+        GROUP BY r.ruumi_kood, r.nimetus, r.mahutavus
+        ORDER BY r.nimetus
     """)
     rooms = cur.fetchall()
+
+    cur.execute("""
+        SELECT
+            treeninguliigi_kood,
+            treeninguliik,
+            varustus,
+            minimaalne_kogus,
+            on_kohustuslik
+        FROM v_treeninguliigi_varustuse_nouded
+        ORDER BY treeninguliik, on_kohustuslik DESC, varustus
+    """)
+    equipment_requirements = cur.fetchall()
 
     cur.execute("""
         SELECT t.e_meil, concat_ws(' ', i.eesnimi, i.perenimi) AS nimi
@@ -166,7 +187,7 @@ def fetch_form_options(cur):
         ORDER BY i.perenimi, i.eesnimi
     """)
     trainers = cur.fetchall()
-    return training_types, rooms, trainers
+    return training_types, rooms, trainers, equipment_requirements
 
 
 @app.context_processor
@@ -398,12 +419,13 @@ def manager_new_session():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             if request.method == "GET":
-                training_types, rooms, trainers = fetch_form_options(cur)
+                training_types, rooms, trainers, equipment_requirements = fetch_form_options(cur)
                 return render_template(
                     "manager_session_form.html",
                     training_types=training_types,
                     rooms=rooms,
                     trainers=trainers,
+                    equipment_requirements=equipment_requirements,
                     user=template_user(),
                 )
 
@@ -440,13 +462,14 @@ def manager_new_session():
     except psycopg2.Error as exc:
         conn.rollback()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            training_types, rooms, trainers = fetch_form_options(cur)
+            training_types, rooms, trainers, equipment_requirements = fetch_form_options(cur)
         return render_template(
             "manager_session_form.html",
             error=db_error_message(exc),
             training_types=training_types,
             rooms=rooms,
             trainers=trainers,
+            equipment_requirements=equipment_requirements,
             user=template_user(),
             form=request.form,
         ), 400

@@ -22,6 +22,7 @@ DIAGRAMS = [
     "07_waitlist_sequence",
     "08_permission_flow",
     "09_app_db_architecture",
+    "10_attendance_activity",
 ]
 
 

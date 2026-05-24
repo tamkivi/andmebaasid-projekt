@@ -1,11 +1,11 @@
 stateDiagram-v2
-    [*] --> KINNIT: klient registreerub ja koht on olemas
-    [*] --> OOTEJRK: klient registreerub ja treeningukord on täis
-    OOTEJRK --> KINNIT: süsteem edendab pärast vaba koha tekkimist
-    KINNIT --> TYH_KL: klient tühistab enne tähtaega
-    OOTEJRK --> TYH_KL: klient tühistab enne tähtaega
-    KINNIT --> TYH_SYS: treeningukord tühistatakse
-    OOTEJRK --> TYH_SYS: treeningukord tühistatakse
+    [*] --> KINNIT: Klient registreerub, vaba koht / fn_registreeri_klient_treeningukorrale
+    [*] --> OOTEJRK: Klient registreerub, kohad täis / fn_registreeri_klient_treeningukorrale
+    OOTEJRK --> KINNIT: Süsteem edendab / fn_edenda_ootejarjekorrast
+    KINNIT --> TYH_KL: Klient tühistab enne tähtaega / fn_tyhista_registreering
+    OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / fn_tyhista_registreering
+    KINNIT --> TYH_SYS: Juhataja tühistab korra / fn_tyhista_treeningukord
+    OOTEJRK --> TYH_SYS: Juhataja tühistab korra / fn_tyhista_treeningukord
     TYH_KL --> [*]
     TYH_SYS --> [*]
 

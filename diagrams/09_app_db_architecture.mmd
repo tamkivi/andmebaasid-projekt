@@ -13,19 +13,19 @@ flowchart TB
         FUNCS["funktsioonid\nkõik tavapärased kirjutused"]
         TRIG["triggerid\ninvariantide kontroll"]
         IDX["unikaalsed ja osalised indeksid"]
-        TABLES["tabelid\ntreeningukord, registreering,\nosalemine, ruum, pädevus"]
+        TABLES["tabelid\ntreeningukord, registreering,\nosalemine, ruum, pädevus,\nvarustus ja nõuded"]
     end
 
-    LOGIN --> FUNCS
-    SCH --> VIEWS
-    CRE --> FUNCS
-    ACT --> FUNCS
-    REG --> FUNCS
-    ATT --> FUNCS
+    LOGIN -->|"SELECT kasutaja andmed"| FUNCS
+    SCH -->|"SELECT rollipõhistest vaadetest"| VIEWS
+    CRE -->|"SELECT fn_* uue korra loomiseks"| FUNCS
+    ACT -->|"SELECT fn_* seisundimuutuseks"| FUNCS
+    REG -->|"SELECT fn_* registreerimiseks ja tühistamiseks"| FUNCS
+    ATT -->|"SELECT fn_marki_osalemine"| FUNCS
 
-    FUNCS --> TABLES
-    VIEWS --> TABLES
-    TRIG --> TABLES
-    IDX --> TABLES
-    FUNCS --> TRIG
-    TABLES --> VIEWS
+    FUNCS -->|"INSERT/UPDATE kontrollitud teel"| TABLES
+    VIEWS -->|"loevad lähteandmeid"| TABLES
+    TRIG -->|"keelavad kattuvused, vigased seisundid ja varustuse sobimatuse"| TABLES
+    IDX -->|"keelavad duplikaadid"| TABLES
+    FUNCS -->|"käivitavad invariantide kontrolli"| TRIG
+    TABLES -->|"on vaadete allikas"| VIEWS

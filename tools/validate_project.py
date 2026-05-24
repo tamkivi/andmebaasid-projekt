@@ -32,6 +32,9 @@ REQUIRED_TABLES = [
     "klient",
     "treeninguliik",
     "ruum",
+    "varustus",
+    "ruumi_varustuse_omamine",
+    "treeninguliigi_varustuse_noue",
     "treeneri_padevus",
     "treeningukord",
     "treeningukorra_seisundi_liik",
@@ -50,6 +53,7 @@ REQUIRED_FUNCTIONS = [
     "fn_edenda_ootejarjekorrast",
     "fn_marki_osalemine",
     "fn_tyhista_treeningukord",
+    "fn_ruum_sobib_treeninguliigile",
 ]
 
 REQUIRED_VIEWS = [
@@ -59,13 +63,24 @@ REQUIRED_VIEWS = [
     "v_treeningukorra_osalejad",
     "v_juhataja_treeningukordade_ulevaade",
     "v_treeningute_taituvuse_statistika",
+    "v_ruumide_varustus",
+    "v_treeninguliigi_varustuse_nouded",
 ]
 
 REQUIRED_EAP_PHYSICAL_ATTRIBUTES = {
     "klient": ["e_meil"],
     "treeninguliigi_seisundi_liik": ["kood", "nimetus"],
     "treeninguliik": ["treeninguliigi_kood", "nimetus", "seisundi_kood"],
+    "treeninguliigi_kategooria_omamine": ["treeninguliigi_kood", "treeningu_kategooria_kood"],
     "ruum": ["ruumi_kood", "nimetus", "mahutavus"],
+    "varustus": ["varustuse_kood", "nimetus", "on_aktiivne"],
+    "ruumi_varustuse_omamine": ["ruumi_kood", "varustuse_kood", "kogus"],
+    "treeninguliigi_varustuse_noue": [
+        "treeninguliigi_kood",
+        "varustuse_kood",
+        "minimaalne_kogus",
+        "on_kohustuslik",
+    ],
     "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_kood"],
     "treeningukorra_seisundi_liik": ["kood", "nimetus"],
     "treeningukord": [
@@ -84,6 +99,12 @@ REQUIRED_EAP_PHYSICAL_ATTRIBUTES = {
 
 REQUIRED_EAP_CONNECTORS = [
     ("treeningukord", "treeninguliik"),
+    ("treeninguliigi_kategooria_omamine", "treeninguliik"),
+    ("treeninguliigi_kategooria_omamine", "treeningu_kategooria"),
+    ("ruumi_varustuse_omamine", "ruum"),
+    ("ruumi_varustuse_omamine", "varustus"),
+    ("treeninguliigi_varustuse_noue", "treeninguliik"),
+    ("treeninguliigi_varustuse_noue", "varustus"),
     ("treeningukord", "ruum"),
     ("treeningukord", "tootaja"),
     ("registreering", "treeningukord"),
@@ -103,9 +124,73 @@ REQUIRED_DIAGRAMS = [
     "07_waitlist_sequence",
     "08_permission_flow",
     "09_app_db_architecture",
+    "10_attendance_activity",
 ]
 
+REQUIRED_DIAGRAM_SOURCE_TERMS = {
+    "03_core_er": [
+        "põhineb liigile",
+        "toimub ruumis",
+        "registreerub",
+        "omab osalemise tulemust",
+        "varustus",
+        "nõuab varustust",
+        "kontrollib sobivust",
+    ],
+    "04_registration_activity": [
+        "fn_registreeri_klient_treeningukorrale",
+        "fn_tyhista_registreering",
+        "fn_edenda_ootejarjekorrast",
+        "vabu kohti",
+        "ootejarjekord",
+        "aktiivne registreering",
+        "tahtaeg",
+    ],
+    "05_session_state": [
+        "fn_ava_treeningukord",
+        "fn_sulge_treeningukord",
+        "fn_lopeta_treeningukord",
+        "fn_tyhista_treeningukord",
+    ],
+    "06_registration_state": [
+        "fn_registreeri_klient_treeningukorrale",
+        "fn_edenda_ootejarjekorrast",
+        "fn_tyhista_registreering",
+        "fn_tyhista_treeningukord",
+    ],
+    "08_permission_flow": [
+        "kutsub",
+        "loeb",
+        "DB kontrollib rolli",
+        "DB kontrollib aktiivset klienti",
+    ],
+    "09_app_db_architecture": [
+        "vaadetest",
+        "fn_*",
+        "triggerid",
+        "INSERT/UPDATE kontrollitud teel",
+        "varustus",
+    ],
+    "10_attendance_activity": [
+        "fn_marki_osalemine",
+        "v_treeningukorra_osalejad",
+        "registreering on KINNIT",
+        "liiga vara",
+    ],
+}
+
 REQUIRED_DOCX_TERMS = [
+    "Strateegiline analüüs",
+    "Detailanalüüs",
+    "Füüsiline disain",
+    "Realisatsioon PostgreSQLis",
+    "Tehisintellekti kasutus",
+    "Kasutatud materjalid",
+    "Primaarne tegutseja",
+    "Osapooled ja nende huvid",
+    "Stsenaarium (tüüpiline sündmuste järjestus)",
+    "Andmebaasioperatsioonid",
+    "OP1 / fn_planeeri_treeningukord",
     "rühmatreeningute ajakava",
     "treeningukord",
     "registreering",
@@ -113,6 +198,10 @@ REQUIRED_DOCX_TERMS = [
     "osalemine",
     "treeneri pädevus",
     "ruum",
+    "varustus",
+    "treeninguliigi varustuse nõue",
+    "ruumi varustuse omamine",
+    "Ruumis puudub treeninguliigi jaoks nõutav varustus",
     "fn_registreeri_klient_treeningukorrale",
     "fn_edenda_ootejarjekorrast",
 ]
@@ -127,6 +216,7 @@ REQUIRED_DOCX_CAPTION_TERMS = [
     "Ootejärjekorra edendamise järjestus",
     "Õiguste ja andmebaasirutiinide seos",
     "Rakenduse ja andmebaasi arhitektuur",
+    "Osalemise märkimise tegevusvoog",
 ]
 
 FORBIDDEN_DOCX_PHRASES = [
@@ -203,12 +293,21 @@ def validate_static_sql(failures: list[str]) -> None:
         else:
             fail(f"SQL missing view {view}", failures)
 
+    for column in ["varustuse_kood", "kogus", "minimaalne_kogus", "on_kohustuslik"]:
+        if column in sql:
+            ok(f"SQL contains equipment column {column}")
+        else:
+            fail(f"SQL missing equipment column {column}", failures)
+
     checks = {
         "partial unique active registration index": r"create\s+unique\s+index\s+uq_registreering_aktiivne_klient_kord[\s\S]+where\s+seisundi_kood\s+in\s+\('kinnit',\s*'ootejrk'\)",
         "trainer overlap trigger/function": r"treeneril on samal ajal juba teine|trg_treeningukord_invariandid",
         "room overlap trigger/function": r"ruumis on samal ajal juba teine|trg_treeningukord_invariandid",
         "capacity trigger/function": r"maksimaalne_osalejate_arv\s+>\s+v_ruumi_mahutavus",
         "trainer competence trigger/function": r"treeneri_padevus",
+        "equipment compatibility trigger/function": r"ruumis puudub treeninguliigi jaoks nõutav varustus|fn_ruum_sobib_treeninguliigile|treeninguliigi_varustuse_noue",
+        "equipment ownership FK index": r"create\s+index\s+ix_ruumi_varustuse_omamine_varustus",
+        "equipment requirement FK index": r"create\s+index\s+ix_treeninguliigi_varustuse_noue_varustus",
         "session status transition trigger": r"trg_treeningukord_status_transition",
         "registration status transition trigger": r"trg_registreering_status_transition",
         "waitlist promotion routine": r"fn_edenda_ootejarjekorrast",
@@ -245,6 +344,12 @@ def validate_app(failures: list[str]) -> None:
             ok(f"app calls {function}")
         else:
             fail(f"app does not call {function}", failures)
+
+    for view in ["v_ruumide_varustus", "v_treeninguliigi_varustuse_nouded"]:
+        if view in source:
+            ok(f"app reads {view}")
+        else:
+            fail(f"app does not read {view}", failures)
 
     direct_mutations = re.findall(
         r"\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(treeningukord|registreering|osalemine)\b",
@@ -307,6 +412,19 @@ def validate_diagrams(failures: list[str]) -> None:
                 ok(f"diagram image is nonblank and readable-sized: {target.relative_to(ROOT)} {image.size}")
         except Exception as exc:
             fail(f"cannot inspect diagram {target.relative_to(ROOT)}: {exc}", failures)
+
+
+def validate_diagram_semantics(failures: list[str]) -> None:
+    for name, terms in REQUIRED_DIAGRAM_SOURCE_TERMS.items():
+        source = DIAGRAM_SRC / f"{name}.mmd"
+        if not source.exists():
+            continue
+        text = source.read_text(encoding="utf-8").lower()
+        for term in terms:
+            if term.lower() in text:
+                ok(f"diagram {source.name} contains explanatory label: {term}")
+            else:
+                fail(f"diagram {source.name} missing explanatory label: {term}", failures)
 
 
 def validate_docx(failures: list[str]) -> None:
@@ -397,11 +515,13 @@ def validate_eap(failures: list[str]) -> None:
         "Registreering",
         "Osalemine",
         "Ruum",
+        "Varustus",
         "Klient",
         "Treeneri_padevus",
         "treeningukord",
         "registreering",
         "osalemine",
+        "varustus",
     ]
     for item in required:
         if item in text:
@@ -421,6 +541,24 @@ def validate_eap(failures: list[str]) -> None:
         fail(f"EAP still contains stale physical class/table named exactly treening/Treening ({names})", failures)
     else:
         ok("EAP contains no stale physical class/table named exactly treening/Treening")
+
+    stale_workbook_names = {
+        "Muuda treening mitteaktiivseks",
+        "Unusta treening",
+        "Vali treening",
+        "Lõpeta valitud treening",
+        "Aktiveeri valitud treening",
+        "Kas treening kuulub kategooriasse?",
+    }
+    stale_workbook_objects = [
+        row for row in object_rows
+        if row.get("Name") in stale_workbook_names
+    ]
+    if stale_workbook_objects:
+        names = ", ".join(f"{row.get('Name')}:{row.get('Object_ID', '?')}" for row in stale_workbook_objects)
+        fail(f"EAP still contains stale workbook use-case/action objects ({names})", failures)
+    else:
+        ok("EAP contains no stale workbook use-case/action objects")
 
     physical_objects = {
         row.get("Name"): row
@@ -477,6 +615,11 @@ def validate_eap(failures: list[str]) -> None:
         "Treeningute arvuline kood",
         "Treeningu registreerimise kuupäev",
         "Treeningu andmete viimase muutmise kuupäev",
+        "treeningu unustada",
+        "treening sellisel kujul ei realiseeru",
+        "treening kuulub kategooriasse",
+        "treeningukorra_kood + treeningu_kategooria_kood",
+        "Veerud: treeningukorra_kood, treeningu_kategooria_kood",
     ]
     stale_fragments = [fragment for fragment in old_fragments if fragment in text]
     if stale_fragments:
@@ -632,7 +775,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             cur.execute(
                 """
                 SELECT fn_planeeri_treeningukord(
-                    1002, 'treener2@jousaal.ee', 'SAAL_A',
+                    1002, 'treener2@jousaal.ee', 'SAAL_B',
                     CURRENT_TIMESTAMP + INTERVAL '60 days',
                     CURRENT_TIMESTAMP + INTERVAL '60 days 75 minutes',
                     CURRENT_TIMESTAMP + INTERVAL '59 days',
@@ -652,7 +795,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             cur.execute(
                 """
                 SELECT fn_planeeri_treeningukord(
-                    1002, 'treener2@jousaal.ee', 'SAAL_A',
+                    1002, 'treener2@jousaal.ee', 'SAAL_B',
                     CURRENT_TIMESTAMP + INTERVAL '61 days',
                     CURRENT_TIMESTAMP + INTERVAL '61 days 75 minutes',
                     CURRENT_TIMESTAMP + INTERVAL '60 days',
@@ -696,6 +839,144 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                 (waitlisted_row[0],),
             )
             promoted_status = cur.fetchone()[0]
+
+            equipment_missing_rejected = False
+            equipment_missing_detail = ""
+            try:
+                cur.execute(
+                    """
+                    SELECT fn_planeeri_treeningukord(
+                        1002, 'treener2@jousaal.ee', 'SAAL_A',
+                        CURRENT_TIMESTAMP + INTERVAL '62 days',
+                        CURRENT_TIMESTAMP + INTERVAL '62 days 75 minutes',
+                        CURRENT_TIMESTAMP + INTERVAL '61 days',
+                        CURRENT_TIMESTAMP + INTERVAL '61 days',
+                        2, 'juhataja@jousaal.ee'
+                    )
+                    """
+                )
+            except Exception as exc:
+                equipment_missing_rejected = True
+                equipment_missing_detail = str(exc)
+                conn.rollback()
+
+            cur.execute(
+                """
+                SELECT fn_planeeri_treeningukord(
+                    1000, 'treener@jousaal.ee', 'SAAL_C',
+                    CURRENT_TIMESTAMP + INTERVAL '63 days',
+                    CURRENT_TIMESTAMP + INTERVAL '63 days 60 minutes',
+                    CURRENT_TIMESTAMP + INTERVAL '62 days',
+                    CURRENT_TIMESTAMP + INTERVAL '62 days',
+                    6, 'juhataja@jousaal.ee'
+                )
+                """
+            )
+            advisory_session = cur.fetchone()[0]
+
+            cur.execute("""
+                INSERT INTO varustus (varustuse_kood, nimetus, kirjeldus, on_aktiivne)
+                VALUES ('TESTQ', 'Live koguse testvarustus', 'Validaatori ajutine koguse test.', TRUE)
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute("""
+                INSERT INTO ruumi_varustuse_omamine (ruumi_kood, varustuse_kood, kogus, markus)
+                VALUES ('SAAL_A', 'TESTQ', 1, 'Validaatori koguse test.')
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute("""
+                INSERT INTO treeninguliigi_varustuse_noue (
+                    treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
+                )
+                VALUES (1001, 'TESTQ', 2, TRUE, 'Validaatori koguse test.')
+                ON CONFLICT DO NOTHING
+            """)
+            quantity_low_rejected = False
+            quantity_low_detail = ""
+            try:
+                cur.execute(
+                    """
+                    SELECT fn_planeeri_treeningukord(
+                        1001, 'treener@jousaal.ee', 'SAAL_A',
+                        CURRENT_TIMESTAMP + INTERVAL '64 days',
+                        CURRENT_TIMESTAMP + INTERVAL '64 days 45 minutes',
+                        CURRENT_TIMESTAMP + INTERVAL '63 days',
+                        CURRENT_TIMESTAMP + INTERVAL '63 days',
+                        2, 'juhataja@jousaal.ee'
+                    )
+                    """
+                )
+            except Exception as exc:
+                quantity_low_rejected = True
+                quantity_low_detail = str(exc)
+                conn.rollback()
+
+            cur.execute("""
+                INSERT INTO treeninguliik (
+                    treeninguliigi_kood, nimetus, kirjeldus, kestus_minutites,
+                    vajalik_varustus, seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil
+                )
+                VALUES (
+                    1900, 'Live varustuseta testtund', 'Validaatori test ilma varustuse nõueteta.',
+                    30, NULL, 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'
+                )
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute("""
+                INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
+                VALUES ('treener2@jousaal.ee', 1900, CURRENT_DATE)
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute(
+                """
+                SELECT fn_planeeri_treeningukord(
+                    1900, 'treener2@jousaal.ee', 'SAAL_C',
+                    CURRENT_TIMESTAMP + INTERVAL '65 days',
+                    CURRENT_TIMESTAMP + INTERVAL '65 days 30 minutes',
+                    CURRENT_TIMESTAMP + INTERVAL '64 days',
+                    CURRENT_TIMESTAMP + INTERVAL '64 days',
+                    5, 'juhataja@jousaal.ee'
+                )
+                """
+            )
+            no_requirement_session = cur.fetchone()[0]
+
+            cur.execute("""
+                INSERT INTO varustus (varustuse_kood, nimetus, kirjeldus, on_aktiivne)
+                VALUES ('TESTI', 'Live mitteaktiivne testvarustus', 'Validaatori ajutine mitteaktiivse varustuse test.', FALSE)
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute("""
+                INSERT INTO ruumi_varustuse_omamine (ruumi_kood, varustuse_kood, kogus, markus)
+                VALUES ('SAAL_B', 'TESTI', 10, 'Varustus on olemas, kuid liik ise on mitteaktiivne.')
+                ON CONFLICT DO NOTHING
+            """)
+            cur.execute("""
+                INSERT INTO treeninguliigi_varustuse_noue (
+                    treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
+                )
+                VALUES (1000, 'TESTI', 1, TRUE, 'Validaatori mitteaktiivse varustuse test.')
+                ON CONFLICT DO NOTHING
+            """)
+            inactive_equipment_rejected = False
+            inactive_equipment_detail = ""
+            try:
+                cur.execute(
+                    """
+                    SELECT fn_planeeri_treeningukord(
+                        1000, 'treener@jousaal.ee', 'SAAL_B',
+                        CURRENT_TIMESTAMP + INTERVAL '66 days',
+                        CURRENT_TIMESTAMP + INTERVAL '66 days 60 minutes',
+                        CURRENT_TIMESTAMP + INTERVAL '65 days',
+                        CURRENT_TIMESTAMP + INTERVAL '65 days',
+                        8, 'juhataja@jousaal.ee'
+                    )
+                    """
+                )
+            except Exception as exc:
+                inactive_equipment_rejected = True
+                inactive_equipment_detail = str(exc)
+                conn.rollback()
         conn.close()
 
         live_failures: list[str] = []
@@ -715,11 +996,21 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             live_failures.append(
                 f"confirmed cancellation did not promote waitlist row; cancellation={cancellation_row}, promoted_status={promoted_status}"
             )
+        if not equipment_missing_rejected or "Ruumis puudub treeninguliigi jaoks nõutav varustus" not in equipment_missing_detail:
+            live_failures.append(f"missing equipment check failed: rejected={equipment_missing_rejected}, detail={equipment_missing_detail}")
+        if not advisory_session:
+            live_failures.append("advisory equipment requirement blocked compatible planning")
+        if not quantity_low_rejected or "Ruumis puudub treeninguliigi jaoks nõutav varustus" not in quantity_low_detail:
+            live_failures.append(f"quantity-low equipment check failed: rejected={quantity_low_rejected}, detail={quantity_low_detail}")
+        if not no_requirement_session:
+            live_failures.append("training type without equipment requirements did not schedule")
+        if not inactive_equipment_rejected or "Ruumis puudub treeninguliigi jaoks nõutav varustus" not in inactive_equipment_detail:
+            live_failures.append(f"inactive equipment check failed: rejected={inactive_equipment_rejected}, detail={inactive_equipment_detail}")
 
         if live_failures:
             fail("live SQL tests failed: " + "; ".join(live_failures), failures)
         else:
-            ok("live SQL tests confirmed registration, waitlist, duplicate rejection, and promotion")
+            ok("live SQL tests confirmed registration, waitlist, duplicate rejection, promotion, and equipment compatibility")
     except Exception as exc:
         fail(f"live SQL tests failed: {exc}", failures)
 
@@ -730,6 +1021,7 @@ def main() -> int:
     validate_static_sql(failures)
     validate_app(failures)
     validate_diagrams(failures)
+    validate_diagram_semantics(failures)
     validate_docx(failures)
     validate_eap(failures)
     validate_submission(failures)

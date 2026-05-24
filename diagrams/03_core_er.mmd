@@ -5,19 +5,25 @@ erDiagram
     TOOTAJA ||--o{ TOOTAJA_ROLLI_OMAMINE : "rollid"
     TOOTAJA_ROLL ||--o{ TOOTAJA_ROLLI_OMAMINE : "määrab"
 
-    TREENINGULIIK ||--o{ TREENINGUKORD : "mall"
-    TREENINGULIIK ||--o{ TREENERI_PADEVUS : "vajab pädevust"
-    TOOTAJA ||--o{ TREENERI_PADEVUS : "omab"
+    TREENINGULIIK ||--o{ TREENINGUKORD : "põhineb liigile"
+    TREENINGULIIK ||--o{ TREENERI_PADEVUS : "määrab vajaliku pädevuse"
+    TREENINGULIIK ||--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "nõuab varustust"
+    TOOTAJA ||--o{ TREENERI_PADEVUS : "omab pädevust"
     TOOTAJA ||--o{ TREENINGUKORD : "juhendab"
-    RUUM ||--o{ TREENINGUKORD : "toimub"
+    RUUM ||--o{ TREENINGUKORD : "toimub ruumis"
+    RUUM ||--o{ RUUMI_VARUSTUSE_OMAMINE : "sisaldab varustust"
+    VARUSTUS ||--o{ RUUMI_VARUSTUSE_OMAMINE : "on ruumis"
+    VARUSTUS ||--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "kirjeldab nõuet"
+    TREENINGUKORD }o--o{ RUUMI_VARUSTUSE_OMAMINE : "kontrollib sobivust"
+    TREENINGUKORD }o--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "kontrollib sobivust"
 
-    TREENINGUKORD ||--o{ REGISTREERING : "vastu võtab"
-    KLIENT ||--o{ REGISTREERING : "teeb"
-    REGISTREERING ||--o| OSALEMINE : "saab tulemuse"
+    TREENINGUKORD ||--o{ REGISTREERING : "võtab registreeringuid"
+    KLIENT ||--o{ REGISTREERING : "registreerub"
+    REGISTREERING ||--o| OSALEMINE : "omab osalemise tulemust"
 
-    TREENINGULIIGI_SEISUNDI_LIIK ||--o{ TREENINGULIIK : "seisund"
-    TREENINGUKORRA_SEISUNDI_LIIK ||--o{ TREENINGUKORD : "seisund"
-    REGISTREERINGU_SEISUNDI_LIIK ||--o{ REGISTREERING : "seisund"
+    TREENINGULIIGI_SEISUNDI_LIIK ||--o{ TREENINGULIIK : "kirjeldab liigi seisundit"
+    TREENINGUKORRA_SEISUNDI_LIIK ||--o{ TREENINGUKORD : "kirjeldab korra seisundit"
+    REGISTREERINGU_SEISUNDI_LIIK ||--o{ REGISTREERING : "kirjeldab registreeringu seisundit"
 
     TREENINGULIIK {
         int treeninguliigi_kood PK
@@ -34,6 +40,22 @@ erDiagram
         datetime lopu_aeg
         int maksimaalne_osalejate_arv
         string seisundi_kood FK
+    }
+    VARUSTUS {
+        string varustuse_kood PK
+        string nimetus UK
+        boolean on_aktiivne
+    }
+    RUUMI_VARUSTUSE_OMAMINE {
+        string ruumi_kood PK, FK
+        string varustuse_kood PK, FK
+        int kogus
+    }
+    TREENINGULIIGI_VARUSTUSE_NOUE {
+        int treeninguliigi_kood PK, FK
+        string varustuse_kood PK, FK
+        int minimaalne_kogus
+        boolean on_kohustuslik
     }
     REGISTREERING {
         int registreeringu_kood PK

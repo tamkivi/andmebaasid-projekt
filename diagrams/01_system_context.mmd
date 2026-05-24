@@ -15,7 +15,7 @@ flowchart LR
     EAP["mudelid.eap\nmudelid"]
     ZIP["rakendus.zip\nFlask prototüüp"]
 
-    DB -.-> SQL
-    APP -.-> ZIP
-    DB -.-> DOC
-    DB -.-> EAP
+    DB -.->|"genereeritakse füüsiliseks SQL-skriptiks"| SQL
+    APP -.->|"pakitakse käivitatavaks prototüübiks"| ZIP
+    DB -.->|"reeglid, rutiinid ja vood selgitatakse aruandes"| DOC
+    DB -.->|"tabelid, veerud ja seosed kajastuvad mudelis"| EAP

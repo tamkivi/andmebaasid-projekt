@@ -1,0 +1,13 @@
+flowchart TB
+    START([Treener valib enda treeningukorra osalejad])
+    ROUTE["Flask POST /trainer/sessions/&lt;kood&gt;/attendance"]
+    FN["fn_marki_osalemine"]
+    CHECKS["DB kontrollid:\nroll sobib\nseisund SULETUD või TOIMUNUD\nalguse_aeg on möödas\nregistreering on KINNIT\nkord ei ole TYHIST"]
+    OK{"Kõik tingimused täidetud?"}
+    SAVE["Lisa või uuenda\nosalemine"]
+    ERR["Tõsta eestikeelne DB viga"]
+    VIEW["v_treeningukorra_osalejad\nnäitab tulemust"]
+
+    START --> ROUTE --> FN --> CHECKS --> OK
+    OK -->|"[jah]"| SAVE --> VIEW
+    OK -->|"[ei: vale tegutseja, vale seisund,\nliiga vara või registreering ei ole KINNIT]"| ERR

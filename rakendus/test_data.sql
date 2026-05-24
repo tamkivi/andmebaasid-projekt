@@ -77,8 +77,38 @@ VALUES
 (1002, 'Jõutreeningu tehnika', 'Rühmatund jõusaali põhiharjutuste tehnika õppimiseks.', 75, 'Kangid ja kettad', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
+INSERT INTO varustus (varustuse_kood, nimetus, kirjeldus, on_aktiivne)
+VALUES
+('MATID', 'Treeningmatid', 'Rühmatreeningu matid põrandaharjutusteks.', TRUE),
+('HANTLID', 'Hantlid', 'Väikese grupi jõuharjutuste hantlid.', TRUE),
+('KANGID', 'Kangid', 'Jõutreeningu tehnika harjutuste kangid.', TRUE),
+('EKRAAN', 'Ekraan või projektor', 'Juhendvideo või ajakava kuvamiseks kasutatav ekraan.', TRUE),
+('RATTAD', 'Spinningurattad', 'Statsionaarsed rattad rattatreeninguks.', TRUE),
+('PALLID', 'Võimlemispallid', 'Tasakaalu- ja kereharjutuste pallid.', TRUE)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO treeninguliigi_varustuse_noue (treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus)
+VALUES
+(1000, 'MATID', 6, TRUE, 'Joogatund vajab igale osalejale matti.'),
+(1000, 'EKRAAN', 1, FALSE, 'Soovituslik juhendmaterjali kuvamiseks.'),
+(1001, 'MATID', 2, TRUE, 'HIIT kasutab põrandaharjutusi.'),
+(1001, 'HANTLID', 2, TRUE, 'HIIT tunnis kasutatakse hantleid.'),
+(1002, 'KANGID', 4, TRUE, 'Jõutreeningu tehnika tunnis kasutatakse kange.')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO ruum (ruumi_kood, nimetus, asukoht, mahutavus)
 VALUES ('SAAL_A', 'Väike stuudio', '1. korrus', 2), ('SAAL_B', 'Suur rühmatreeningute saal', '2. korrus', 12)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO ruumi_varustuse_omamine (ruumi_kood, varustuse_kood, kogus, markus)
+VALUES
+('SAAL_A', 'MATID', 4, 'Väikese stuudio matid.'),
+('SAAL_A', 'HANTLID', 4, 'HIIT tunniks piisav hulk hantleid.'),
+('SAAL_A', 'PALLID', 2, 'Lisavarustus väikese grupi harjutusteks.'),
+('SAAL_B', 'MATID', 12, 'Suure saali matid.'),
+('SAAL_B', 'HANTLID', 10, 'Suure saali hantlid.'),
+('SAAL_B', 'KANGID', 6, 'Jõutreeningu tehnika varustus.'),
+('SAAL_B', 'EKRAAN', 1, 'Ekraan või projektor juhendmaterjaliks.')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)

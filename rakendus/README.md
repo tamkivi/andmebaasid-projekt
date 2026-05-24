@@ -6,7 +6,7 @@ Rakendus demonstreerib andmebaasiprojekti kolme nähtavat töövoogu:
 - treener näeb enda treeningukordi, osalejate nimekirja ja märgib osalemist;
 - klient vaatab avatud ajakava, registreerub, satub täitumisel ootejärjekorda ja tühistab enda registreeringu.
 
-Tavapärased kirjutavad toimingud kutsuvad PostgreSQL funktsioone. Rakendus ei ole eraldiseisev ärireeglite allikas.
+Tavapärased kirjutavad toimingud kutsuvad PostgreSQL funktsioone. Rakendus ei ole eraldiseisev ärireeglite allikas. Treeningukorra planeerimisel kuvab juhataja vorm ruumide varustust ja treeninguliikide varustuse nõudeid; sobimatuse lõplik kontroll tehakse andmebaasis.
 
 ## Eeltingimused
 
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Muuda `.env` failis vähemalt:
+Muuda `.env` failis vähemalt. Allolevad väärtused on kohaliku prototüübi näited, mitte kooli serveri kasutajanimi ega parool:
 
 ```env
 DB_HOST=localhost
@@ -60,6 +60,8 @@ Vaikimisi aadress: `http://127.0.0.1:5001`
 
 ## Demo kasutajad
 
+Järgmised kasutajad ja paroolid on ainult lokaalse demoandmebaasi testimiseks. Need ei ole TalTechi ega kooli PostgreSQL serveri kasutajad.
+
 - juhataja: `juhataja@jousaal.ee` / `juhataja123`
 - treener: `treener@jousaal.ee` / `treener123`
 - teine treener: `treener2@jousaal.ee` / `treener123`
@@ -72,7 +74,7 @@ Vaikimisi aadress: `http://127.0.0.1:5001`
 - `/schedule` - avatud treeningukordade ajakava
 - `/client/registrations` - kliendi enda registreeringud
 - `/manager/sessions` - juhataja treeningukordade töölaud
-- `/manager/sessions/new` - uue treeningukorra planeerimine
+- `/manager/sessions/new` - uue treeningukorra planeerimine koos ruumi varustuse infoga
 - `/manager/report` - täituvuse statistika
 - `/trainer/sessions` - treeneri tunniplaan
 - `/trainer/sessions/<treeningukorra_kood>/roster` - osalejate nimekiri ja osalemise märkimine
@@ -91,4 +93,4 @@ Vaikimisi aadress: `http://127.0.0.1:5001`
 
 ## Prototüübi piirid
 
-Rakendus on õppeprojekti prototüüp. See kasutab parameeterdatud SQL päringuid, parooliräse ja sessioone, kuid ei väida tootmiskeskkonna täielikku turvataset. Makseid, tellimusi, inventari, toitumiskavasid ja palgaarvestust ei käsitleta.
+Rakendus on õppeprojekti prototüüp. See kasutab parameeterdatud SQL päringuid, parooliräse ja sessioone, kuid ei väida tootmiskeskkonna täielikku turvataset. Varustus on ainult ruumi sobivuse põhiandmete kontroll, mitte täiemahuline inventari elutsükli haldus. Makseid, tellimusi, inventari, toitumiskavasid ja palgaarvestust ei käsitleta.

@@ -1,11 +1,11 @@
 stateDiagram-v2
-    [*] --> KAVAND: juhataja planeerib
-    KAVAND --> AVATUD: juhataja avab registreerimise
-    AVATUD --> SULETUD: juhataja või treener sulgeb
-    SULETUD --> TOIMUNUD: treener või juhataja lõpetab
-    KAVAND --> TYHIST: juhataja tühistab
-    AVATUD --> TYHIST: juhataja tühistab
-    SULETUD --> TYHIST: juhataja tühistab
+    [*] --> KAVAND: Juhataja planeerib / fn_planeeri_treeningukord
+    KAVAND --> AVATUD: Juhataja avab / fn_ava_treeningukord
+    AVATUD --> SULETUD: Juhataja või treener sulgeb / fn_sulge_treeningukord
+    SULETUD --> TOIMUNUD: Treener või juhataja lõpetab / fn_lopeta_treeningukord
+    KAVAND --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
+    AVATUD --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
+    SULETUD --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
     TOIMUNUD --> [*]
     TYHIST --> [*]
 
