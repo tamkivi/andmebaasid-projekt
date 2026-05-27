@@ -1,8 +1,8 @@
 stateDiagram-v2
     [*] --> KAVAND: Juhataja planeerib / fn_planeeri_treeningukord
     KAVAND --> AVATUD: Juhataja avab / fn_ava_treeningukord
-    AVATUD --> SULETUD: Juhataja või treener sulgeb / fn_sulge_treeningukord
-    SULETUD --> TOIMUNUD: Treener või juhataja lõpetab / fn_lopeta_treeningukord
+    AVATUD --> SULETUD: Juhataja sulgeb või treener sulgeb pärast tähtaega / fn_sulge_treeningukord
+    SULETUD --> TOIMUNUD: Treener või juhataja lõpetab pärast lõppu / fn_lopeta_treeningukord
     KAVAND --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
     AVATUD --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
     SULETUD --> TYHIST: Juhataja tühistab / fn_tyhista_treeningukord
@@ -12,6 +12,9 @@ stateDiagram-v2
     note right of AVATUD
         Klient saab registreeruda.
         Täitumisel tekib ootejärjekord.
+        Aeg mõjutab nähtavust:
+        pärast registreerimise tähtaega
+        ei saa klient enam registreeruda.
     end note
     note right of SULETUD
         Registreerimine on lukus.

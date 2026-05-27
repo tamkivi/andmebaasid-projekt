@@ -1,0 +1,55 @@
+erDiagram
+    ISIK ||--|| KASUTAJAKONTO : "omab sisselogimiseks"
+    ISIK ||--o| TOOTAJA : "võib olla"
+    ISIK ||--o| KLIENT : "võib olla"
+    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TOOTAJA ||--o| JUHATAJA : "võib spetsialiseeruda"
+    TOOTAJA ||--o{ TOOTAJA_ROLLI_OMAMINE : "omab rolle"
+    ROLL ||--o{ TOOTAJA_ROLLI_OMAMINE : "liigitab rolli"
+    SEISUND ||--o{ ISIK : "kirjeldab isiku seisu"
+    SEISUND ||--o{ TOOTAJA : "kirjeldab töötaja seisu"
+
+    ISIK {
+        tunnus e_meil
+        tunnus isikukood
+        nimetus eesnimi
+        nimetus perenimi
+        kirjeldus elukoht
+        seisund isiku_seisund
+    }
+    KASUTAJAKONTO {
+        tunnus e_meil
+        tunnus aktiivsus
+    }
+    TOOTAJA {
+        tunnus tootaja_tunnus
+        seisund tootaja_seisund
+    }
+    TREENER {
+        tunnus treeneri_tunnus
+        aeg rolli_kehtivus
+        kirjeldus juhendamise_ulatus
+    }
+    JUHATAJA {
+        tunnus juhataja_roll
+        aeg rolli_kehtivus
+    }
+    KLIENT {
+        tunnus kliendi_tunnus
+        aeg kliendiks_saamise_aeg
+        tunnus aktiivsus
+    }
+    TOOTAJA_ROLLI_OMAMINE {
+        aeg rolli_algus
+        aeg rolli_lopp
+    }
+    ROLL {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus vastutus
+    }
+    SEISUND {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
+    }

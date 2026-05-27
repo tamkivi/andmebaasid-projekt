@@ -1,38 +1,42 @@
 %%{init: {"themeVariables": {"fontSize": "22px"}, "flowchart": {"nodeSpacing": 35, "rankSpacing": 40}}}%%
 flowchart TB
-    subgraph SYSBOUND["Jõusaali rühmatreeningute funktsionaalne allsüsteem"]
+    subgraph SYSBOUND["Registreeringukeskne rühmatreeningute allsüsteem"]
         direction TB
 
-        subgraph MGR["Juhataja kasutusmallid"]
+        subgraph MGR["Töötaja/juhataja kasutusmallid"]
             direction LR
             JUH["&lt;&lt;actor&gt;&gt;<br/>Juhataja"]
             P(["Planeeri treeningukord"])
             A(["Ava registreerimine"])
+            SL(["Sulge registreerimine"])
             C(["Tühista treeningukord"])
-            S(["Vaata statistikat"])
+            S(["Vaata täituvuse statistikat"])
             JUH --> P
             JUH --> A
+            JUH --> SL
             JUH --> C
             JUH --> S
         end
 
         subgraph TRN["Treeneri kasutusmallid"]
             direction LR
-            TRE["&lt;&lt;actor&gt;&gt;<br/>Treener"]
+            TRE["&lt;&lt;actor&gt;&gt;<br/>Treener<br/>(töötaja roll)"]
             TT(["Vaata tunniplaani"])
-            R(["Vaata osalejaid"])
+            R(["Vaata treeningukorra registreeringuid"])
             O(["Märgi osalemine"])
+            TS(["Sulge enda treeningukorra registreerimine"])
             TRE --> TT
             TRE --> R
             TRE --> O
+            TRE --> TS
         end
 
         subgraph CLI["Kliendi kasutusmallid"]
             direction LR
             KLI["&lt;&lt;actor&gt;&gt;<br/>Klient"]
-            AJ(["Vaata ajakava"])
-            REG(["Registreeru"])
-            TYH(["Tühista registreering"])
+            AJ(["Vaata vabu treeningukordi"])
+            REG(["Esita registreering"])
+            TYH(["Tühista enda registreering"])
             MINU(["Vaata enda registreeringuid"])
             KLI --> AJ
             KLI --> REG
@@ -40,11 +44,14 @@ flowchart TB
             KLI --> MINU
         end
 
-        subgraph AUTO["Automaatne kasutusmall"]
+        subgraph AUTO["Automaatne või ajast sõltuv kasutusmall"]
             direction LR
             SYS["&lt;&lt;actor&gt;&gt;<br/>Süsteem"]
+            AEG["&lt;&lt;trigger&gt;&gt;<br/>Aeg"]
             ED(["Edenda ootejärjekorrast"])
+            DL(["Rakenda registreerimise tähtaja tingimus"])
             SYS --> ED
+            AEG --> DL
         end
     end
 
@@ -53,3 +60,5 @@ flowchart TB
     TYH -. "&lt;&lt;include&gt;&gt;" .-> MINU
     TYH -. "&lt;&lt;include&gt;&gt;" .-> ED
     O -. "&lt;&lt;include&gt;&gt;" .-> R
+    SL -. "&lt;&lt;include&gt;&gt;" .-> DL
+    TS -. "&lt;&lt;include&gt;&gt;" .-> DL

@@ -7,27 +7,27 @@ flowchart TB
         ENDERR((Lõpp veaga))
     end
 
-    subgraph LANE_F["Flask rakendus"]
-        ROUTE["POST /client/sessions/&lt;id&gt;/register"]
-        CANCEL_ROUTE["POST /client/registrations/&lt;id&gt;/cancel"]
+    subgraph LANE_F["Rakendus"]
+        ROUTE["Käivitab registreeringu esitamise"]
+        CANCEL_ROUTE["Käivitab registreeringu tühistamise"]
         VIEW["Vaated näitavad kinnitatud,\nootel ja vabu kohti"]
         ERR["Kuvab eestikeelse DB vea"]
     end
 
-    subgraph LANE_DB["PostgreSQL"]
-        FN["fn_registreeri_klient_treeningukorrale"]
+    subgraph LANE_DB["Andmetalletus ja ärireeglid"]
+        FN["Registreeringu loomise operatsioon"]
         ACTIVE{"Aktiivne klient?"}
         OPEN{"Treeningukord AVATUD?"}
-        DEADLINE{"tahtaeg kehtib?"}
+        DEADLINE{"registreerimise tahtaeg kehtib?"}
         DUP{"aktiivne registreering puudub?"}
         COUNT["Loenda KINNIT registreeringud"]
         SEAT{"vabu kohti on?"}
         CONF["Loo KINNIT registreering"]
-        WAIT["Loo OOTEJRK rida\nja ootejarjekorra nr"]
-        CANCEL_FN["fn_tyhista_registreering"]
+        WAIT["Loo OOTEJRK registreering\nja järjekorrakoht"]
+        CANCEL_FN["Registreeringu tühistamise operatsioon"]
         WAS_CONF{"Tühistati kinnitatud registreering?"}
         QUEUE{"ootejarjekord sisaldab klienti?"}
-        PROMOTED["fn_edenda_ootejarjekorrast\nmuudab esimese OOTEJRK -> KINNIT"]
+        PROMOTED["Edenda esimene OOTEJRK\nregistreering KINNIT seisundisse"]
     end
 
     START --> PICK --> ROUTE --> FN --> ACTIVE

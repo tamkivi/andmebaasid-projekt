@@ -7,15 +7,15 @@ flowchart TB
         ENDERR((Lõpp veaga))
     end
 
-    subgraph LANE_F["Flask rakendus"]
+    subgraph LANE_F["Rakendus"]
         ROSTER["Loeb treeningukorra_osalejad vaadet"]
-        ROUTE["POST /trainer/sessions/&lt;id&gt;/attendance"]
+        ROUTE["Käivitab osalemise märkimise"]
         VIEW["Kuvab uuendatud osalejate nimekirja"]
         ERR["Kuvab DB vea"]
     end
 
-    subgraph LANE_DB["PostgreSQL"]
-        FN["fn_marki_osalemine"]
+    subgraph LANE_DB["Andmetalletus ja ärireeglid"]
+        FN["Osalemise märkimise operatsioon"]
         ROLE{"Roll sobib?"}
         STATE{"Seisund SULETUD või TOIMUNUD?"}
         TIME{"Alguse_aeg on möödas?\nMitte liiga vara"}

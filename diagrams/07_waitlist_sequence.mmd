@@ -1,17 +1,17 @@
 sequenceDiagram
     participant K as Klient
-    participant F as Flask route
-    participant T as fn_tyhista_registreering
-    participant E as fn_edenda_ootejarjekorrast
+    participant F as Rakendus
+    participant T as Tühistamise operatsioon
+    participant E as Edendamise operatsioon
     participant R as registreering
     participant V as vaated
 
-    K->>F: POST /client/registrations/{id}/cancel
-    F->>T: fn_tyhista_registreering(id, klient, põhjus)
+    K->>F: annab korralduse enda registreering tühistada
+    F->>T: käivita registreeringu tühistamine
     T->>R: lukusta sama treeningukorra aktiivsed registreeringud
     T->>R: muuda KINNIT või OOTEJRK -> TYH_KL
     alt tühistati kinnitatud koht
-        T->>E: fn_edenda_ootejarjekorrast(treeningukord)
+        T->>E: käivita ootel registreeringu edendamine
         E->>R: lukusta esimene OOTEJRK rida
         E->>R: muuda OOTEJRK -> KINNIT, märgi edendamise aeg
         E-->>T: edendatud registreeringu id

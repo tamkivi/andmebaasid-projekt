@@ -1,9 +1,9 @@
 flowchart LR
-    subgraph "Jõusaali rühmatreeningute allsüsteem"
-        APP["Flask prototüüp\nrollipõhised töövood"]
-        DB[("PostgreSQL andmebaas\nreeglid, rutiinid, vaated")]
-        APP -->|"loeb vaateid"| DB
-        APP -->|"kutsub kirjutusfunktsioone"| DB
+    subgraph "Registreeringukeskne rühmatreeningute allsüsteem"
+        APP["Rakenduse prototüüp\nrollipõhised töövood"]
+        DB[("Andmetalletus\nregistreeringud, seisundid ja reeglid")]
+        APP -->|"loeb töövoo andmeid"| DB
+        APP -->|"käivitab ärilised toimingud"| DB
     end
 
     JUH["Juhataja"] -->|"planeerib, avab, tühistab,\nvaatab statistikat"| APP
@@ -15,7 +15,7 @@ flowchart LR
     EAP["mudelid.eap\nmudelid"]
     ZIP["rakendus.zip\nFlask prototüüp"]
 
-    DB -.->|"genereeritakse füüsiliseks SQL-skriptiks"| SQL
+    DB -.->|"realiseeritakse füüsilise SQL-skriptina"| SQL
     APP -.->|"pakitakse käivitatavaks prototüübiks"| ZIP
-    DB -.->|"reeglid, rutiinid ja vood selgitatakse aruandes"| DOC
-    DB -.->|"tabelid, veerud ja seosed kajastuvad mudelis"| EAP
+    DB -.->|"reeglid ja töövood selgitatakse aruandes"| DOC
+    DB -.->|"kontseptuaalne ja füüsiline mudel kajastuvad mudelis"| EAP

@@ -1,11 +1,11 @@
 stateDiagram-v2
-    [*] --> KINNIT: Klient registreerub, vaba koht / fn_registreeri_klient_treeningukorrale
-    [*] --> OOTEJRK: Klient registreerub, kohad täis / fn_registreeri_klient_treeningukorrale
-    OOTEJRK --> KINNIT: Süsteem edendab / fn_edenda_ootejarjekorrast
-    KINNIT --> TYH_KL: Klient tühistab enne tähtaega / fn_tyhista_registreering
-    OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / fn_tyhista_registreering
-    KINNIT --> TYH_SYS: Juhataja tühistab korra / fn_tyhista_treeningukord
-    OOTEJRK --> TYH_SYS: Juhataja tühistab korra / fn_tyhista_treeningukord
+    [*] --> KINNIT: Klient esitab registreeringu, vaba koht / esita registreering
+    [*] --> OOTEJRK: Klient esitab registreeringu, kohad täis / esita registreering
+    OOTEJRK --> KINNIT: Süsteem edendab pärast koha vabanemist / edenda ootel registreering
+    KINNIT --> TYH_KL: Klient tühistab enne tähtaega / tühista enda registreering
+    OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / tühista enda registreering
+    KINNIT --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / süsteemne tühistamine
+    OOTEJRK --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / süsteemne tühistamine
     TYH_KL --> [*]
     TYH_SYS --> [*]
 
@@ -15,5 +15,6 @@ stateDiagram-v2
     end note
     note right of OOTEJRK
         Säilitatakse järjekorranumber.
-        Edendamine toimub DB funktsioonis.
+        Edendamine toimub ühe
+        ärisündmusena.
     end note

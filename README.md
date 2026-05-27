@@ -1,6 +1,6 @@
 # Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem
 
-See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt ei käsitle enam treeningut kui töövihiku laadset kirjelduskaarti. Põhiobjekt on konkreetne `treeningukord` koos ruumi, treeneri, registreeringute, ootejärjekorra ja osalemisega.
+See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt ei käsitle kogu jõusaali infosüsteemi ega treeningut kui töövihiku laadset kirjelduskaarti. Keskne elutsükli objekt on `registreering`; seda toetavad, kuid ei asenda, `treeningukord`, `treeninguliik`, `isik`, `tootaja`, `klient`, `treener`, ootejärjekord ja osalemine.
 
 ## Lõppartefaktid
 
@@ -95,4 +95,4 @@ Demo kasutajad:
 
 ## Kaitsmise põhisõnum
 
-Projekt ei ole enam vana `treening` kaardi CRUD. Andmebaas kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, registreerimise ja tühistamise tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist. Flaski tavapärased kirjutavad töövood kutsuvad PostgreSQL funktsioone ning loevad rollipõhiseid vaateid.
+Projekt ei ole vana `treening` kaardi CRUD ega kogu jõusaali haldus. Keskne põhiobjekt on `registreering`: klient esitab registreeringu, saab kinnitatud koha või ootejärjekorra koha, näeb enda registreeringuid, saab tähtaja piires tühistada ning koha vabanemisel edendatakse esimene ootel registreering. `Treener` on `tootaja` spetsialiseerumine ja selles allsüsteemis põhiobjekt, kuid mitte isikust eraldiseisev uus persooniobjekt. `Treeninguliik` on hallatav kataloogimõiste, mitte pelk klassifikaator. Füüsiline PostgreSQL teostus kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist.

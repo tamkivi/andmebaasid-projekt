@@ -46,8 +46,8 @@ public class EapFixes {
     }
 
     private void apply() throws Exception {
-        renamePackagesAndDiagrams();
         replaceOldProjectText();
+        renamePackagesAndDiagrams();
         neutralizeTemplateClass();
         removeStaleTreeningPhysicalClass();
         removeStaleWorkbookObjects();
@@ -56,6 +56,7 @@ public class EapFixes {
         ensureCoreClasses();
         ensurePhysicalTables();
         removeOldPaymentLanguage();
+        removeNonSubmittedTemplateObjects();
     }
 
     private static String guid() {
@@ -116,7 +117,11 @@ public class EapFixes {
         Row row;
         while ((row = cursor.getNextRow()) != null) {
             Object actual = row.get(idColumn);
-            if (actual instanceof Number && ((Number) actual).intValue() == id) {
+            boolean matches = actual instanceof Number && ((Number) actual).intValue() == id;
+            if (!matches && actual != null) {
+                matches = String.valueOf(id).equals(actual.toString());
+            }
+            if (matches) {
                 row.putAll(values);
                 row.put("ModifiedDate", new Date());
                 cursor.updateCurrentRowFromMap(row);
@@ -215,6 +220,31 @@ public class EapFixes {
         deleteConnectorsForObject(TEMPLATE_CLASS);
     }
 
+    private void removeNonSubmittedTemplateObjects() throws Exception {
+        deleteObjectAndDependencies(TEMPLATE_CLASS);
+
+        Table objects = db.getTable("t_object");
+        Set<Integer> genericClassifierIds = new HashSet<>();
+        for (Row row : objects) {
+            Object id = row.get("Object_ID");
+            Object name = row.get("Name");
+            Object type = row.get("Object_Type");
+            Object packageId = row.get("Package_ID");
+            boolean isGenericClassifier =
+                id instanceof Number
+                && "Class".equals(type)
+                && "Klassifikaator".equals(name)
+                && packageId instanceof Number
+                && ((Number) packageId).intValue() == 11;
+            if (isGenericClassifier) {
+                genericClassifierIds.add(((Number) id).intValue());
+            }
+        }
+        for (int objectId : genericClassifierIds) {
+            deleteObjectAndDependencies(objectId);
+        }
+    }
+
     private void removeStaleTreeningPhysicalClass() throws Exception {
         Table objects = db.getTable("t_object");
         Set<Integer> staleObjectIds = new HashSet<>();
@@ -245,11 +275,23 @@ public class EapFixes {
 
     private void removeStaleWorkbookObjects() throws Exception {
         Set<String> staleObjectNames = Set.of(
+            "Uudistaja",
             "Muuda treening mitteaktiivseks",
             "Unusta treening",
             "Vali treening",
+            "Vali treeningukord",
+            "Otsi treeningukorda",
+            "Muuda treeningukorra andmeid",
+            "Muuda treeningut",
             "Lõpeta valitud treening",
+            "Lõpeta valitud treeningukord",
             "Aktiveeri valitud treening",
+            "Vaata avatud rühmatreeningute ajakava",
+            "Vaata kõiki treeninguid",
+            "Vaata kõiki treeninguid, mida saab lõpetada",
+            "Vaata kõiki ootel või mitteaktiivseid treeninguid",
+            "Vaata treeningukordi, mida saab lõpetada",
+            "Vaata kavandatud või suletud treeningukordi",
             "Kas treening kuulub kategooriasse?"
         );
         Table objects = db.getTable("t_object");
@@ -334,34 +376,43 @@ public class EapFixes {
 
     private void renamePackagesAndDiagrams() throws Exception {
         updateById("t_package", "Package_ID", PKG_ANALYSIS_SUBSYSTEM, Map.of(
-            "Name", "Rühmatreeningute ajakava, registreerimise ja osalemise funktsionaalne allsüsteem"
+            "Name", "Registreeringukeskne rühmatreeningute funktsionaalne allsüsteem"
         ));
         updateById("t_package", "Package_ID", PKG_STATE_MODELS, Map.of(
             "Name", "Treeningukorra ja registreeringu elutsüklid"
         ));
         updateById("t_package", "Package_ID", PKG_REGISTER, Map.of(
-            "Name", "Rühmatreeningute ajakava ja registreeringute register"
+            "Name", "Registreeringute register"
         ));
 
-        updateById("t_diagram", "Diagram_ID", 2, Map.of("Name", "Rühmatreeningute funktsionaalne allsüsteem"));
+        updateById("t_diagram", "Diagram_ID", 2, Map.of("Name", "Registreeringukeskne rühmatreeningute funktsionaalne allsüsteem"));
         updateById("t_diagram", "Diagram_ID", 3, Map.of("Name", "Registreerimise ja ootejärjekorra tegevusvoog"));
-        updateById("t_diagram", "Diagram_ID", 4, Map.of("Name", "Rühmatreeningute registri füüsiline mudel"));
+        updateById("t_diagram", "Diagram_ID", 4, Map.of("Name", "Registreeringute ja treeningukordade füüsiline mudel"));
         updateById("t_diagram", "Diagram_ID", 6, Map.of("Name", "Treeningukorra seisundimudel"));
-        updateById("t_diagram", "Diagram_ID", 8, Map.of("Name", "Rühmatreeningute pädevusalad ja registrid"));
+        updateById("t_diagram", "Diagram_ID", 7, Map.of("Name", "Registreeringute registri kontseptuaalne eskiismudel"));
+        updateById("t_diagram", "Diagram_ID", 8, Map.of("Name", "Registreeringukeskse allsüsteemi pädevusalad ja registrid"));
+        updateById("t_diagram", "Diagram_ID", 9, Map.of("Name", "Ava registreerimise tegevusdiagramm"));
+        updateById("t_diagram", "Diagram_ID", 13, Map.of("Name", "Rühmatreeningute registrite füüsiline disain"));
     }
 
     private void replaceOldProjectText() throws Exception {
         Map<String, String> replacements = new LinkedHashMap<>();
-        replacements.put("Treeningute funktsionaalne allsüsteem", "Rühmatreeningute ajakava, registreerimise ja osalemise funktsionaalne allsüsteem");
-        replacements.put("treeningute funktsionaalne allsüsteem", "rühmatreeningute ajakava, registreerimise ja osalemise funktsionaalne allsüsteem");
-        replacements.put("Treeningute register", "Rühmatreeningute ajakava ja registreeringute register");
-        replacements.put("treeningute register", "rühmatreeningute ajakava ja registreeringute register");
+        replacements.put("Treeningute funktsionaalne allsüsteem", "registreeringukeskne rühmatreeningute funktsionaalne allsüsteem");
+        replacements.put("treeningute funktsionaalne allsüsteem", "registreeringukeskne rühmatreeningute funktsionaalne allsüsteem");
+        replacements.put("Registreeringukeskne rühmaregistreeringukeskne rühmatreeningute funktsionaalne allsüsteem", "Registreeringukeskne rühmatreeningute funktsionaalne allsüsteem");
+        replacements.put("registreeringukeskne rühmaregistreeringukeskne rühmatreeningute funktsionaalne allsüsteem", "registreeringukeskne rühmatreeningute funktsionaalne allsüsteem");
+        replacements.put("Treeningute register", "Registreeringute register");
+        replacements.put("treeningute register", "registreeringute register");
+        replacements.put("Treeningute elutsüklid", "Treeningukorra ja registreeringu elutsüklid");
+        replacements.put("treeningute elutsüklid", "treeningukorra ja registreeringu elutsüklid");
         replacements.put("Treeningu_seisundi_liik", "Treeningukorra_seisundi_liik");
         replacements.put("treeningu_seisundi_liik", "treeningukorra_seisundi_liik");
         replacements.put("Treeningu_kategooria_omamine", "Treeninguliigi_kategooria_omamine");
         replacements.put("treeningu_kategooria_omamine", "treeninguliigi_kategooria_omamine");
         replacements.put("treeningu_kood", "treeningukorra_id");
         replacements.put("Registreeri treening", "Planeeri treeningukord");
+        replacements.put("Registreeru treeningukorrale", "Esita registreering");
+        replacements.put("Tühista registreering", "Tühista enda registreering");
         replacements.put("Aktiveeri treening", "Ava registreerimine");
         replacements.put("Lõpeta treening", "Lõpeta treeningukord");
         replacements.put("Vaata aktiivseid treeninguid", "Vaata avatud rühmatreeningute ajakava");
@@ -403,83 +454,103 @@ public class EapFixes {
 
     private void ensureActors() throws Exception {
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Juhataja", "Sisemine kasutaja, kes planeerib, avab, sulgeb ja tühistab treeningukordi ning vaatab statistikat.");
-        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Treener", "Sisemine kasutaja, kes näeb enda treeningukordi ja märgib osalemist.");
-        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Klient", "Väline kasutaja, kes registreerub treeningukorrale ja tühistab enda registreeringu.");
+        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Treener", "Töötaja spetsialiseerumine ja tegutseja, mille kaudu treener näeb enda treeningukordi, kasutab pädevusi ja märgib osalemist.");
+        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Klient", "Väline kasutaja, kes vaatab vabu treeningukordi, esitab registreeringu, vaatab enda registreeringuid ja tühistab enda registreeringu.");
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Süsteem", "Automaatne osapool, mis edendab ootejärjekorda ja jõustab andmebaasi ärireegleid.");
+        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Aeg", "Väline käivitaja või tingimus, mis mõjutab registreerimise tähtaegu ja treeningukorra seisundisiirdeid.");
     }
 
     private void ensureUseCases() throws Exception {
         ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Planeeri treeningukord", "Juhataja loob konkreetse treeningukorra koos treeneri, ruumi, aja ja mahupiiranguga.");
         ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Ava registreerimine", "Juhataja muudab kavandatud treeningukorra klientidele registreerimiseks avatuks.");
-        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Registreeru treeningukorrale", "Klient saab kinnitatud registreeringu või ootejärjekorra koha.");
-        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Tühista registreering", "Klient tühistab enda aktiivse registreeringu ja süsteem edendab vajadusel ootejärjekorda.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Vaata vabu treeningukordi", "Klient näeb treeningukordi, millele saab registreeruda.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Esita registreering", "Klient saab kinnitatud registreeringu või ootejärjekorra koha.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Vaata enda registreeringuid", "Klient näeb enda kinnitatud, ootel ja tühistatud registreeringuid.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Tühista enda registreering", "Klient tühistab enda aktiivse registreeringu ja süsteem edendab vajadusel ootejärjekorda.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Edenda ootel registreering", "Süsteem muudab esimese ootel registreeringu kinnitatuks, kui koht vabaneb.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Vaata treeningukorra registreeringuid", "Treeneri rollis töötaja või juhataja näeb konkreetse treeningukorra registreeringuid.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Sulge registreerimine", "Juhataja, treeneri rollis töötaja või tähtaja tingimus lõpetab registreerimise.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Lõpeta treeningukord", "Treeneri rollis töötaja või juhataja märgib pärast lõppu treeningukorra toimunuks.");
+        ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Tühista treeningukord", "Juhataja tühistab treeningukorra ja aktiivsed registreeringud süsteemselt.");
         ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Märgi osalemine", "Treener või juhataja märgib kinnitatud registreeringule osalemise tulemuse.");
         ensureObject("UseCase", PKG_ANALYSIS_SUBSYSTEM, TEMPLATE_USE_CASE, "Vaata täituvuse statistikat", "Juhataja vaatab treeningukordade täituvust ja ootejärjekorda.");
     }
 
     private void ensureCoreClasses() throws Exception {
-        ensureClassWithColumns("Treeninguliik", "Korduv rühmatreeningu mall, mille alusel planeeritakse konkreetsed treeningukorrad.", new String[][] {
-            {"treeninguliigi_id", "integer", "PK"},
-            {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
-            {"kestus_minutites", "integer", "NOT NULL"},
-            {"treeninguliigi_seisundi_kood", "varchar(10)", "FK treeninguliigi_seisundi_liik.treeninguliigi_seisundi_kood"}
+        ensureClassWithColumns("Isik", "Põhiobjekt: tegelik inimene, kellel võib olla kliendi ja/või töötaja roll.", new String[][] {
+            {"e_meil", "tunnus", "Isiku e-posti tunnus."},
+            {"isikukood", "tunnus", "Isiku lisatunnus."},
+            {"nimi", "nimetus", "Isiku nimi."},
+            {"isiku_seisund", "seisund", "Isiku kasutatavuse seisund."}
         });
-        ensureClassWithColumns("Treeningukord", "Kalendris toimuv rühmatreening koos ruumi, treeneri, aja ja mahupiiranguga.", new String[][] {
-            {"treeningukorra_id", "integer", "PK"},
-            {"treeninguliigi_id", "integer", "FK treeninguliik.treeninguliigi_id"},
-            {"treener_e_meil", "varchar(254)", "FK tootaja.e_meil"},
-            {"ruumi_kood", "varchar(10)", "FK ruum.ruumi_kood"},
-            {"alguse_aeg", "timestamp", "NOT NULL"},
-            {"lopu_aeg", "timestamp", "NOT NULL"},
-            {"maksimaalne_osalejate_arv", "integer", "CHECK > 0"},
-            {"treeningukorra_seisundi_kood", "varchar(10)", "FK treeningukorra_seisundi_liik.treeningukorra_seisundi_kood"}
+        ensureClassWithColumns("Töötaja", "Põhiobjekt ja isiku spetsialiseerumine organisatsioonis. Töötaja kaudu tekivad juhataja ja treeneri tegevusõigused.", new String[][] {
+            {"tootaja_tunnus", "tunnus", "Töötaja tunnus."},
+            {"tootaja_seisund", "seisund", "Töötaja kasutatavuse seisund."}
         });
-        ensureClassWithColumns("Registreering", "Kliendi kinnitatud või ootejärjekorras registreering treeningukorrale.", new String[][] {
-            {"registreeringu_id", "integer", "PK"},
-            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
-            {"klient_e_meil", "varchar(254)", "FK klient.e_meil"},
-            {"registreeringu_seisundi_kood", "varchar(10)", "FK registreeringu_seisundi_liik.registreeringu_seisundi_kood"}
+        ensureClassWithColumns("Treener", "Põhiobjekt ja töötaja spetsialiseerumine rühmatreeningute kontekstis. Treener juhendab treeningukordi ja omab pädevusi.", new String[][] {
+            {"treeneri_tunnus", "tunnus", "Treeneri äriline tunnus."},
+            {"rolli_kehtivus", "aeg", "Treeneri rolli kehtivus."},
+            {"padevuste_ulatus", "kirjeldus", "Treeneri pädevuste äriline ulatus."}
+        });
+        ensureClassWithColumns("Juhataja", "Töötaja spetsialiseerumine, kes planeerib ja haldab rühmatreeningute ajakava valitud allsüsteemi piires.", new String[][] {
+            {"juhataja_roll", "tunnus", "Juhataja rolli tunnus."},
+            {"rolli_kehtivus", "aeg", "Juhataja rolli kehtivus."}
+        });
+        ensureClassWithColumns("Treeninguliik", "Põhiandmete põhiobjekt: hallatav rühmatreeningu kataloogimõiste, mille alusel planeeritakse konkreetsed treeningukorrad.", new String[][] {
+            {"nimetus", "nimetus", "Treeninguliigi nimetus."},
+            {"sisu", "kirjeldus", "Treeninguliigi kirjeldus."},
+            {"tyypiline_kestus", "aeg", "Tavaline kestus."},
+            {"kasutatavus", "seisund", "Kas treeninguliiki saab kasutada."}
+        });
+        ensureClassWithColumns("Treeningukord", "Põhiobjekt: kalendris toimuv rühmatreening, millele registreeringud tekivad.", new String[][] {
+            {"treeningukorra_tunnus", "tunnus", "Treeningukorra äriline tunnus."},
+            {"algus_ja_lopp", "aeg", "Toimumise ajavahemik."},
+            {"registreerimise_tahtaeg", "aeg", "Hetk, milleni saab registreeringuid esitada."},
+            {"tyhistamise_tahtaeg", "aeg", "Hetk, milleni klient saab enda registreeringu tühistada."},
+            {"kohtade_piir", "arv", "Suurim lubatud kinnitatud osalejate arv."},
+            {"treeningukorra_seisund", "seisund", "Treeningukorra hetkeseisund."}
+        });
+        ensureClassWithColumns("Registreering", "Keskne põhiobjekt: kliendi osalemissoov konkreetsele treeningukorrale.", new String[][] {
+            {"registreeringu_tunnus", "tunnus", "Registreeringu äriline tunnus."},
+            {"esitamise_aeg", "aeg", "Registreeringu loomise aeg."},
+            {"registreeringu_seisund", "seisund", "Registreeringu hetkeseisund."},
+            {"tyhistamise_aeg", "aeg", "Tühistamise aeg, kui registreering tühistati."},
+            {"edendamise_aeg", "aeg", "Aeg, mil ootel registreering kinnitati."}
         });
         ensureClassWithColumns("OotejarjekorraKoht", "Ootejärjekorras oleva registreeringu kohustuslik järjekorrakoht.", new String[][] {
-            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
-            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
-            {"ootejarjekorra_nr", "integer", "UNIQUE per treeningukord, NOT NULL"}
+            {"jarjekorranumber", "arv", "Ootel registreeringu järjekord sama treeningukorra sees."}
         });
-        ensureClassWithColumns("Osalemine", "Kinnitatud registreeringu osalemise tulemus.", new String[][] {
-            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
-            {"on_osalenud", "boolean", "NOT NULL"},
-            {"markija_e_meil", "varchar(254)", "FK tootaja.e_meil"}
+        ensureClassWithColumns("Osalemine", "Sõltuv elutsükliga tulemusobjekt: kinnitatud registreeringu osalemise või puudumise tulemus.", new String[][] {
+            {"tulemus", "tunnus", "Kas klient osales või puudus."},
+            {"markimise_aeg", "aeg", "Osalemise märkimise aeg."},
+            {"markus", "kirjeldus", "Täpsustav märkus."}
         });
         ensureClassWithColumns("Ruum", "Jõusaali saal või stuudio, mille mahutavus piirab treeningukorra osalejate arvu.", new String[][] {
-            {"ruumi_kood", "varchar(10)", "PK"},
-            {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
-            {"mahutavus", "integer", "CHECK > 0"}
+            {"ruumi_tunnus", "tunnus", "Ruumi tunnus."},
+            {"nimetus", "nimetus", "Ruumi nimetus."},
+            {"asukoht", "kirjeldus", "Ruumi asukoht."},
+            {"mahutavus", "arv", "Ruumi maksimaalne osalejate arv."}
         });
         ensureClassWithColumns("Varustus", "Toetav põhiandmete objekt, mille abil kontrollitakse ruumi sobivust treeninguliigile.", new String[][] {
-            {"varustuse_kood", "varchar(10)", "PK"},
-            {"nimetus", "varchar(100)", "UNIQUE, NOT NULL"},
-            {"on_aktiivne", "boolean", "NOT NULL"}
+            {"varustuse_tunnus", "tunnus", "Varustuse tunnus."},
+            {"nimetus", "nimetus", "Varustuse nimetus."},
+            {"aktiivsus", "tunnus", "Kas varustust saab kasutada."}
         });
         ensureClassWithColumns("Ruumi_varustuse_omamine", "Seos ruumi ja olemasoleva varustuse koguse vahel.", new String[][] {
-            {"ruumi_kood", "varchar(10)", "PK, FK ruum.ruumi_kood"},
-            {"varustuse_kood", "varchar(10)", "PK, FK varustus.varustuse_kood"},
-            {"kogus", "integer", "CHECK > 0"}
+            {"kogus", "arv", "Ruumis olemas oleva varustuse kogus."}
         });
         ensureClassWithColumns("Treeninguliigi_varustuse_noue", "Treeninguliigi kohustuslik või soovituslik varustuse nõue.", new String[][] {
-            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
-            {"varustuse_kood", "varchar(10)", "PK, FK varustus.varustuse_kood"},
-            {"minimaalne_kogus", "integer", "CHECK > 0"},
-            {"on_kohustuslik", "boolean", "NOT NULL"}
+            {"minimaalne_kogus", "arv", "Vajalik minimaalne kogus."},
+            {"kohustuslikkus", "tunnus", "Kas nõue on kohustuslik."}
         });
-        ensureClassWithColumns("Klient", "Kasutajakontoga seotud osaleja.", new String[][] {
-            {"e_meil", "varchar(254)", "PK, FK kasutajakonto.e_meil"},
-            {"on_aktiivne", "boolean", "NOT NULL"}
+        ensureClassWithColumns("Klient", "Põhiobjekt ja isiku spetsialiseerumine teenuse kasutajana.", new String[][] {
+            {"kliendi_tunnus", "tunnus", "Kliendi tunnus."},
+            {"aktiivsus", "tunnus", "Kas klient saab registreeringuid esitada."},
+            {"kliendiks_saamise_aeg", "aeg", "Kliendi rolli algus."}
         });
-        ensureClassWithColumns("Treeneri_padevus", "Seos, mis määrab, millist treeninguliiki treener võib juhendada.", new String[][] {
-            {"tootaja_e_meil", "varchar(254)", "PK, FK tootaja.e_meil"},
-            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
-            {"alates", "date", "NOT NULL"},
-            {"kuni", "date", "NOT NULL, DEFAULT infinity"}
+        ensureClassWithColumns("Treeneri_padevus", "Sõltuv elutsükliga suhteobjekt, mis määrab, millist treeninguliiki treener võib juhendada ja millal see pädevus kehtib.", new String[][] {
+            {"kehtiv_alates", "aeg", "Pädevuse algus."},
+            {"kehtiv_kuni", "aeg", "Pädevuse lõpp."}
         });
     }
 
@@ -786,6 +857,7 @@ public class EapFixes {
 
     private void ensureClassWithColumns(String name, String note, String[][] columns) throws Exception {
         int id = ensureObject("Class", PKG_REGISTER, TEMPLATE_CLASS, name, note);
+        deleteRowsByNumber("t_attribute", "Object_ID", id);
         for (String[] column : columns) {
             addAttributeIfMissing(id, column[0], column[1], column[2]);
         }

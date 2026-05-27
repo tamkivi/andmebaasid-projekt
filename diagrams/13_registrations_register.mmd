@@ -1,0 +1,34 @@
+erDiagram
+    KLIENT ||--o{ REGISTREERING : "esitab"
+    TREENINGUKORD ||--o{ REGISTREERING : "kogub"
+    REGISTREERING ||--o| OOTEJARJEKORRA_KOHT : "saab kui kohti pole"
+    SEISUND ||--o{ REGISTREERING : "kirjeldab hetkeseisu"
+
+    KLIENT {
+        tunnus kliendi_tunnus
+        tunnus aktiivsus
+    }
+    TREENINGUKORD {
+        tunnus treeningukorra_tunnus
+        aeg algus_ja_lopp
+        aeg registreerimise_tahtaeg
+        aeg tyhistamise_tahtaeg
+        arv kohtade_piir
+        seisund treeningukorra_seisund
+    }
+    REGISTREERING {
+        tunnus registreeringu_tunnus
+        aeg esitamise_aeg
+        seisund hetkeseisund
+        aeg tyhistamise_aeg
+        aeg edendamise_aeg
+        kirjeldus tyhistamise_pohjus
+    }
+    OOTEJARJEKORRA_KOHT {
+        arv jarjekorranumber
+    }
+    SEISUND {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
+    }

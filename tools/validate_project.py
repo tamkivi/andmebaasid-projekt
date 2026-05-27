@@ -128,22 +128,29 @@ REQUIRED_DIAGRAMS = [
     "08_permission_flow",
     "09_app_db_architecture",
     "10_attendance_activity",
+    "11_people_register",
+    "12_training_sessions_register",
+    "13_registrations_register",
+    "14_attendance_register",
+    "15_classifiers_register",
 ]
 
 REQUIRED_DIAGRAM_SOURCE_TERMS = {
     "03_core_er": [
-        "põhineb liigile",
-        "toimub ruumis",
-        "registreerub",
-        "omab osalemise tulemust",
-        "varustus",
-        "nõuab varustust",
-        "kontrollib sobivust",
+        "REGISTREERING",
+        "ISIK",
+        "TOOTAJA",
+        "TREENER",
+        "KLIENT",
+        "juhendab",
+        "TREENINGULIIK",
+        "OSALEMINE",
+        "kirjeldab hetkeseisu",
     ],
     "04_registration_activity": [
-        "fn_registreeri_klient_treeningukorrale",
-        "fn_tyhista_registreering",
-        "fn_edenda_ootejarjekorrast",
+        "Registreeringu loomise operatsioon",
+        "Registreeringu tühistamise operatsioon",
+        "Edenda esimene OOTEJRK",
         "vabu kohti",
         "ootejarjekord",
         "aktiivne registreering",
@@ -156,10 +163,10 @@ REQUIRED_DIAGRAM_SOURCE_TERMS = {
         "fn_tyhista_treeningukord",
     ],
     "06_registration_state": [
-        "fn_registreeri_klient_treeningukorrale",
-        "fn_edenda_ootejarjekorrast",
-        "fn_tyhista_registreering",
-        "fn_tyhista_treeningukord",
+        "esita registreering",
+        "edenda ootel registreering",
+        "tühista enda registreering",
+        "süsteemne tühistamine",
     ],
     "08_permission_flow": [
         "kutsub",
@@ -175,10 +182,40 @@ REQUIRED_DIAGRAM_SOURCE_TERMS = {
         "varustus",
     ],
     "10_attendance_activity": [
-        "fn_marki_osalemine",
+        "Osalemise märkimise operatsioon",
         "treeningukorra_osalejad",
         "registreering on KINNIT",
         "liiga vara",
+    ],
+    "11_people_register": [
+        "ISIK",
+        "TOOTAJA",
+        "TREENER",
+        "JUHATAJA",
+        "KLIENT",
+        "ROLL",
+    ],
+    "12_training_sessions_register": [
+        "TREENINGUKORD",
+        "TREENERI_PADEVUS",
+        "RUUMI_VARUSTATUS",
+        "VARUSTUSE_NOUE",
+    ],
+    "13_registrations_register": [
+        "REGISTREERING",
+        "OOTEJARJEKORRA_KOHT",
+        "KLIENT",
+        "TREENINGUKORD",
+    ],
+    "14_attendance_register": [
+        "OSALEMINE",
+        "REGISTREERING",
+        "TREENER",
+    ],
+    "15_classifiers_register": [
+        "SEISUND",
+        "ROLL",
+        "RIIK",
     ],
 }
 
@@ -197,13 +234,16 @@ REQUIRED_DOCX_TERMS = [
     "rühmatreeningute ajakava",
     "treeningukord",
     "registreering",
+    "Isik",
+    "Töötaja",
+    "Vaata enda registreeringuid",
     "ootejärjekord",
     "osalemine",
     "treeneri pädevus",
     "ruum",
     "varustus",
-    "treeninguliigi varustuse nõue",
-    "ruumi varustuse omamine",
+    "Varustuse nõue",
+    "Ruumi varustatus",
     "Ruumis puudub treeninguliigi jaoks nõutav varustus",
     "fn_registreeri_klient_treeningukorrale",
     "fn_edenda_ootejarjekorrast",
@@ -212,14 +252,19 @@ REQUIRED_DOCX_TERMS = [
 REQUIRED_DOCX_CAPTION_TERMS = [
     "Süsteemi kontekst",
     "Kasutusjuhtude kaart",
-    "Põhiandmemudel",
-    "Registreerimise tegevusvoog",
+    "Kontseptuaalse andmemudeli ülevaade",
+    "Registreeringu esitamise",
     "Treeningukorra seisundimudel",
     "Registreeringu seisundimudel",
     "Ootejärjekorra edendamise järjestus",
     "Õiguste ja andmebaasirutiinide seos",
     "Rakenduse ja andmebaasi arhitektuur",
     "Osalemise märkimise tegevusvoog",
+    "Isikute, kasutajakontode",
+    "Treeningukordade registri kontseptuaalne skeem",
+    "Registreeringute registri kontseptuaalne skeem",
+    "Osalemiste registri kontseptuaalne skeem",
+    "Klassifikaatorite registri kontseptuaalne skeem",
 ]
 
 FORBIDDEN_DOCX_PHRASES = [
@@ -512,7 +557,7 @@ def validate_eap(failures: list[str]) -> None:
 
     text = eap_export_text()
     required = [
-        "Rühmatreeningute ajakava",
+    "Registreeringukeskne",
         "Treeninguliik",
         "Treeningukord",
         "Registreering",
@@ -549,6 +594,10 @@ def validate_eap(failures: list[str]) -> None:
         "Muuda treening mitteaktiivseks",
         "Unusta treening",
         "Vali treening",
+        "Muuda treeningut",
+        "Vaata kõiki treeninguid",
+        "Vaata kõiki treeninguid, mida saab lõpetada",
+        "Vaata kõiki ootel või mitteaktiivseid treeninguid",
         "Lõpeta valitud treening",
         "Aktiveeri valitud treening",
         "Kas treening kuulub kategooriasse?",
@@ -562,6 +611,28 @@ def validate_eap(failures: list[str]) -> None:
         fail(f"EAP still contains stale workbook use-case/action objects ({names})", failures)
     else:
         ok("EAP contains no stale workbook use-case/action objects")
+
+    template_objects = [
+        row for row in object_rows
+        if row.get("Object_Type") == "Class" and row.get("Name") == "Mallklass"
+    ]
+    if template_objects:
+        names = ", ".join(f"{row.get('Name')}:{row.get('Object_ID', '?')}" for row in template_objects)
+        fail(f"EAP still contains template class artifact ({names})", failures)
+    else:
+        ok("EAP contains no template class artifact named Mallklass")
+
+    generic_classifier_objects = [
+        row for row in object_rows
+        if row.get("Object_Type") == "Class"
+        and row.get("Name") == "Klassifikaator"
+        and row.get("Package_ID") == "11"
+    ]
+    if generic_classifier_objects:
+        names = ", ".join(f"{row.get('Name')}:{row.get('Object_ID', '?')}" for row in generic_classifier_objects)
+        fail(f"EAP still contains generic classifier class instead of only concrete classifier concepts ({names})", failures)
+    else:
+        ok("EAP contains no generic Klassifikaator class in the classifier register")
 
     physical_objects = {
         row.get("Name"): row
@@ -621,6 +692,10 @@ def validate_eap(failures: list[str]) -> None:
         "treeningu unustada",
         "treening sellisel kujul ei realiseeru",
         "treening kuulub kategooriasse",
+        "rühmaregistreeringukeskne",
+        "Treeningu aktiveerimise tegevusdiagramm",
+        "Treeningute registrite füüsiline disain",
+        "Treeningute elutsüklid",
         "treeningukorra_id + treeningu_kategooria_kood",
         "Veerud: treeningukorra_id, treeningu_kategooria_kood",
     ]

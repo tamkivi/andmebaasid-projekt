@@ -1,77 +1,83 @@
 erDiagram
-    ISIK ||--|| KASUTAJAKONTO : "omab"
-    KASUTAJAKONTO ||--o| TOOTAJA : "võib olla"
-    KASUTAJAKONTO ||--o| KLIENT : "võib olla"
-    TOOTAJA ||--o{ TOOTAJA_ROLLI_OMAMINE : "rollid"
-    TOOTAJA_ROLL ||--o{ TOOTAJA_ROLLI_OMAMINE : "määrab"
+    ISIK ||--o| TOOTAJA : "võib olla töötaja"
+    ISIK ||--o| KLIENT : "võib olla klient"
+    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TOOTAJA ||--o| JUHATAJA : "võib spetsialiseeruda"
+    TREENER ||--o{ TREENINGUKORD : "juhendab"
+    TREENER ||--o{ TREENERI_PADEVUS : "omab"
+    TREENINGULIIK ||--o{ TREENERI_PADEVUS : "määrab sobivuse"
+    KLIENT ||--o{ REGISTREERING : "esitab"
+    TREENINGUKORD ||--o{ REGISTREERING : "kogub"
+    REGISTREERING ||--o| OOTEJARJEKORRA_KOHT : "võib saada"
+    REGISTREERING ||--o| OSALEMINE : "võib lõppeda"
+    TREENINGULIIK ||--o{ TREENINGUKORD : "on aluseks"
+    RUUM ||--o{ TREENINGUKORD : "võimaldab"
+    SEISUND ||--o{ REGISTREERING : "kirjeldab hetkeseisu"
+    SEISUND ||--o{ TREENINGUKORD : "kirjeldab hetkeseisu"
+    SEISUND ||--o{ TREENINGULIIK : "kirjeldab kasutatavust"
 
-    TREENINGULIIK ||--o{ TREENINGUKORD : "põhineb liigile"
-    TREENINGULIIK ||--o{ TREENERI_PADEVUS : "määrab vajaliku pädevuse"
-    TREENINGULIIK ||--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "nõuab varustust"
-    TOOTAJA ||--o{ TREENERI_PADEVUS : "omab pädevust"
-    TOOTAJA ||--o{ TREENINGUKORD : "juhendab"
-    RUUM ||--o{ TREENINGUKORD : "toimub ruumis"
-    RUUM ||--o{ RUUMI_VARUSTUSE_OMAMINE : "sisaldab varustust"
-    VARUSTUS ||--o{ RUUMI_VARUSTUSE_OMAMINE : "on ruumis"
-    VARUSTUS ||--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "kirjeldab nõuet"
-    TREENINGUKORD }o--o{ RUUMI_VARUSTUSE_OMAMINE : "kontrollib sobivust"
-    TREENINGUKORD }o--o{ TREENINGULIIGI_VARUSTUSE_NOUE : "kontrollib sobivust"
-
-    TREENINGUKORD ||--o{ REGISTREERING : "võtab registreeringuid"
-    KLIENT ||--o{ REGISTREERING : "registreerub"
-    REGISTREERING ||--o| OOTEJARJEKORRA_KOHT : "saab järjekorrakoha"
-    TREENINGUKORD ||--o{ OOTEJARJEKORRA_KOHT : "järjestab ootel registreeringud"
-    REGISTREERING ||--o| OSALEMINE : "omab osalemise tulemust"
-
-    TREENINGULIIGI_SEISUNDI_LIIK ||--o{ TREENINGULIIK : "kirjeldab liigi seisundit"
-    TREENINGUKORRA_SEISUNDI_LIIK ||--o{ TREENINGUKORD : "kirjeldab korra seisundit"
-    REGISTREERINGU_SEISUNDI_LIIK ||--o{ REGISTREERING : "kirjeldab registreeringu seisundit"
-
-    TREENINGULIIK {
-        int treeninguliigi_id PK
-        string nimetus UK
-        int kestus_minutites
-        string treeninguliigi_seisundi_kood FK
+    ISIK {
+        tunnus e_meil
+        tunnus isikukood
+        nimetus nimi
+        seisund isiku_seisund
+    }
+    TOOTAJA {
+        tunnus tootaja_tunnus
+        seisund tootaja_seisund
+    }
+    TREENER {
+        tunnus treeneri_tunnus
+        aeg rolli_kehtivus
+        kirjeldus padevuste_ulatus
+    }
+    JUHATAJA {
+        tunnus juhataja_roll
+        aeg rolli_kehtivus
+    }
+    KLIENT {
+        tunnus kliendi_tunnus
+        tunnus aktiivsus
     }
     TREENINGUKORD {
-        int treeningukorra_id PK
-        int treeninguliigi_id FK
-        string treener_e_meil FK
-        string ruumi_kood FK
-        datetime alguse_aeg
-        datetime lopu_aeg
-        int maksimaalne_osalejate_arv
-        string treeningukorra_seisundi_kood FK
-    }
-    VARUSTUS {
-        string varustuse_kood PK
-        string nimetus UK
-        boolean on_aktiivne
-    }
-    RUUMI_VARUSTUSE_OMAMINE {
-        string ruumi_kood PK, FK
-        string varustuse_kood PK, FK
-        int kogus
-    }
-    TREENINGULIIGI_VARUSTUSE_NOUE {
-        int treeninguliigi_id PK, FK
-        string varustuse_kood PK, FK
-        int minimaalne_kogus
-        boolean on_kohustuslik
+        tunnus treeningukorra_tunnus
+        aeg algus_ja_lopp
+        aeg registreerimise_tahtaeg
+        arv kohtade_piir
+        seisund treeningukorra_seisund
     }
     REGISTREERING {
-        int registreeringu_id PK
-        int treeningukorra_id FK
-        string klient_e_meil FK
-        string registreeringu_seisundi_kood FK
+        tunnus registreeringu_tunnus
+        aeg esitamise_aeg
+        seisund registreeringu_seisund
+        aeg tyhistamise_aeg
+        aeg edendamise_aeg
     }
     OOTEJARJEKORRA_KOHT {
-        int registreeringu_id PK, FK
-        int treeningukorra_id FK
-        int ootejarjekorra_nr UK
+        arv jarjekorranumber
     }
     OSALEMINE {
-        int registreeringu_id PK, FK
-        boolean on_osalenud
-        string markija_e_meil FK
+        tunnus osalemise_tulemus
+        aeg markimise_aeg
+        kirjeldus markus
+    }
+    TREENINGULIIK {
+        nimetus nimetus
+        kirjeldus sisu
+        aeg tyypiline_kestus
+        seisund kasutatavus
+    }
+    TREENERI_PADEVUS {
+        aeg kehtiv_alates
+        aeg kehtiv_kuni
+    }
+    RUUM {
+        tunnus ruumi_tunnus
+        nimetus nimetus
+        arv mahutavus
+    }
+    SEISUND {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
     }

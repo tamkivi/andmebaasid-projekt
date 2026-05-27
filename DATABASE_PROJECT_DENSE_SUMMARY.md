@@ -10,10 +10,21 @@ Core process:
 
 1. Juhataja planeerib konkreetse `treeningukord` rea.
 2. Juhataja avab registreerimise.
-3. Klient registreerub ja saab `KINNIT` või `OOTEJRK` seisundi.
-4. Kliendi tühistamine võib käivitada `fn_edenda_ootejarjekorrast`.
-5. Treener näeb enda treeningukordi ja märgib `osalemine`.
-6. Juhataja näeb täituvuse ja ootejärjekorra statistikat.
+3. Klient vaatab vabu treeningukordi.
+4. Klient esitab `registreering` objekti ja saab `KINNIT` või `OOTEJRK` seisundi.
+5. Klient vaatab enda registreeringuid.
+6. Kliendi tühistamine võib käivitada `fn_edenda_ootejarjekorrast`.
+7. Treeneri rollis töötaja näeb enda treeningukordi ja märgib `osalemine`.
+8. Juhataja näeb täituvuse ja ootejärjekorra statistikat.
+
+Conceptual classification:
+
+- Central lifecycle object: `registreering`.
+- Strong core objects: `isik`, `tootaja`, `klient`, `treener`, `treeninguliik`, `treeningukord`, `registreering`.
+- Dependent lifecycle-bearing objects: `osalemine`, `treeneri_padevus`.
+- Supporting/relationship objects: `ootejarjekorra_koht`, `ruum`, `varustus`, `ruumi_varustuse_omamine`, `treeninguliigi_varustuse_noue`.
+- Classifiers/value lists: statuses, roles and countries.
+- `treener` is a `tootaja` specialization and actor; it is not an unrelated person object.
 
 ## Core Tables
 
@@ -86,6 +97,7 @@ The DOCX embeds:
 - system context;
 - use cases;
 - core ER model;
+- separate conceptual register diagrams for people, training sessions, registrations, attendance and classifiers;
 - registration activity;
 - session lifecycle;
 - registration lifecycle;

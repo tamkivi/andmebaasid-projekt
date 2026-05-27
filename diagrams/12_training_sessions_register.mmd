@@ -1,0 +1,65 @@
+erDiagram
+    TREENINGULIIK ||--o{ TREENINGUKORD : "on aluseks"
+    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TREENER ||--o{ TREENINGUKORD : "juhendab"
+    TREENER ||--o{ TREENERI_PADEVUS : "omab"
+    TREENINGULIIK ||--o{ TREENERI_PADEVUS : "lubab juhendada"
+    RUUM ||--o{ TREENINGUKORD : "on toimumiskoht"
+    RUUM ||--o{ RUUMI_VARUSTATUS : "sisaldab"
+    VARUSTUS ||--o{ RUUMI_VARUSTATUS : "on olemas"
+    TREENINGULIIK ||--o{ VARUSTUSE_NOUE : "vajab"
+    VARUSTUS ||--o{ VARUSTUSE_NOUE : "kirjeldab nõuet"
+    SEISUND ||--o{ TREENINGUKORD : "kirjeldab hetkeseisu"
+
+    TREENINGUKORD {
+        tunnus treeningukorra_tunnus
+        aeg algus
+        aeg lopp
+        aeg registreerimise_tahtaeg
+        aeg tyhistamise_tahtaeg
+        arv kohtade_piir
+        seisund hetkeseisund
+    }
+    TREENINGULIIK {
+        nimetus nimetus
+        kirjeldus sisu
+        aeg tyypiline_kestus
+        seisund kasutatavus
+    }
+    TOOTAJA {
+        tunnus tootaja_tunnus
+        seisund tootaja_seisund
+    }
+    TREENER {
+        tunnus treeneri_tunnus
+        aeg rolli_kehtivus
+    }
+    TREENERI_PADEVUS {
+        aeg kehtiv_alates
+        aeg kehtiv_kuni
+    }
+    RUUM {
+        tunnus ruumi_tunnus
+        nimetus nimetus
+        kirjeldus asukoht
+        arv mahutavus
+    }
+    VARUSTUS {
+        tunnus varustuse_tunnus
+        nimetus nimetus
+        tunnus aktiivsus
+    }
+    RUUMI_VARUSTATUS {
+        arv kogus
+        kirjeldus markus
+    }
+    VARUSTUSE_NOUE {
+        arv minimaalne_kogus
+        tunnus kohustuslikkus
+        kirjeldus markus
+    }
+    SEISUND {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
+    }

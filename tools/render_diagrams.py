@@ -23,6 +23,11 @@ DIAGRAMS = [
     "08_permission_flow",
     "09_app_db_architecture",
     "10_attendance_activity",
+    "11_people_register",
+    "12_training_sessions_register",
+    "13_registrations_register",
+    "14_attendance_register",
+    "15_classifiers_register",
 ]
 
 

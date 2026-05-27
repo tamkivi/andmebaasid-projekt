@@ -1,0 +1,37 @@
+erDiagram
+    REGISTREERING ||--o| OSALEMINE : "annab tulemuse"
+    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TOOTAJA ||--o| JUHATAJA : "võib spetsialiseeruda"
+    TREENER ||--o{ OSALEMINE : "märgib juhendajana"
+    JUHATAJA ||--o{ OSALEMINE : "võib märkida"
+    KLIENT ||--o{ REGISTREERING : "on registreeruja"
+    TREENINGUKORD ||--o{ REGISTREERING : "on osalemise alus"
+
+    OSALEMINE {
+        tunnus tulemus
+        aeg markimise_aeg
+        kirjeldus markus
+    }
+    REGISTREERING {
+        tunnus registreeringu_tunnus
+        seisund registreeringu_seisund
+    }
+    TOOTAJA {
+        tunnus tootaja_tunnus
+        seisund tootaja_seisund
+    }
+    TREENER {
+        tunnus treeneri_tunnus
+        aeg rolli_kehtivus
+    }
+    JUHATAJA {
+        tunnus juhataja_roll
+    }
+    KLIENT {
+        tunnus kliendi_tunnus
+    }
+    TREENINGUKORD {
+        tunnus treeningukorra_tunnus
+        aeg algus_ja_lopp
+        seisund treeningukorra_seisund
+    }

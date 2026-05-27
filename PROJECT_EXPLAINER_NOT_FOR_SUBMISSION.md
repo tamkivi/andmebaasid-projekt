@@ -10,15 +10,18 @@ The project models and prototypes a gym group-training schedule, registration, w
 
 The old project treated `treening` mostly as a training description card with categories and lifecycle status. That looked too close to the workbook-style training example.
 
-The reworked project centers on concrete `treeningukord` rows:
+The reworked project centers on the lifecycle of `registreering`:
 
 - a manager plans a session;
 - the session has a room, capacity, trainer and deadlines;
 - the trainer must have competence for the selected `treeninguliik`;
-- clients register;
+- clients view available sessions and submit registrations;
 - a full session creates an `OOTEJRK` waitlist row;
+- clients can view their own registrations;
 - a confirmed cancellation promotes the first waitlisted client;
 - trainers mark attendance through `osalemine`.
+
+`Treener` is a specialization of `tootaja` and is treated as a conceptual core object inside this subsystem because trainers have competences, sessions and attendance responsibilities. `Treeninguliik` is a managed catalog/master-data business object, not merely a classifier. `Osalemine` is dependent on `registreering`, but it is a lifecycle-bearing attendance result object. Statuses, roles and countries remain true classifiers.
 
 ## Core Tables
 
@@ -71,7 +74,7 @@ Normal write routes call database functions. Reads use views such as `avalikud_t
 
 Diagram sources are Mermaid files in `diagrams/`. Generated PNGs are in `work/generated_diagrams/` and are embedded into the DOCX.
 
-The diagrams explain context, use cases, core ER model, registration activity, session state, registration state, waitlist promotion, permissions and app/database architecture.
+The diagrams explain context, use cases, a compact conceptual overview, separate register schemas, registration activity, session state, registration state, waitlist promotion, permissions and app/database architecture.
 
 ## Final Submission Files
 
