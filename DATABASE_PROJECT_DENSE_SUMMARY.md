@@ -41,10 +41,10 @@ Kept foundation:
 
 ## Required Routines
 
-- `fn_kasutajal_on_roll`
-- `fn_on_juhataja`
-- `fn_on_treener`
-- `fn_kasutaja_tuvastamise_andmed`
+- `on_kasutajal_roll`
+- `on_juhataja`
+- `on_treener`
+- `fn_tuvasta_kasutaja_e_meili_jargi`
 - `fn_planeeri_treeningukord`
 - `fn_ava_treeningukord`
 - `fn_sulge_treeningukord`
@@ -57,13 +57,13 @@ Kept foundation:
 
 ## Required Views
 
-- `v_avalikud_treeningukorrad`
-- `v_kliendi_registreeringud`
-- `v_treeneri_tunniplaan`
-- `v_treeningukorra_osalejad`
-- `v_juhataja_treeningukordade_ulevaade`
-- `v_treeningute_taituvuse_statistika`
-- `v_treeninguliigid_kategooriatega`
+- `avalikud_treeningukorrad`
+- `kliendi_registreeringud`
+- `treeneri_tunniplaan`
+- `treeningukorra_osalejad`
+- `juhataja_treeningukordade_ulevaade`
+- `treeningute_taituvuse_statistika`
+- `treeninguliigid_kategooriatega`
 
 ## Database Rules
 
@@ -96,19 +96,19 @@ The DOCX embeds:
 ## App Routes
 
 - `/schedule`
-- `/client/sessions/<treeningukorra_kood>/register`
+- `/client/sessions/<treeningukorra_id>/register`
 - `/client/registrations`
-- `/client/registrations/<registreeringu_kood>/cancel`
+- `/client/registrations/<registreeringu_id>/cancel`
 - `/manager/sessions`
 - `/manager/sessions/new`
-- `/manager/sessions/<treeningukorra_kood>/open`
-- `/manager/sessions/<treeningukorra_kood>/close`
-- `/manager/sessions/<treeningukorra_kood>/complete`
-- `/manager/sessions/<treeningukorra_kood>/cancel`
+- `/manager/sessions/<treeningukorra_id>/open`
+- `/manager/sessions/<treeningukorra_id>/close`
+- `/manager/sessions/<treeningukorra_id>/complete`
+- `/manager/sessions/<treeningukorra_id>/cancel`
 - `/manager/report`
 - `/trainer/sessions`
-- `/trainer/sessions/<treeningukorra_kood>/roster`
-- `/trainer/sessions/<treeningukorra_kood>/attendance`
+- `/trainer/sessions/<treeningukorra_id>/roster`
+- `/trainer/sessions/<treeningukorra_id>/attendance`
 
 ## Validation
 

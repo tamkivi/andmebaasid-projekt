@@ -19,6 +19,8 @@ erDiagram
 
     TREENINGUKORD ||--o{ REGISTREERING : "võtab registreeringuid"
     KLIENT ||--o{ REGISTREERING : "registreerub"
+    REGISTREERING ||--o| OOTEJARJEKORRA_KOHT : "saab järjekorrakoha"
+    TREENINGUKORD ||--o{ OOTEJARJEKORRA_KOHT : "järjestab ootel registreeringud"
     REGISTREERING ||--o| OSALEMINE : "omab osalemise tulemust"
 
     TREENINGULIIGI_SEISUNDI_LIIK ||--o{ TREENINGULIIK : "kirjeldab liigi seisundit"
@@ -26,20 +28,20 @@ erDiagram
     REGISTREERINGU_SEISUNDI_LIIK ||--o{ REGISTREERING : "kirjeldab registreeringu seisundit"
 
     TREENINGULIIK {
-        int treeninguliigi_kood PK
+        int treeninguliigi_id PK
         string nimetus UK
         int kestus_minutites
-        string seisundi_kood FK
+        string treeninguliigi_seisundi_kood FK
     }
     TREENINGUKORD {
-        int treeningukorra_kood PK
-        int treeninguliigi_kood FK
+        int treeningukorra_id PK
+        int treeninguliigi_id FK
         string treener_e_meil FK
         string ruumi_kood FK
         datetime alguse_aeg
         datetime lopu_aeg
         int maksimaalne_osalejate_arv
-        string seisundi_kood FK
+        string treeningukorra_seisundi_kood FK
     }
     VARUSTUS {
         string varustuse_kood PK
@@ -52,20 +54,24 @@ erDiagram
         int kogus
     }
     TREENINGULIIGI_VARUSTUSE_NOUE {
-        int treeninguliigi_kood PK, FK
+        int treeninguliigi_id PK, FK
         string varustuse_kood PK, FK
         int minimaalne_kogus
         boolean on_kohustuslik
     }
     REGISTREERING {
-        int registreeringu_kood PK
-        int treeningukorra_kood FK
+        int registreeringu_id PK
+        int treeningukorra_id FK
         string klient_e_meil FK
-        string seisundi_kood FK
-        int ootejarjekorra_nr
+        string registreeringu_seisundi_kood FK
+    }
+    OOTEJARJEKORRA_KOHT {
+        int registreeringu_id PK, FK
+        int treeningukorra_id FK
+        int ootejarjekorra_nr UK
     }
     OSALEMINE {
-        int registreeringu_kood PK, FK
-        boolean osales
+        int registreeringu_id PK, FK
+        boolean on_osalenud
         string markija_e_meil FK
     }

@@ -43,7 +43,7 @@ public class EapRename {
         REPLACEMENTS.put("X_kategooria_tüüp", "treeningu_kategooria_tyyp");
         REPLACEMENTS.put("X_kategooria", "treeningu_kategooria");
         REPLACEMENTS.put("X_seisundi_liik", "treeningukorra_seisundi_liik");
-        REPLACEMENTS.put("X_kood", "treeningukorra_kood");
+        REPLACEMENTS.put("X_kood", "treeningukorra_id");
     }
 
     private static String rename(String value) {

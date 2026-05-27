@@ -1,45 +1,55 @@
+%%{init: {"themeVariables": {"fontSize": "22px"}, "flowchart": {"nodeSpacing": 35, "rankSpacing": 40}}}%%
 flowchart TB
-    JUH["Juhataja"]
-    TRE["Treener"]
-    KLI["Klient"]
+    subgraph SYSBOUND["Jõusaali rühmatreeningute funktsionaalne allsüsteem"]
+        direction TB
 
-    subgraph "Juhataja töövoog"
-        P["Planeeri treeningukord"]
-        A["Ava registreerimine"]
-        C["Tühista treeningukord"]
-        S["Vaata täituvust ja statistikat"]
-        P -->|"valmis kava"| A
-        A -->|"avatud korrad ja täituvus"| S
-        C -->|"muudab statistikat"| S
+        subgraph MGR["Juhataja kasutusmallid"]
+            direction LR
+            JUH["&lt;&lt;actor&gt;&gt;<br/>Juhataja"]
+            P(["Planeeri treeningukord"])
+            A(["Ava registreerimine"])
+            C(["Tühista treeningukord"])
+            S(["Vaata statistikat"])
+            JUH --> P
+            JUH --> A
+            JUH --> C
+            JUH --> S
+        end
+
+        subgraph TRN["Treeneri kasutusmallid"]
+            direction LR
+            TRE["&lt;&lt;actor&gt;&gt;<br/>Treener"]
+            TT(["Vaata tunniplaani"])
+            R(["Vaata osalejaid"])
+            O(["Märgi osalemine"])
+            TRE --> TT
+            TRE --> R
+            TRE --> O
+        end
+
+        subgraph CLI["Kliendi kasutusmallid"]
+            direction LR
+            KLI["&lt;&lt;actor&gt;&gt;<br/>Klient"]
+            AJ(["Vaata ajakava"])
+            REG(["Registreeru"])
+            TYH(["Tühista registreering"])
+            MINU(["Vaata enda registreeringuid"])
+            KLI --> AJ
+            KLI --> REG
+            KLI --> TYH
+            KLI --> MINU
+        end
+
+        subgraph AUTO["Automaatne kasutusmall"]
+            direction LR
+            SYS["&lt;&lt;actor&gt;&gt;<br/>Süsteem"]
+            ED(["Edenda ootejärjekorrast"])
+            SYS --> ED
+        end
     end
 
-    subgraph "Treeneri töövoog"
-        TT["Vaata enda treeningukordi"]
-        R["Vaata osalejate nimekirja"]
-        O["Märgi osalemine"]
-        TT -->|"valib oma treeningukorra"| R
-        R -->|"pärast toimumist"| O
-    end
-
-    subgraph "Kliendi töövoog"
-        AJ["Vaata avatud ajakava"]
-        REG["Registreeru treeningukorrale"]
-        KIN["KINNIT kui koht on olemas"]
-        OOT["OOTEJRK kui kohad on täis"]
-        TYH["Tühista registreering"]
-        ED["fn_edenda_ootejarjekorrast"]
-        MINU["Vaata enda registreeringuid"]
-        AJ -->|"valib AVATUD korra"| REG
-        REG -->|"vabu kohti on"| KIN
-        REG -->|"kohad on täis"| OOT
-        KIN -->|"klient tühistab kinnitatud koha"| TYH
-        TYH -->|"kinnitatud koha vabanemisel <<include>>"| ED
-        ED -->|"süsteem edendab automaatselt"| MINU
-        OOT -->|"ooteseis on nähtav"| MINU
-    end
-
-    JUH -->|"algatab"| P
-    JUH -->|"tühistab"| C
-    JUH -->|"vaatab"| S
-    TRE -->|"vaatab ja märgib"| TT
-    KLI -->|"vaatab ja registreerub"| AJ
+    A -. "&lt;&lt;include&gt;&gt;" .-> P
+    REG -. "&lt;&lt;include&gt;&gt;" .-> AJ
+    TYH -. "&lt;&lt;include&gt;&gt;" .-> MINU
+    TYH -. "&lt;&lt;include&gt;&gt;" .-> ED
+    O -. "&lt;&lt;include&gt;&gt;" .-> R

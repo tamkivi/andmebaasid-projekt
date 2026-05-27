@@ -28,23 +28,23 @@
                 </thead>
                 <tbody>
                     {% for row in sessions %}
-                        {% set own = registrations.get(row.treeningukorra_kood) if registrations else none %}
+                        {% set own = registrations.get(row.treeningukorra_id) if registrations else none %}
                         <tr>
                             <td>
                                 <strong>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</strong><br>
                                 <small class="text-muted">kuni {{ row.lopu_aeg.strftime('%H:%M') if row.lopu_aeg else '' }}</small>
                             </td>
                             <td>
-                                <strong>{{ row.treeninguliik }}</strong><br>
-                                <span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span>
+                                <strong>{{ row.treeninguliigi_nimetus }}</strong><br>
+                                <span class="badge badge-{{ row.korra_seisundi_kood }}">{{ session_status_label(row.korra_seisundi_kood) }}</span>
                             </td>
                             <td>
                                 {{ row.treener_nimi }}<br>
-                                <small class="text-muted">{{ row.ruum }} · mahutavus {{ row.ruumi_mahutavus }}</small>
+                                <small class="text-muted">{{ row.ruumi_nimetus }} · mahutavus {{ row.ruumi_mahutavus }}</small>
                             </td>
                             <td>
-                                {{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} kinnitatud<br>
-                                <small class="text-muted">{{ row.vabu_kohti }} vaba · {{ row.ootejarjekorra_arv }} ootel</small>
+                                {{ row.kinnitatud_osalejate_arv }}/{{ row.maksimaalne_osalejate_arv }} kinnitatud<br>
+                                <small class="text-muted">{{ row.vabu_kohti }} vaba · {{ row.ootel_registreeringute_arv }} ootel</small>
                             </td>
                             <td>
                                 {% if own %}
@@ -58,7 +58,7 @@
                             </td>
                             <td class="text-end">
                                 {% if user.role == 'klient' and not own %}
-                                    <form method="post" action="{{ url_for('client_register_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    <form method="post" action="{{ url_for('client_register_session', treeningukorra_id=row.treeningukorra_id) }}">
                                         <button class="btn btn-sm btn-success" type="submit">
                                             <i class="bi bi-check2-circle"></i> Registreeru
                                         </button>

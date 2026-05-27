@@ -360,7 +360,7 @@ public class EapFixes {
         replacements.put("treeningu_seisundi_liik", "treeningukorra_seisundi_liik");
         replacements.put("Treeningu_kategooria_omamine", "Treeninguliigi_kategooria_omamine");
         replacements.put("treeningu_kategooria_omamine", "treeninguliigi_kategooria_omamine");
-        replacements.put("treeningu_kood", "treeningukorra_kood");
+        replacements.put("treeningu_kood", "treeningukorra_id");
         replacements.put("Registreeri treening", "Planeeri treeningukord");
         replacements.put("Aktiveeri treening", "Ava registreerimine");
         replacements.put("Lõpeta treening", "Lõpeta treeningukord");
@@ -419,31 +419,35 @@ public class EapFixes {
 
     private void ensureCoreClasses() throws Exception {
         ensureClassWithColumns("Treeninguliik", "Korduv rühmatreeningu mall, mille alusel planeeritakse konkreetsed treeningukorrad.", new String[][] {
-            {"treeninguliigi_kood", "integer", "PK"},
+            {"treeninguliigi_id", "integer", "PK"},
             {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
             {"kestus_minutites", "integer", "NOT NULL"},
-            {"seisundi_kood", "varchar(10)", "FK treeninguliigi_seisundi_liik.kood"}
+            {"treeninguliigi_seisundi_kood", "varchar(10)", "FK treeninguliigi_seisundi_liik.treeninguliigi_seisundi_kood"}
         });
         ensureClassWithColumns("Treeningukord", "Kalendris toimuv rühmatreening koos ruumi, treeneri, aja ja mahupiiranguga.", new String[][] {
-            {"treeningukorra_kood", "integer", "PK"},
-            {"treeninguliigi_kood", "integer", "FK treeninguliik.treeninguliigi_kood"},
+            {"treeningukorra_id", "integer", "PK"},
+            {"treeninguliigi_id", "integer", "FK treeninguliik.treeninguliigi_id"},
             {"treener_e_meil", "varchar(254)", "FK tootaja.e_meil"},
             {"ruumi_kood", "varchar(10)", "FK ruum.ruumi_kood"},
             {"alguse_aeg", "timestamp", "NOT NULL"},
             {"lopu_aeg", "timestamp", "NOT NULL"},
             {"maksimaalne_osalejate_arv", "integer", "CHECK > 0"},
-            {"seisundi_kood", "varchar(10)", "FK treeningukorra_seisundi_liik.kood"}
+            {"treeningukorra_seisundi_kood", "varchar(10)", "FK treeningukorra_seisundi_liik.treeningukorra_seisundi_kood"}
         });
         ensureClassWithColumns("Registreering", "Kliendi kinnitatud või ootejärjekorras registreering treeningukorrale.", new String[][] {
-            {"registreeringu_kood", "integer", "PK"},
-            {"treeningukorra_kood", "integer", "FK treeningukord.treeningukorra_kood"},
+            {"registreeringu_id", "integer", "PK"},
+            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
             {"klient_e_meil", "varchar(254)", "FK klient.e_meil"},
-            {"seisundi_kood", "varchar(10)", "FK registreeringu_seisundi_liik.kood"},
-            {"ootejarjekorra_nr", "integer", "ootejärjekorra positsioon"}
+            {"registreeringu_seisundi_kood", "varchar(10)", "FK registreeringu_seisundi_liik.registreeringu_seisundi_kood"}
+        });
+        ensureClassWithColumns("OotejarjekorraKoht", "Ootejärjekorras oleva registreeringu kohustuslik järjekorrakoht.", new String[][] {
+            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
+            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
+            {"ootejarjekorra_nr", "integer", "UNIQUE per treeningukord, NOT NULL"}
         });
         ensureClassWithColumns("Osalemine", "Kinnitatud registreeringu osalemise tulemus.", new String[][] {
-            {"registreeringu_kood", "integer", "PK, FK registreering.registreeringu_kood"},
-            {"osales", "boolean", "NOT NULL"},
+            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
+            {"on_osalenud", "boolean", "NOT NULL"},
             {"markija_e_meil", "varchar(254)", "FK tootaja.e_meil"}
         });
         ensureClassWithColumns("Ruum", "Jõusaali saal või stuudio, mille mahutavus piirab treeningukorra osalejate arvu.", new String[][] {
@@ -462,7 +466,7 @@ public class EapFixes {
             {"kogus", "integer", "CHECK > 0"}
         });
         ensureClassWithColumns("Treeninguliigi_varustuse_noue", "Treeninguliigi kohustuslik või soovituslik varustuse nõue.", new String[][] {
-            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
             {"varustuse_kood", "varchar(10)", "PK, FK varustus.varustuse_kood"},
             {"minimaalne_kogus", "integer", "CHECK > 0"},
             {"on_kohustuslik", "boolean", "NOT NULL"}
@@ -473,9 +477,9 @@ public class EapFixes {
         });
         ensureClassWithColumns("Treeneri_padevus", "Seos, mis määrab, millist treeninguliiki treener võib juhendada.", new String[][] {
             {"tootaja_e_meil", "varchar(254)", "PK, FK tootaja.e_meil"},
-            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
             {"alates", "date", "NOT NULL"},
-            {"kuni", "date", "nullable"}
+            {"kuni", "date", "NOT NULL, DEFAULT infinity"}
         });
     }
 
@@ -483,29 +487,29 @@ public class EapFixes {
         Map<String, Integer> ids = new LinkedHashMap<>();
         ids.put("klient", ensurePhysicalTable("klient", "Kliendi osalejatabel. PK/FK: e_meil.", new String[][] {
             {"e_meil", "e_meil_aadress", "PK, FK kasutajakonto.e_meil"},
-            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"registreerimise_aeg", "ajakava_ajahetk", "NOT NULL"},
             {"on_aktiivne", "boolean", "NOT NULL"}
         }));
         ids.put("treeninguliigi_seisundi_liik", ensurePhysicalTable("treeninguliigi_seisundi_liik", "Treeninguliigi seisundite klassifikaator.", new String[][] {
-            {"kood", "kood_10", "PK"},
+            {"treeninguliigi_seisundi_kood", "kood_10", "PK"},
             {"nimetus", "varchar(200)", "NOT NULL"},
             {"on_aktiivne", "boolean", "NOT NULL"}
         }));
-        ids.put("treeninguliik", ensurePhysicalTable("treeninguliik", "Rühmatreeningu korduv mall. PK: treeninguliigi_kood.", new String[][] {
-            {"treeninguliigi_kood", "integer", "PK"},
+        ids.put("treeninguliik", ensurePhysicalTable("treeninguliik", "Rühmatreeningu korduv mall. PK: treeninguliigi_id.", new String[][] {
+            {"treeninguliigi_id", "integer", "PK"},
             {"nimetus", "varchar(200)", "UNIQUE, NOT NULL"},
             {"kirjeldus", "text", "nullable"},
             {"kestus_minutites", "integer", "NOT NULL"},
             {"vajalik_varustus", "text", "nullable"},
-            {"seisundi_kood", "kood_10", "FK treeninguliigi_seisundi_liik.kood"},
+            {"treeninguliigi_seisundi_kood", "kood_10", "FK treeninguliigi_seisundi_liik.treeninguliigi_seisundi_kood"},
             {"registreerija_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
             {"viimase_muutja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
-            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
-            {"viimase_muutmise_aeg", "timestamp with time zone", "nullable"}
+            {"registreerimise_aeg", "ajakava_ajahetk", "NOT NULL"},
+            {"viimase_muutmise_aeg", "ajakava_ajahetk", "NOT NULL"}
         }));
-        ids.put("treeninguliigi_kategooria_omamine", ensurePhysicalTable("treeninguliigi_kategooria_omamine", "Treeninguliigi ja kategooria seos. PK: treeninguliigi_kood + treeningu_kategooria_kood.", new String[][] {
-            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
-            {"treeningu_kategooria_kood", "kood_10", "PK, FK treeningu_kategooria.kood"}
+        ids.put("treeninguliigi_kategooria_omamine", ensurePhysicalTable("treeninguliigi_kategooria_omamine", "Treeninguliigi ja kategooria seos. PK: treeninguliigi_id + treeningu_kategooria_kood.", new String[][] {
+            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
+            {"treeningu_kategooria_kood", "kood_10", "PK, FK treeningu_kategooria.treeningu_kategooria_kood"}
         }));
         ids.put("varustus", ensurePhysicalTable("varustus", "Rühmatreeningu läbiviimiseks vajalik varustus. PK: varustuse_kood.", new String[][] {
             {"varustuse_kood", "kood_10", "PK"},
@@ -513,8 +517,8 @@ public class EapFixes {
             {"kirjeldus", "text", "nullable"},
             {"on_aktiivne", "boolean", "NOT NULL"}
         }));
-        ids.put("treeninguliigi_varustuse_noue", ensurePhysicalTable("treeninguliigi_varustuse_noue", "Treeninguliigi varustuse nõue. PK: treeninguliigi_kood + varustuse_kood.", new String[][] {
-            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+        ids.put("treeninguliigi_varustuse_noue", ensurePhysicalTable("treeninguliigi_varustuse_noue", "Treeninguliigi varustuse nõue. PK: treeninguliigi_id + varustuse_kood.", new String[][] {
+            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
             {"varustuse_kood", "kood_10", "PK, FK varustus.varustuse_kood"},
             {"minimaalne_kogus", "integer", "NOT NULL, CHECK > 0"},
             {"on_kohustuslik", "boolean", "NOT NULL"},
@@ -533,57 +537,61 @@ public class EapFixes {
             {"kogus", "integer", "NOT NULL, CHECK > 0"},
             {"markus", "text", "nullable"}
         }));
-        ids.put("treeneri_padevus", ensurePhysicalTable("treeneri_padevus", "Treeneri lubatud treeninguliigid. PK: tootaja_e_meil + treeninguliigi_kood.", new String[][] {
+        ids.put("treeneri_padevus", ensurePhysicalTable("treeneri_padevus", "Treeneri lubatud treeninguliigid. PK: tootaja_e_meil + treeninguliigi_id.", new String[][] {
             {"tootaja_e_meil", "e_meil_aadress", "PK, FK tootaja.e_meil"},
-            {"treeninguliigi_kood", "integer", "PK, FK treeninguliik.treeninguliigi_kood"},
+            {"treeninguliigi_id", "integer", "PK, FK treeninguliik.treeninguliigi_id"},
             {"alates", "date", "NOT NULL"},
-            {"kuni", "date", "nullable"}
+            {"kuni", "date", "NOT NULL, DEFAULT infinity"}
         }));
         ids.put("treeningukorra_seisundi_liik", ensurePhysicalTable("treeningukorra_seisundi_liik", "Treeningukorra seisundite klassifikaator.", new String[][] {
-            {"kood", "kood_10", "PK"},
+            {"treeningukorra_seisundi_kood", "kood_10", "PK"},
             {"nimetus", "varchar(200)", "NOT NULL"},
             {"on_aktiivne", "boolean", "NOT NULL"},
             {"kirjeldus", "text", "nullable"}
         }));
-        ids.put("treeningukord", ensurePhysicalTable("treeningukord", "Ajakavas toimuv konkreetne rühmatreening. PK: treeningukorra_kood.", new String[][] {
-            {"treeningukorra_kood", "integer", "PK"},
-            {"treeninguliigi_kood", "integer", "FK treeninguliik.treeninguliigi_kood"},
+        ids.put("treeningukord", ensurePhysicalTable("treeningukord", "Ajakavas toimuv konkreetne rühmatreening. PK: treeningukorra_id.", new String[][] {
+            {"treeningukorra_id", "integer", "PK"},
+            {"treeninguliigi_id", "integer", "FK treeninguliik.treeninguliigi_id"},
             {"treener_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
             {"ruumi_kood", "kood_10", "FK ruum.ruumi_kood"},
-            {"alguse_aeg", "timestamp with time zone", "NOT NULL"},
-            {"lopu_aeg", "timestamp with time zone", "NOT NULL"},
-            {"registreerimise_lopp", "timestamp with time zone", "NOT NULL"},
-            {"tyhistamise_lopp", "timestamp with time zone", "NOT NULL"},
+            {"alguse_aeg", "ajakava_ajahetk", "NOT NULL"},
+            {"lopu_aeg", "ajakava_ajahetk", "NOT NULL"},
+            {"registreerimise_lopp", "ajakava_ajahetk", "NOT NULL"},
+            {"tyhistamise_lopp", "ajakava_ajahetk", "NOT NULL"},
             {"maksimaalne_osalejate_arv", "integer", "NOT NULL, CHECK > 0"},
-            {"seisundi_kood", "kood_10", "FK treeningukorra_seisundi_liik.kood"},
+            {"treeningukorra_seisundi_kood", "kood_10", "FK treeningukorra_seisundi_liik.treeningukorra_seisundi_kood"},
             {"looja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
             {"viimase_muutja_e_meil", "e_meil_aadress", "FK tootaja.e_meil, nullable"},
-            {"loomise_aeg", "timestamp with time zone", "NOT NULL"},
-            {"viimase_muutmise_aeg", "timestamp with time zone", "nullable"},
+            {"loomise_aeg", "ajakava_ajahetk", "NOT NULL"},
+            {"viimase_muutmise_aeg", "ajakava_ajahetk", "NOT NULL"},
             {"tyhistamise_pohjus", "text", "nullable"}
         }));
         ids.put("registreeringu_seisundi_liik", ensurePhysicalTable("registreeringu_seisundi_liik", "Registreeringu seisundite klassifikaator.", new String[][] {
-            {"kood", "kood_10", "PK"},
+            {"registreeringu_seisundi_kood", "kood_10", "PK"},
             {"nimetus", "varchar(200)", "NOT NULL"},
             {"on_aktiivne", "boolean", "NOT NULL"},
             {"kirjeldus", "text", "nullable"}
         }));
-        ids.put("registreering", ensurePhysicalTable("registreering", "Kliendi kinnitatud või ootejärjekorra registreering. PK: registreeringu_kood.", new String[][] {
-            {"registreeringu_kood", "integer", "PK"},
-            {"treeningukorra_kood", "integer", "FK treeningukord.treeningukorra_kood"},
+        ids.put("registreering", ensurePhysicalTable("registreering", "Kliendi kinnitatud või ootejärjekorra registreering. PK: registreeringu_id.", new String[][] {
+            {"registreeringu_id", "integer", "PK"},
+            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
             {"klient_e_meil", "e_meil_aadress", "FK klient.e_meil"},
-            {"seisundi_kood", "kood_10", "FK registreeringu_seisundi_liik.kood"},
-            {"registreerimise_aeg", "timestamp with time zone", "NOT NULL"},
-            {"tyhistamise_aeg", "timestamp with time zone", "nullable"},
-            {"edendamise_aeg", "timestamp with time zone", "nullable"},
-            {"ootejarjekorra_nr", "integer", "nullable"},
+            {"registreeringu_seisundi_kood", "kood_10", "FK registreeringu_seisundi_liik.registreeringu_seisundi_kood"},
+            {"registreerimise_aeg", "ajakava_ajahetk", "NOT NULL"},
+            {"tyhistamise_aeg", "ajakava_ajahetk", "nullable"},
+            {"edendamise_aeg", "ajakava_ajahetk", "nullable"},
             {"tyhistamise_pohjus", "text", "nullable"}
         }));
-        ids.put("osalemine", ensurePhysicalTable("osalemine", "Kohalolu tulemus kinnitatud registreeringule. PK/FK: registreeringu_kood.", new String[][] {
-            {"registreeringu_kood", "integer", "PK, FK registreering.registreeringu_kood"},
-            {"osales", "boolean", "NOT NULL"},
+        ids.put("ootejarjekorra_koht", ensurePhysicalTable("ootejarjekorra_koht", "Ootejärjekorras oleva registreeringu järjekorrakoht. PK/FK: registreeringu_id.", new String[][] {
+            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
+            {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
+            {"ootejarjekorra_nr", "integer", "NOT NULL"}
+        }));
+        ids.put("osalemine", ensurePhysicalTable("osalemine", "Kohalolu tulemus kinnitatud registreeringule. PK/FK: registreeringu_id.", new String[][] {
+            {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
+            {"on_osalenud", "boolean", "NOT NULL"},
             {"markija_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
-            {"markimise_aeg", "timestamp with time zone", "NOT NULL"},
+            {"markimise_aeg", "ajakava_ajahetk", "NOT NULL"},
             {"markus", "text", "nullable"}
         }));
 
@@ -613,27 +621,29 @@ public class EapFixes {
 
     private void ensurePhysicalForeignKeys(Map<String, Integer> ids) throws Exception {
         addConnectorIfMissing(ids.get("klient"), physicalObjectId("kasutajakonto", ids), "fk_klient_kasutajakonto", "e_meil -> kasutajakonto.e_meil");
-        addConnectorIfMissing(ids.get("treeninguliik"), ids.get("treeninguliigi_seisundi_liik"), "fk_treeninguliik_seisund", "seisundi_kood -> treeninguliigi_seisundi_liik.kood");
+        addConnectorIfMissing(ids.get("treeninguliik"), ids.get("treeninguliigi_seisundi_liik"), "fk_treeninguliik_treeninguliigi_seisundi_liik", "treeninguliigi_seisundi_kood -> treeninguliigi_seisundi_liik.treeninguliigi_seisundi_kood");
         addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_registreerija", "registreerija_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("treeninguliik"), physicalObjectId("tootaja", ids), "fk_treeninguliik_muutja", "viimase_muutja_e_meil -> tootaja.e_meil");
-        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), ids.get("treeninguliik"), "fk_treeninguliigi_kategooria_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
-        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), physicalObjectId("treeningu_kategooria", ids), "fk_treeninguliigi_kategooria_kategooria", "treeningu_kategooria_kood -> treeningu_kategooria.kood");
-        addConnectorIfMissing(ids.get("treeninguliigi_varustuse_noue"), ids.get("treeninguliik"), "fk_treeninguliigi_varustuse_noue_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), ids.get("treeninguliik"), "fk_treeninguliigi_kategooria_liik", "treeninguliigi_id -> treeninguliik.treeninguliigi_id");
+        addConnectorIfMissing(ids.get("treeninguliigi_kategooria_omamine"), physicalObjectId("treeningu_kategooria", ids), "fk_treeninguliigi_kategooria_omamine_treeningu_kategooria", "treeningu_kategooria_kood -> treeningu_kategooria.treeningu_kategooria_kood");
+        addConnectorIfMissing(ids.get("treeninguliigi_varustuse_noue"), ids.get("treeninguliik"), "fk_treeninguliigi_varustuse_noue_treeninguliik", "treeninguliigi_id -> treeninguliik.treeninguliigi_id");
         addConnectorIfMissing(ids.get("treeninguliigi_varustuse_noue"), ids.get("varustus"), "fk_treeninguliigi_varustuse_noue_varustus", "varustuse_kood -> varustus.varustuse_kood");
         addConnectorIfMissing(ids.get("ruumi_varustuse_omamine"), ids.get("ruum"), "fk_ruumi_varustuse_omamine_ruum", "ruumi_kood -> ruum.ruumi_kood");
         addConnectorIfMissing(ids.get("ruumi_varustuse_omamine"), ids.get("varustus"), "fk_ruumi_varustuse_omamine_varustus", "varustuse_kood -> varustus.varustuse_kood");
         addConnectorIfMissing(ids.get("treeneri_padevus"), physicalObjectId("tootaja", ids), "fk_treeneri_padevus_tootaja", "tootaja_e_meil -> tootaja.e_meil");
-        addConnectorIfMissing(ids.get("treeneri_padevus"), ids.get("treeninguliik"), "fk_treeneri_padevus_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
-        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeninguliik"), "fk_treeningukord_liik", "treeninguliigi_kood -> treeninguliik.treeninguliigi_kood");
+        addConnectorIfMissing(ids.get("treeneri_padevus"), ids.get("treeninguliik"), "fk_treeneri_padevus_treeninguliik", "treeninguliigi_id -> treeninguliik.treeninguliigi_id");
+        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeninguliik"), "fk_treeningukord_treeninguliik", "treeninguliigi_id -> treeninguliik.treeninguliigi_id");
         addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_treener", "treener_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("treeningukord"), ids.get("ruum"), "fk_treeningukord_ruum", "ruumi_kood -> ruum.ruumi_kood");
-        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeningukorra_seisundi_liik"), "fk_treeningukord_seisund", "seisundi_kood -> treeningukorra_seisundi_liik.kood");
+        addConnectorIfMissing(ids.get("treeningukord"), ids.get("treeningukorra_seisundi_liik"), "fk_treeningukord_treeningukorra_seisundi_liik", "treeningukorra_seisundi_kood -> treeningukorra_seisundi_liik.treeningukorra_seisundi_kood");
         addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_looja", "looja_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("treeningukord"), physicalObjectId("tootaja", ids), "fk_treeningukord_muutja", "viimase_muutja_e_meil -> tootaja.e_meil");
-        addConnectorIfMissing(ids.get("registreering"), ids.get("treeningukord"), "fk_registreering_kord", "treeningukorra_kood -> treeningukord.treeningukorra_kood");
+        addConnectorIfMissing(ids.get("registreering"), ids.get("treeningukord"), "fk_registreering_kord", "treeningukorra_id -> treeningukord.treeningukorra_id");
         addConnectorIfMissing(ids.get("registreering"), ids.get("klient"), "fk_registreering_klient", "klient_e_meil -> klient.e_meil");
-        addConnectorIfMissing(ids.get("registreering"), ids.get("registreeringu_seisundi_liik"), "fk_registreering_seisund", "seisundi_kood -> registreeringu_seisundi_liik.kood");
-        addConnectorIfMissing(ids.get("osalemine"), ids.get("registreering"), "fk_osalemine_registreering", "registreeringu_kood -> registreering.registreeringu_kood");
+        addConnectorIfMissing(ids.get("registreering"), ids.get("registreeringu_seisundi_liik"), "fk_registreering_registreeringu_seisundi_liik", "registreeringu_seisundi_kood -> registreeringu_seisundi_liik.registreeringu_seisundi_kood");
+        addConnectorIfMissing(ids.get("ootejarjekorra_koht"), ids.get("registreering"), "fk_ootejarjekorra_koht_registreering", "registreeringu_id -> registreering.registreeringu_id");
+        addConnectorIfMissing(ids.get("ootejarjekorra_koht"), ids.get("treeningukord"), "fk_ootejarjekorra_koht_treeningukord", "treeningukorra_id -> treeningukord.treeningukorra_id");
+        addConnectorIfMissing(ids.get("osalemine"), ids.get("registreering"), "fk_osalemine_registreering", "registreeringu_id -> registreering.registreeringu_id");
         addConnectorIfMissing(ids.get("osalemine"), physicalObjectId("tootaja", ids), "fk_osalemine_markija", "markija_e_meil -> tootaja.e_meil");
     }
 

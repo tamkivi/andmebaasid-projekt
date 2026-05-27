@@ -53,48 +53,49 @@ REQUIRED_FUNCTIONS = [
     "fn_edenda_ootejarjekorrast",
     "fn_marki_osalemine",
     "fn_tyhista_treeningukord",
-    "fn_ruum_sobib_treeninguliigile",
+    "on_ruum_sobiv_treeninguliigile",
 ]
 
 REQUIRED_VIEWS = [
-    "v_avalikud_treeningukorrad",
-    "v_kliendi_registreeringud",
-    "v_treeneri_tunniplaan",
-    "v_treeningukorra_osalejad",
-    "v_juhataja_treeningukordade_ulevaade",
-    "v_treeningute_taituvuse_statistika",
-    "v_ruumide_varustus",
-    "v_treeninguliigi_varustuse_nouded",
+    "avalikud_treeningukorrad",
+    "kliendi_registreeringud",
+    "treeneri_tunniplaan",
+    "treeningukorra_osalejad",
+    "juhataja_treeningukordade_ulevaade",
+    "treeningute_taituvuse_statistika",
+    "ruumide_varustus",
+    "treeninguliigi_varustuse_nouded",
 ]
 
 REQUIRED_EAP_PHYSICAL_ATTRIBUTES = {
     "klient": ["e_meil"],
-    "treeninguliigi_seisundi_liik": ["kood", "nimetus"],
-    "treeninguliik": ["treeninguliigi_kood", "nimetus", "seisundi_kood"],
-    "treeninguliigi_kategooria_omamine": ["treeninguliigi_kood", "treeningu_kategooria_kood"],
+    "treeninguliigi_seisundi_liik": ["treeninguliigi_seisundi_kood", "nimetus"],
+    "treeninguliik": ["treeninguliigi_id", "nimetus", "treeninguliigi_seisundi_kood"],
+    "treeninguliigi_kategooria_omamine": ["treeninguliigi_id", "treeningu_kategooria_kood"],
     "ruum": ["ruumi_kood", "nimetus", "mahutavus"],
     "varustus": ["varustuse_kood", "nimetus", "on_aktiivne"],
     "ruumi_varustuse_omamine": ["ruumi_kood", "varustuse_kood", "kogus"],
     "treeninguliigi_varustuse_noue": [
-        "treeninguliigi_kood",
+        "treeninguliigi_id",
         "varustuse_kood",
         "minimaalne_kogus",
         "on_kohustuslik",
     ],
-    "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_kood"],
-    "treeningukorra_seisundi_liik": ["kood", "nimetus"],
+    "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_id"],
+    "treeningukorra_seisundi_liik": ["treeningukorra_seisundi_kood", "nimetus"],
     "treeningukord": [
-        "treeningukorra_kood",
-        "treeninguliigi_kood",
+        "treeningukorra_id",
+        "treeninguliigi_id",
         "treener_e_meil",
         "ruumi_kood",
         "alguse_aeg",
         "lopu_aeg",
-        "seisundi_kood",
+        "treeningukorra_seisundi_kood",
     ],
-    "registreeringu_seisundi_liik": ["kood", "nimetus"],
-    "registreering": ["registreeringu_kood", "treeningukorra_kood", "klient_e_meil", "seisundi_kood"],
-    "osalemine": ["registreeringu_kood", "osales", "markija_e_meil"],
+    "registreeringu_seisundi_liik": ["registreeringu_seisundi_kood", "nimetus"],
+    "registreering": ["registreeringu_id", "treeningukorra_id", "klient_e_meil", "registreeringu_seisundi_kood"],
+    "ootejarjekorra_koht": ["registreeringu_id", "treeningukorra_id", "ootejarjekorra_nr"],
+    "osalemine": ["registreeringu_id", "on_osalenud", "markija_e_meil"],
 }
 
 REQUIRED_EAP_CONNECTORS = [
@@ -109,6 +110,8 @@ REQUIRED_EAP_CONNECTORS = [
     ("treeningukord", "tootaja"),
     ("registreering", "treeningukord"),
     ("registreering", "klient"),
+    ("ootejarjekorra_koht", "registreering"),
+    ("ootejarjekorra_koht", "treeningukord"),
     ("osalemine", "registreering"),
     ("treeneri_padevus", "tootaja"),
     ("treeneri_padevus", "treeninguliik"),
@@ -173,7 +176,7 @@ REQUIRED_DIAGRAM_SOURCE_TERMS = {
     ],
     "10_attendance_activity": [
         "fn_marki_osalemine",
-        "v_treeningukorra_osalejad",
+        "treeningukorra_osalejad",
         "registreering on KINNIT",
         "liiga vara",
     ],
@@ -300,16 +303,16 @@ def validate_static_sql(failures: list[str]) -> None:
             fail(f"SQL missing equipment column {column}", failures)
 
     checks = {
-        "partial unique active registration index": r"create\s+unique\s+index\s+uq_registreering_aktiivne_klient_kord[\s\S]+where\s+seisundi_kood\s+in\s+\('kinnit',\s*'ootejrk'\)",
+        "partial unique active registration index": r"create\s+unique\s+index\s+uq_registreering_aktiivne_klient_kord[\s\S]+where\s+(?:registreeringu_seisundi_kood\s+in\s+\('kinnit',\s*'ootejrk'\)|registreeringu_seisundi_kood\s*=\s*'kinnit'\s+or\s+registreeringu_seisundi_kood\s*=\s*'ootejrk')",
         "trainer overlap trigger/function": r"treeneril on samal ajal juba teine|trg_treeningukord_invariandid",
         "room overlap trigger/function": r"ruumis on samal ajal juba teine|trg_treeningukord_invariandid",
         "capacity trigger/function": r"maksimaalne_osalejate_arv\s+>\s+v_ruumi_mahutavus",
         "trainer competence trigger/function": r"treeneri_padevus",
-        "equipment compatibility trigger/function": r"ruumis puudub treeninguliigi jaoks nõutav varustus|fn_ruum_sobib_treeninguliigile|treeninguliigi_varustuse_noue",
+        "equipment compatibility trigger/function": r"ruumis puudub treeninguliigi jaoks nõutav varustus|on_ruum_sobiv_treeninguliigile|treeninguliigi_varustuse_noue",
         "equipment ownership FK index": r"create\s+index\s+ix_ruumi_varustuse_omamine_varustus",
         "equipment requirement FK index": r"create\s+index\s+ix_treeninguliigi_varustuse_noue_varustus",
-        "session status transition trigger": r"trg_treeningukord_status_transition",
-        "registration status transition trigger": r"trg_registreering_status_transition",
+        "session status transition trigger": r"trg_treeningukord_seisundisiire",
+        "registration status transition trigger": r"trg_registreering_seisundisiire",
         "waitlist promotion routine": r"fn_edenda_ootejarjekorrast",
     }
     for label, pattern in checks.items():
@@ -345,7 +348,7 @@ def validate_app(failures: list[str]) -> None:
         else:
             fail(f"app does not call {function}", failures)
 
-    for view in ["v_ruumide_varustus", "v_treeninguliigi_varustuse_nouded"]:
+    for view in ["ruumide_varustus", "treeninguliigi_varustuse_nouded"]:
         if view in source:
             ok(f"app reads {view}")
         else:
@@ -363,12 +366,12 @@ def validate_app(failures: list[str]) -> None:
 
     required_routes = [
         "/schedule",
-        "/client/sessions/<int:treeningukorra_kood>/register",
+        "/client/sessions/<int:treeningukorra_id>/register",
         "/client/registrations",
         "/manager/sessions",
         "/manager/sessions/new",
         "/trainer/sessions",
-        "/trainer/sessions/<int:treeningukorra_kood>/roster",
+        "/trainer/sessions/<int:treeningukorra_id>/roster",
     ]
     for route in required_routes:
         if route in source:
@@ -612,14 +615,14 @@ def validate_eap(failures: list[str]) -> None:
         "hind_ei_kuulu_skoopi",
         "Treeningu hind eurodes",
         "kestus_minutites, maksimaalne_osalejate_arv, vajalik_varustus",
-        "Treeningute arvuline kood",
+        "Treeningute arvuline identifikaator",
         "Treeningu registreerimise kuupäev",
         "Treeningu andmete viimase muutmise kuupäev",
         "treeningu unustada",
         "treening sellisel kujul ei realiseeru",
         "treening kuulub kategooriasse",
-        "treeningukorra_kood + treeningu_kategooria_kood",
-        "Veerud: treeningukorra_kood, treeningu_kategooria_kood",
+        "treeningukorra_id + treeningu_kategooria_kood",
+        "Veerud: treeningukorra_id, treeningu_kategooria_kood",
     ]
     stale_fragments = [fragment for fragment in old_fragments if fragment in text]
     if stale_fragments:
@@ -766,20 +769,38 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
         with conn.cursor() as cur:
             cur.execute(SQL_DDL)
 
-            cur.execute("SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK'")
+            cur.execute("SELECT COUNT(*) FROM registreering WHERE registreeringu_seisundi_kood = 'OOTEJRK'")
             seeded_waitlisted = cur.fetchone()[0]
-            cur.execute("SELECT fn_tyhista_registreering(3000, 'klient@jousaal.ee', 'Live test')")
-            cur.execute("SELECT COUNT(*) FROM registreering WHERE registreeringu_kood = 3002 AND seisundi_kood = 'KINNIT'")
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM registreering
+                WHERE registreeringu_id = 3000
+                  AND registreeringu_seisundi_kood = 'TYH_KL'
+                  AND tyhistamise_aeg IS NOT NULL
+                  AND tyhistamise_pohjus IS NOT NULL
+                """
+            )
+            seeded_cancelled = cur.fetchone()[0]
+            cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM registreering
+                WHERE registreeringu_id = 3002
+                  AND registreeringu_seisundi_kood = 'KINNIT'
+                  AND edendamise_aeg IS NOT NULL
+                """
+            )
             seeded_promoted = cur.fetchone()[0]
 
             cur.execute(
                 """
                 SELECT fn_planeeri_treeningukord(
                     1002, 'treener2@jousaal.ee', 'SAAL_B',
-                    CURRENT_TIMESTAMP + INTERVAL '60 days',
-                    CURRENT_TIMESTAMP + INTERVAL '60 days 75 minutes',
-                    CURRENT_TIMESTAMP + INTERVAL '59 days',
-                    CURRENT_TIMESTAMP + INTERVAL '59 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '60 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '60 days 75 minutes',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '59 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '59 days',
                     2, 'juhataja@jousaal.ee'
                 )
                 """
@@ -796,10 +817,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                 """
                 SELECT fn_planeeri_treeningukord(
                     1002, 'treener2@jousaal.ee', 'SAAL_B',
-                    CURRENT_TIMESTAMP + INTERVAL '61 days',
-                    CURRENT_TIMESTAMP + INTERVAL '61 days 75 minutes',
-                    CURRENT_TIMESTAMP + INTERVAL '60 days',
-                    CURRENT_TIMESTAMP + INTERVAL '60 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '61 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '61 days 75 minutes',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '60 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '60 days',
                     1, 'juhataja@jousaal.ee'
                 )
                 """
@@ -835,7 +856,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             )
             cancellation_row = cur.fetchone()
             cur.execute(
-                "SELECT seisundi_kood FROM registreering WHERE registreeringu_kood = %s",
+                "SELECT registreeringu_seisundi_kood FROM registreering WHERE registreeringu_id = %s",
                 (waitlisted_row[0],),
             )
             promoted_status = cur.fetchone()[0]
@@ -847,10 +868,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                     """
                     SELECT fn_planeeri_treeningukord(
                         1002, 'treener2@jousaal.ee', 'SAAL_A',
-                        CURRENT_TIMESTAMP + INTERVAL '62 days',
-                        CURRENT_TIMESTAMP + INTERVAL '62 days 75 minutes',
-                        CURRENT_TIMESTAMP + INTERVAL '61 days',
-                        CURRENT_TIMESTAMP + INTERVAL '61 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '62 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '62 days 75 minutes',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '61 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '61 days',
                         2, 'juhataja@jousaal.ee'
                     )
                     """
@@ -864,10 +885,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                 """
                 SELECT fn_planeeri_treeningukord(
                     1000, 'treener@jousaal.ee', 'SAAL_C',
-                    CURRENT_TIMESTAMP + INTERVAL '63 days',
-                    CURRENT_TIMESTAMP + INTERVAL '63 days 60 minutes',
-                    CURRENT_TIMESTAMP + INTERVAL '62 days',
-                    CURRENT_TIMESTAMP + INTERVAL '62 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '63 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '63 days 60 minutes',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '62 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '62 days',
                     6, 'juhataja@jousaal.ee'
                 )
                 """
@@ -886,7 +907,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             """)
             cur.execute("""
                 INSERT INTO treeninguliigi_varustuse_noue (
-                    treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
+                    treeninguliigi_id, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
                 )
                 VALUES (1001, 'TESTQ', 2, TRUE, 'Validaatori koguse test.')
                 ON CONFLICT DO NOTHING
@@ -898,10 +919,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                     """
                     SELECT fn_planeeri_treeningukord(
                         1001, 'treener@jousaal.ee', 'SAAL_A',
-                        CURRENT_TIMESTAMP + INTERVAL '64 days',
-                        CURRENT_TIMESTAMP + INTERVAL '64 days 45 minutes',
-                        CURRENT_TIMESTAMP + INTERVAL '63 days',
-                        CURRENT_TIMESTAMP + INTERVAL '63 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '64 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '64 days 45 minutes',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '63 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '63 days',
                         2, 'juhataja@jousaal.ee'
                     )
                     """
@@ -913,8 +934,8 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
 
             cur.execute("""
                 INSERT INTO treeninguliik (
-                    treeninguliigi_kood, nimetus, kirjeldus, kestus_minutites,
-                    vajalik_varustus, seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil
+                    treeninguliigi_id, nimetus, kirjeldus, kestus_minutites,
+                    vajalik_varustus, treeninguliigi_seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil
                 )
                 VALUES (
                     1900, 'Live varustuseta testtund', 'Validaatori test ilma varustuse nõueteta.',
@@ -923,7 +944,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                 ON CONFLICT DO NOTHING
             """)
             cur.execute("""
-                INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
+                INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_id, alates)
                 VALUES ('treener2@jousaal.ee', 1900, CURRENT_DATE)
                 ON CONFLICT DO NOTHING
             """)
@@ -931,10 +952,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                 """
                 SELECT fn_planeeri_treeningukord(
                     1900, 'treener2@jousaal.ee', 'SAAL_C',
-                    CURRENT_TIMESTAMP + INTERVAL '65 days',
-                    CURRENT_TIMESTAMP + INTERVAL '65 days 30 minutes',
-                    CURRENT_TIMESTAMP + INTERVAL '64 days',
-                    CURRENT_TIMESTAMP + INTERVAL '64 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '65 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '65 days 30 minutes',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '64 days',
+                    CURRENT_TIMESTAMP(0) + INTERVAL '64 days',
                     5, 'juhataja@jousaal.ee'
                 )
                 """
@@ -953,7 +974,7 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
             """)
             cur.execute("""
                 INSERT INTO treeninguliigi_varustuse_noue (
-                    treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
+                    treeninguliigi_id, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus
                 )
                 VALUES (1000, 'TESTI', 1, TRUE, 'Validaatori mitteaktiivse varustuse test.')
                 ON CONFLICT DO NOTHING
@@ -965,10 +986,10 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
                     """
                     SELECT fn_planeeri_treeningukord(
                         1000, 'treener@jousaal.ee', 'SAAL_B',
-                        CURRENT_TIMESTAMP + INTERVAL '66 days',
-                        CURRENT_TIMESTAMP + INTERVAL '66 days 60 minutes',
-                        CURRENT_TIMESTAMP + INTERVAL '65 days',
-                        CURRENT_TIMESTAMP + INTERVAL '65 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '66 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '66 days 60 minutes',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '65 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '65 days',
                         8, 'juhataja@jousaal.ee'
                     )
                     """
@@ -980,8 +1001,8 @@ def validate_live_sql_if_requested(failures: list[str]) -> None:
         conn.close()
 
         live_failures: list[str] = []
-        if seeded_waitlisted < 1 or seeded_promoted != 1:
-            live_failures.append("seeded waitlist promotion did not produce expected state")
+        if seeded_waitlisted < 1 or seeded_cancelled != 1 or seeded_promoted != 1:
+            live_failures.append("seeded cancellation, waitlist, and promotion states did not match expected data")
         if confirmed_row is None or confirmed_row[1] != "KINNIT":
             live_failures.append(f"available-seat registration returned {confirmed_row}")
         if full_confirmed is None or full_confirmed[1] != "KINNIT":

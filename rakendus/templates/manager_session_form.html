@@ -16,9 +16,9 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Treeninguliik</label>
-                                <select class="form-select" name="treeninguliigi_kood" required>
+                                <select class="form-select" name="treeninguliigi_id" required>
                                     {% for row in training_types %}
-                                        <option value="{{ row.treeninguliigi_kood }}" {% if form and form.treeninguliigi_kood == row.treeninguliigi_kood|string %}selected{% endif %}>
+                                        <option value="{{ row.treeninguliigi_id }}" {% if form and form.treeninguliigi_id == row.treeninguliigi_id|string %}selected{% endif %}>
                                             {{ row.nimetus }} ({{ row.kestus_minutites }} min)
                                         </option>
                                     {% endfor %}
@@ -39,7 +39,7 @@
                                 <select class="form-select" name="ruumi_kood" required>
                                     {% for row in rooms %}
                                         <option value="{{ row.ruumi_kood }}" {% if form and form.ruumi_kood == row.ruumi_kood %}selected{% endif %}>
-                                            {{ row.nimetus }} · mahutavus {{ row.mahutavus }} · {{ row.varustuse_kokkuvote }}
+                                            {{ row.nimetus }} · mahutavus {{ row.mahutavus }} · {{ row.varustuse_nimetuse_kokkuvote }}
                                         </option>
                                     {% endfor %}
                                 </select>
@@ -71,7 +71,7 @@
                                     <div class="fw-semibold mb-2">Ruumi varustus</div>
                                     <ul class="small mb-0">
                                         {% for row in rooms %}
-                                            <li><strong>{{ row.nimetus }}</strong>: {{ row.varustuse_kokkuvote }}</li>
+                                            <li><strong>{{ row.nimetus }}</strong>: {{ row.varustuse_nimetuse_kokkuvote }}</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
@@ -82,8 +82,8 @@
                                     <ul class="small mb-0">
                                         {% for row in equipment_requirements %}
                                             <li>
-                                                <strong>{{ row.treeninguliik }}</strong>:
-                                                {{ row.varustus }} vähemalt {{ row.minimaalne_kogus }} tk
+                                                <strong>{{ row.treeninguliigi_nimetus }}</strong>:
+                                                {{ row.varustuse_nimetus }} vähemalt {{ row.minimaalne_kogus }} tk
                                                 {% if not row.on_kohustuslik %}(soovituslik){% endif %}
                                             </li>
                                         {% endfor %}

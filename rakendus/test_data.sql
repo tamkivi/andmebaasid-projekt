@@ -5,43 +5,43 @@ INSERT INTO riik (riigi_kood, nimetus) VALUES
 ('EE', 'Eesti'), ('LV', 'Läti'), ('LT', 'Leedu')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO isiku_seisundi_liik (kood, nimetus) VALUES
+INSERT INTO isiku_seisundi_liik (isiku_seisundi_liigi_kood, nimetus) VALUES
 ('KLIENT', 'Klient'), ('TOOTAJA', 'Töötaja')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tootaja_seisundi_liik (kood, nimetus) VALUES
+INSERT INTO tootaja_seisundi_liik (tootaja_seisundi_liigi_kood, nimetus) VALUES
 ('AKTIIVNE', 'Aktiivne'), ('PUHKUSEL', 'Puhkusel'), ('LAHKUNUD', 'Lahkunud')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tootaja_roll (kood, nimetus, kirjeldus) VALUES
+INSERT INTO tootaja_roll (tootaja_rolli_kood, nimetus, kirjeldus) VALUES
 ('TREENER', 'Treener', 'Treener märgib osalemist ja näeb enda tunniplaani.'),
 ('JUHATAJA', 'Juhataja', 'Juhataja planeerib ja juhib treeningukordi.')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeninguliigi_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+INSERT INTO treeninguliigi_seisundi_liik (treeninguliigi_seisundi_kood, nimetus, on_aktiivne) VALUES
 ('KOOST', 'Koostamisel', TRUE), ('AKTIIVNE', 'Aktiivne', TRUE),
 ('MITTEAKT', 'Mitteaktiivne', TRUE), ('LOPETATUD', 'Lõpetatud', FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeningukorra_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+INSERT INTO treeningukorra_seisundi_liik (treeningukorra_seisundi_kood, nimetus, on_aktiivne) VALUES
 ('KAVAND', 'Kavandatud', TRUE), ('AVATUD', 'Avatud', TRUE),
 ('SULETUD', 'Suletud', TRUE), ('TOIMUNUD', 'Toimunud', FALSE), ('TYHIST', 'Tühistatud', FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO registreeringu_seisundi_liik (kood, nimetus, on_aktiivne) VALUES
+INSERT INTO registreeringu_seisundi_liik (registreeringu_seisundi_kood, nimetus, on_aktiivne) VALUES
 ('KINNIT', 'Kinnitatud', TRUE), ('OOTEJRK', 'Ootejärjekorras', TRUE),
 ('TYH_KL', 'Kliendi poolt tühistatud', FALSE), ('TYH_SYS', 'Süsteemi poolt tühistatud', FALSE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, perenimi, e_meil)
+INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, elukoht, e_meil)
 VALUES
-('39001010001', 'EE', 'TOOTAJA', DATE '1990-01-01', 'Anna', 'Juhataja', 'juhataja@jousaal.ee'),
-('38802020002', 'EE', 'TOOTAJA', DATE '1988-02-02', 'Tristan', 'Treener', 'treener@jousaal.ee'),
-('39203030003', 'EE', 'TOOTAJA', DATE '1992-03-03', 'Liis', 'Treener', 'treener2@jousaal.ee'),
-('39504040004', 'EE', 'KLIENT', DATE '1995-04-04', 'Andres', 'Klient', 'klient@jousaal.ee'),
-('39605050005', 'EE', 'KLIENT', DATE '1996-05-05', 'Kärt', 'Klient', 'klient2@jousaal.ee'),
-('39706060006', 'EE', 'KLIENT', DATE '1997-06-06', 'Mati', 'Klient', 'klient3@jousaal.ee'),
-('39807070007', 'EE', 'KLIENT', DATE '1998-07-07', 'Mari', 'Klient', 'klient4@jousaal.ee')
+('39001010001', 'EE', 'TOOTAJA', DATE '1990-01-01', 'Anna', 'Juhataja', 'Tallinn', 'juhataja@jousaal.ee'),
+('38802020002', 'EE', 'TOOTAJA', DATE '1988-02-02', 'Tristan', 'Treener', 'Tallinn', 'treener@jousaal.ee'),
+('39203030003', 'EE', 'TOOTAJA', DATE '1992-03-03', 'Liis', 'Treener', 'Tartu', 'treener2@jousaal.ee'),
+('39504040004', 'EE', 'KLIENT', DATE '1995-04-04', 'Andres', 'Klient', 'Tallinn', 'klient@jousaal.ee'),
+('39605050005', 'EE', 'KLIENT', DATE '1996-05-05', 'Kärt', 'Klient', 'Pärnu', 'klient2@jousaal.ee'),
+('39706060006', 'EE', 'KLIENT', DATE '1997-06-06', 'Mati', 'Klient', 'Tartu', 'klient3@jousaal.ee'),
+('39807070007', 'EE', 'KLIENT', DATE '1998-07-07', 'Mari', 'Klient', 'Tallinn', 'klient4@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO kasutajakonto (e_meil, parool, on_aktiivne)
@@ -59,18 +59,19 @@ INSERT INTO klient (e_meil)
 VALUES ('klient@jousaal.ee'), ('klient2@jousaal.ee'), ('klient3@jousaal.ee'), ('klient4@jousaal.ee')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tootaja (e_meil, tootaja_seisundi_liik_kood)
+INSERT INTO tootaja (e_meil, tootaja_seisundi_liigi_kood)
 VALUES ('juhataja@jousaal.ee', 'AKTIIVNE'), ('treener@jousaal.ee', 'AKTIIVNE'), ('treener2@jousaal.ee', 'AKTIIVNE')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tootaja_rolli_omamine (tootaja_e_meil, tootaja_roll_kood, alguse_aeg)
+INSERT INTO tootaja_rolli_omamine (tootaja_e_meil, tootaja_rolli_kood, alguse_aeg)
 VALUES
 ('juhataja@jousaal.ee', 'JUHATAJA', TIMESTAMPTZ '2025-01-01 00:00:00+02'),
 ('treener@jousaal.ee', 'TREENER', TIMESTAMPTZ '2025-01-01 00:00:00+02'),
 ('treener2@jousaal.ee', 'TREENER', TIMESTAMPTZ '2025-01-01 00:00:00+02')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeninguliik (treeninguliigi_kood, nimetus, kirjeldus, kestus_minutites, vajalik_varustus, seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil)
+INSERT INTO treeninguliik (treeninguliigi_id, nimetus, kirjeldus, kestus_minutites, vajalik_varustus, treeninguliigi_seisundi_kood, registreerija_e_meil, viimase_muutja_e_meil)
+OVERRIDING SYSTEM VALUE
 VALUES
 (1000, 'Jooga algajatele', 'Rahulik rühmatreening liikuvuse ja hingamise arendamiseks.', 60, 'Matid ja joogaplokid', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
 (1001, 'HIIT rühmatreening', 'Kõrge intensiivsusega intervalltreening väikesele grupile.', 45, 'Matid, hantlid ja stopper', 'AKTIIVNE', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
@@ -87,7 +88,7 @@ VALUES
 ('PALLID', 'Võimlemispallid', 'Tasakaalu- ja kereharjutuste pallid.', TRUE)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeninguliigi_varustuse_noue (treeninguliigi_kood, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus)
+INSERT INTO treeninguliigi_varustuse_noue (treeninguliigi_id, varustuse_kood, minimaalne_kogus, on_kohustuslik, markus)
 VALUES
 (1000, 'MATID', 6, TRUE, 'Joogatund vajab igale osalejale matti.'),
 (1000, 'EKRAAN', 1, FALSE, 'Soovituslik juhendmaterjali kuvamiseks.'),
@@ -111,7 +112,7 @@ VALUES
 ('SAAL_B', 'EKRAAN', 1, 'Ekraan või projektor juhendmaterjaliks.')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood, alates)
+INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_id, alates)
 VALUES ('treener@jousaal.ee', 1000, DATE '2025-01-01'), ('treener@jousaal.ee', 1001, DATE '2025-01-01'), ('treener2@jousaal.ee', 1002, DATE '2025-01-01')
 ON CONFLICT DO NOTHING;
 
@@ -119,54 +120,90 @@ ON CONFLICT DO NOTHING;
 -- attempting duplicate inserts because BEFORE INSERT overlap triggers fire
 -- before ON CONFLICT can skip an existing row.
 WITH seeded_treeningukorrad (
-    treeningukorra_kood, treeninguliigi_kood, treener_e_meil, ruumi_kood,
+    treeningukorra_id, treeninguliigi_id, treener_e_meil, ruumi_kood,
     alguse_aeg, lopu_aeg, registreerimise_lopp, tyhistamise_lopp,
-    maksimaalne_osalejate_arv, seisundi_kood, looja_e_meil, viimase_muutja_e_meil
+    maksimaalne_osalejate_arv, treeningukorra_seisundi_kood, looja_e_meil, viimase_muutja_e_meil
 ) AS (
     VALUES
-    (2000, 1002, 'treener2@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '10 days', CURRENT_TIMESTAMP + INTERVAL '10 days 75 minutes', CURRENT_TIMESTAMP + INTERVAL '9 days', CURRENT_TIMESTAMP + INTERVAL '9 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-    (2001, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP + INTERVAL '7 days 60 minutes', CURRENT_TIMESTAMP + INTERVAL '6 days', CURRENT_TIMESTAMP + INTERVAL '6 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-    (2002, 1001, 'treener@jousaal.ee', 'SAAL_A', CURRENT_TIMESTAMP + INTERVAL '5 days', CURRENT_TIMESTAMP + INTERVAL '5 days 45 minutes', CURRENT_TIMESTAMP + INTERVAL '4 days', CURRENT_TIMESTAMP + INTERVAL '4 days', 2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
-    (2003, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '3 days' + INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '4 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
+    (2000, 1002, 'treener2@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP(0) + INTERVAL '10 days', CURRENT_TIMESTAMP(0) + INTERVAL '10 days 75 minutes', CURRENT_TIMESTAMP(0) + INTERVAL '9 days', CURRENT_TIMESTAMP(0) + INTERVAL '9 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2001, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP(0) + INTERVAL '7 days', CURRENT_TIMESTAMP(0) + INTERVAL '7 days 60 minutes', CURRENT_TIMESTAMP(0) + INTERVAL '6 days', CURRENT_TIMESTAMP(0) + INTERVAL '6 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2002, 1001, 'treener@jousaal.ee', 'SAAL_A', CURRENT_TIMESTAMP(0) + INTERVAL '5 days', CURRENT_TIMESTAMP(0) + INTERVAL '5 days 45 minutes', CURRENT_TIMESTAMP(0) + INTERVAL '4 days', CURRENT_TIMESTAMP(0) + INTERVAL '4 days', 2, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee'),
+    (2003, 1000, 'treener@jousaal.ee', 'SAAL_B', CURRENT_TIMESTAMP(0) - INTERVAL '3 days', CURRENT_TIMESTAMP(0) - INTERVAL '3 days' + INTERVAL '60 minutes', CURRENT_TIMESTAMP(0) - INTERVAL '4 days', CURRENT_TIMESTAMP(0) - INTERVAL '4 days', 8, 'KAVAND', 'juhataja@jousaal.ee', 'juhataja@jousaal.ee')
 )
 INSERT INTO treeningukord (
-    treeningukorra_kood, treeninguliigi_kood, treener_e_meil, ruumi_kood,
+    treeningukorra_id, treeninguliigi_id, treener_e_meil, ruumi_kood,
     alguse_aeg, lopu_aeg, registreerimise_lopp, tyhistamise_lopp,
-    maksimaalne_osalejate_arv, seisundi_kood, looja_e_meil, viimase_muutja_e_meil
+    maksimaalne_osalejate_arv, treeningukorra_seisundi_kood, looja_e_meil, viimase_muutja_e_meil
 )
+OVERRIDING SYSTEM VALUE
 SELECT
-    s.treeningukorra_kood, s.treeninguliigi_kood, s.treener_e_meil, s.ruumi_kood,
+    s.treeningukorra_id, s.treeninguliigi_id, s.treener_e_meil, s.ruumi_kood,
     s.alguse_aeg, s.lopu_aeg, s.registreerimise_lopp, s.tyhistamise_lopp,
-    s.maksimaalne_osalejate_arv, s.seisundi_kood, s.looja_e_meil, s.viimase_muutja_e_meil
+    s.maksimaalne_osalejate_arv, s.treeningukorra_seisundi_kood, s.looja_e_meil, s.viimase_muutja_e_meil
 FROM seeded_treeningukorrad s
 WHERE NOT EXISTS (
     SELECT 1
     FROM treeningukord tk
-    WHERE tk.treeningukorra_kood = s.treeningukorra_kood
+    WHERE tk.treeningukorra_id = s.treeningukorra_id
 );
 
-UPDATE treeningukord SET seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
-WHERE treeningukorra_kood IN (2001, 2002) AND seisundi_kood = 'KAVAND';
-UPDATE treeningukord SET seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
-WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'KAVAND';
-UPDATE treeningukord SET seisundi_kood = 'SULETUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
-WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'AVATUD';
-UPDATE treeningukord SET seisundi_kood = 'TOIMUNUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP
-WHERE treeningukorra_kood = 2003 AND seisundi_kood = 'SULETUD';
+UPDATE treeningukord SET treeningukorra_seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP(0)
+WHERE treeningukorra_id IN (2001, 2002) AND treeningukorra_seisundi_kood = 'KAVAND';
+UPDATE treeningukord
+SET treeningukorra_seisundi_kood = 'TYHIST',
+    tyhistamise_pohjus = 'Demo treeningukord tühistati enne avamist.',
+    registreerimise_lopp = CURRENT_TIMESTAMP(0) - INTERVAL '1 minute',
+    tyhistamise_lopp = CURRENT_TIMESTAMP(0) - INTERVAL '1 minute',
+    viimase_muutmise_aeg = CURRENT_TIMESTAMP(0)
+WHERE treeningukorra_id = 2000 AND treeningukorra_seisundi_kood = 'KAVAND';
+UPDATE treeningukord SET treeningukorra_seisundi_kood = 'AVATUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP(0)
+WHERE treeningukorra_id = 2003 AND treeningukorra_seisundi_kood = 'KAVAND';
+UPDATE treeningukord SET treeningukorra_seisundi_kood = 'SULETUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP(0)
+WHERE treeningukorra_id = 2003 AND treeningukorra_seisundi_kood = 'AVATUD';
+UPDATE treeningukord SET treeningukorra_seisundi_kood = 'TOIMUNUD', viimase_muutmise_aeg = CURRENT_TIMESTAMP(0)
+WHERE treeningukorra_id = 2003 AND treeningukorra_seisundi_kood = 'SULETUD';
 
-INSERT INTO registreering (registreeringu_kood, treeningukorra_kood, klient_e_meil, seisundi_kood, ootejarjekorra_nr)
+INSERT INTO registreering (registreeringu_id, treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood)
+OVERRIDING SYSTEM VALUE
 VALUES
-(3000, 2002, 'klient@jousaal.ee', 'KINNIT', NULL),
-(3001, 2002, 'klient2@jousaal.ee', 'KINNIT', NULL),
-(3002, 2002, 'klient3@jousaal.ee', 'OOTEJRK', 1),
-(3003, 2003, 'klient@jousaal.ee', 'KINNIT', NULL),
-(3004, 2003, 'klient2@jousaal.ee', 'KINNIT', NULL)
+(3000, 2002, 'klient@jousaal.ee', 'KINNIT'),
+(3001, 2002, 'klient2@jousaal.ee', 'KINNIT'),
+(3002, 2002, 'klient3@jousaal.ee', 'OOTEJRK'),
+(3003, 2003, 'klient@jousaal.ee', 'KINNIT'),
+(3004, 2003, 'klient2@jousaal.ee', 'KINNIT'),
+(3005, 2002, 'klient4@jousaal.ee', 'OOTEJRK')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO osalemine (registreeringu_kood, osales, markija_e_meil, markus)
+INSERT INTO ootejarjekorra_koht (registreeringu_id, treeningukorra_id, ootejarjekorra_nr)
+VALUES
+(3002, 2002, 1),
+(3005, 2002, 2)
+ON CONFLICT DO NOTHING;
+
+UPDATE registreering
+SET registreeringu_seisundi_kood = 'TYH_KL',
+    tyhistamise_aeg = CURRENT_TIMESTAMP(0),
+    tyhistamise_pohjus = 'Demo klient tühistas registreeringu.'
+WHERE registreeringu_id = 3000
+  AND registreeringu_seisundi_kood = 'KINNIT';
+
+UPDATE registreering
+SET registreeringu_seisundi_kood = 'KINNIT',
+    edendamise_aeg = CURRENT_TIMESTAMP(0)
+WHERE registreeringu_id = 3002
+  AND registreeringu_seisundi_kood = 'OOTEJRK';
+
+DELETE FROM ootejarjekorra_koht
+WHERE registreeringu_id = 3002;
+
+UPDATE ootejarjekorra_koht
+SET ootejarjekorra_nr = 1
+WHERE registreeringu_id = 3005;
+
+INSERT INTO osalemine (registreeringu_id, on_osalenud, markija_e_meil, markus)
 VALUES
 (3003, TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
 (3004, FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
 ON CONFLICT DO NOTHING;
 
-SELECT 'Demoandmed on olemas: üks kavandatud treeningukord, üks avatud vabade kohtadega treeningukord, üks täis avatud treeningukord ootejärjekorraga ja üks toimunud treeningukord osalemistega.';
+SELECT 'Demoandmed on olemas: üks tühistatud treeningukord, üks avatud vabade kohtadega treeningukord, üks täis avatud treeningukord ootejärjekorraga ja üks toimunud treeningukord osalemistega.';

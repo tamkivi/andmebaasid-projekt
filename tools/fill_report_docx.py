@@ -72,7 +72,7 @@ USE_CASES = [
     ("Registreeru treeningukorrale", "Klient", "Klient valib avatud treeningukorra. Kui koht on olemas, tekib KINNIT registreering; kui koht puudub, tekib OOTEJRK rida."),
     ("Tühista registreering", "Klient, juhataja", "Klient saab enne tähtaega enda aktiivse registreeringu tühistada. Kui vabaneb kinnitatud koht, edendab andmebaas esimese ootel kliendi."),
     ("Tühista treeningukord", "Juhataja", "Juhataja saab kavandatud, avatud või suletud treeningukorra tühistada. Kõik aktiivsed registreeringud lähevad seisundisse TYH_SYS."),
-    ("Märgi osalemine", "Treener, juhataja", "Määratud treener või juhataja märgib kinnitatud registreeringutele osales/ei osalenud tulemuse."),
+    ("Märgi osalemine", "Treener, juhataja", "Määratud treener või juhataja märgib kinnitatud registreeringutele on_osalenud/ei osalenud tulemuse."),
     ("Vaata statistikat", "Juhataja", "Juhataja näeb täituvust, kinnitatud osalejate arvu, ootejärjekorda ja toimunud treeningukordade koondit."),
 ]
 
@@ -145,7 +145,7 @@ EXTENDED_USE_CASES = [
         "postconditions": "Treeningukorra seisund on AVATUD ja see ilmub kliendi ajakava vaatesse.",
         "scenario": [
             "Juhataja avab treeningukordade haldusvaate.",
-            "Süsteem kuvab treeningukorrad vaate v_juhataja_treeningukordade_ulevaade alusel.",
+            "Süsteem kuvab treeningukorrad vaate juhataja_treeningukordade_ulevaade alusel.",
             "Juhataja valib kavandatud treeningukorra ja käivitab registreerimise avamise.",
             "Süsteem kutsub OP2 / fn_ava_treeningukord.",
             "Andmebaas kontrollib juhataja rolli, treeningukorra seisundit ja algusaega.",
@@ -155,7 +155,7 @@ EXTENDED_USE_CASES = [
             "Kui treeningukord ei ole KAVAND seisundis, siis seisundimuutust ei tehta.",
             "Kui treeningukorra algusaeg on möödas, siis registreerimist ei avata.",
         ],
-        "operations": "Loeb v_juhataja_treeningukordade_ulevaade; muudab treeningukord. Rutiin: OP2.",
+        "operations": "Loeb juhataja_treeningukordade_ulevaade; muudab treeningukord. Rutiin: OP2.",
     },
     {
         "number": "2.1.1.3",
@@ -170,7 +170,7 @@ EXTENDED_USE_CASES = [
         "postconditions": "Tekib KINNIT registreering või täitunud treeningukorra korral OOTEJRK registreering.",
         "scenario": [
             "Klient avab avatud ajakava.",
-            "Süsteem kuvab v_avalikud_treeningukorrad vaate alusel treeningukorrad koos vabade kohtade ja ootejärjekorra arvuga.",
+            "Süsteem kuvab avalikud_treeningukorrad vaate alusel treeningukorrad koos vabade kohtade ja ootejärjekorra arvuga.",
             "Klient valib treeningukorra ja kinnitab registreerimise.",
             "Süsteem kutsub OP5 / fn_registreeri_klient_treeningukorrale.",
             "Andmebaas kontrollib aktiivset klienti, avatud seisundit, tähtaega ja topeltregistreeringut.",
@@ -181,7 +181,7 @@ EXTENDED_USE_CASES = [
             "Kui klient on juba aktiivselt registreeritud, siis andmebaas keeldub topeltregistreeringust.",
             "Kui tähtaeg on möödas või treeningukord pole AVATUD, siis registreeringut ei looda.",
         ],
-        "operations": "Loeb v_avalikud_treeningukorrad; muudab registreering. Rutiin: OP5.",
+        "operations": "Loeb avalikud_treeningukorrad; muudab registreering. Rutiin: OP5.",
     },
     {
         "number": "2.1.1.4",
@@ -207,14 +207,14 @@ EXTENDED_USE_CASES = [
             "Kui tühistamise tähtaeg on möödas, siis klient ei saa registreeringut tühistada.",
             "Kui ootejärjekorras ei ole klienti, siis edendamist ei toimu.",
         ],
-        "operations": "Loeb v_kliendi_registreeringud; muudab registreering. Rutiinid: OP6 ja OP7.",
+        "operations": "Loeb kliendi_registreeringud; muudab registreering. Rutiinid: OP6 ja OP7.",
     },
     {
         "number": "2.1.1.5",
         "name": "Märgi osalemine",
         "actor": "Treener või juhataja",
         "interests": [
-            "Treener soovib märkida, kes treeningukorral osales ja kes puudus.",
+            "Treener soovib märkida, kes treeningukorral on_osalenud ja kes puudus.",
             "Juhataja soovib kasutada osalemise andmeid aruandluses ja täituvuse hindamisel.",
         ],
         "trigger": "Treeningukord on alanud või toimunud ning treener avab osalejate nimekirja.",
@@ -222,10 +222,10 @@ EXTENDED_USE_CASES = [
         "postconditions": "Osalemise kirje on lisatud või uuendatud.",
         "scenario": [
             "Treener avab enda tunniplaani.",
-            "Süsteem kuvab v_treeneri_tunniplaan vaate alusel treeneri treeningukorrad.",
+            "Süsteem kuvab treeneri_tunniplaan vaate alusel treeneri treeningukorrad.",
             "Treener avab konkreetse treeningukorra osalejate nimekirja.",
-            "Süsteem kuvab v_treeningukorra_osalejad vaate alusel kinnitatud osalejad.",
-            "Treener märgib osales/ei osalenud väärtused.",
+            "Süsteem kuvab treeningukorra_osalejad vaate alusel kinnitatud osalejad.",
+            "Treener märgib on_osalenud/ei osalenud väärtused.",
             "Süsteem kutsub iga muudetud rea kohta OP8 / fn_marki_osalemine.",
             "Andmebaas salvestab või uuendab osalemise tulemuse.",
         ],
@@ -234,7 +234,7 @@ EXTENDED_USE_CASES = [
             "Kui registreering ei ole KINNIT, siis andmebaas keeldub osalemise märkimisest.",
             "Kui tegutseja ei ole määratud treener ega juhataja, siis operatsioon ebaõnnestub.",
         ],
-        "operations": "Loeb v_treeneri_tunniplaan ja v_treeningukorra_osalejad; muudab osalemine. Rutiin: OP8.",
+        "operations": "Loeb treeneri_tunniplaan ja treeningukorra_osalejad; muudab osalemine. Rutiin: OP8.",
     },
     {
         "number": "2.1.1.6",
@@ -259,7 +259,7 @@ EXTENDED_USE_CASES = [
             "Kui treeningukord on juba TOIMUNUD, siis seda enam ei tühistata.",
             "Kui tegutseja ei ole juhataja, siis andmebaas keeldub muudatusest.",
         ],
-        "operations": "Loeb v_juhataja_treeningukordade_ulevaade; muudab treeningukord ja registreering. Rutiin: OP9.",
+        "operations": "Loeb juhataja_treeningukordade_ulevaade; muudab treeningukord ja registreering. Rutiin: OP9.",
     },
     {
         "number": "2.1.1.7",
@@ -274,21 +274,21 @@ EXTENDED_USE_CASES = [
         "postconditions": "Andmeid ei muudeta; juhataja saab aruande.",
         "scenario": [
             "Juhataja avab aruande vaate.",
-            "Süsteem loeb v_treeningute_taituvuse_statistika vaadet.",
+            "Süsteem loeb treeningute_taituvuse_statistika vaadet.",
             "Süsteem kuvab treeninguliikide ja treeningukordade koondnäitajad.",
             "Juhataja kasutab tulemusi järgmiste treeningukordade planeerimisel.",
         ],
         "extensions": [
             "Kui mõnel treeninguliigil ei ole veel treeningukordi, siis seda ei kuvata täituvuse koondis või kuvatakse nullväärtustega sõltuvalt aruandest.",
         ],
-        "operations": "Loeb v_treeningute_taituvuse_statistika; andmeid ei muuda.",
+        "operations": "Loeb treeningute_taituvuse_statistika; andmeid ei muuda.",
     },
 ]
 
 
 BUSINESS_RULES = [
     ("Ruum ei tohi üle täituda", "Trigger fn_kontrolli_treeningukorra_invariandid kontrollib, et maksimaalne_osalejate_arv <= ruum.mahutavus."),
-    ("Ruum peab vastama kohustuslikele varustuse nõuetele", "Trigger fn_kontrolli_treeningukorra_invariandid kasutab fn_ruum_sobib_treeninguliigile kontrolli ja katkestab planeerimise, kui ruumis puudub treeninguliigi jaoks kohustuslik varustus või seda on nõutust vähem."),
+    ("Ruum peab vastama kohustuslikele varustuse nõuetele", "Trigger fn_kontrolli_treeningukorra_invariandid kasutab on_ruum_sobiv_treeninguliigile kontrolli ja katkestab planeerimise, kui ruumis puudub treeninguliigi jaoks kohustuslik varustus või seda on nõutust vähem."),
     ("Treener peab olema pädev", "Trigger ja planeerimisfunktsioon kontrollivad treeneri aktiivset TREENER rolli ning treeneri_padevus kirjet."),
     ("Treeneril ei tohi olla kattuvaid tunde", "Trigger otsib sama treeneri tühistamata kattuvad treeningukorrad ja katkestab muudatuse."),
     ("Ruumil ei tohi olla kattuvaid tunde", "Trigger otsib sama ruumi tühistamata kattuvad treeningukorrad ja katkestab muudatuse."),
@@ -304,30 +304,31 @@ BUSINESS_RULES = [
 TABLES = [
     ("klient", "Kasutajakontoga seotud osaleja.", "PK e_meil, FK kasutajakonto."),
     ("treeninguliigi_seisundi_liik", "Treeninguliigi elutsükli klassifikaator.", "KOOST, AKTIIVNE, MITTEAKT, LOPETATUD."),
-    ("treeninguliik", "Rühmatreeningu korduv mall.", "PK treeninguliigi_kood, UNIQUE nimetus, FK seisund."),
+    ("treeninguliik", "Rühmatreeningu korduv mall.", "PK treeninguliigi_id, UNIQUE nimetus, FK seisund."),
     ("ruum", "Saal või stuudio.", "PK ruumi_kood, UNIQUE nimetus, CHECK mahutavus > 0."),
     ("varustus", "Treeningu läbiviimiseks vajalik põhiandmete objekt.", "PK varustuse_kood, UNIQUE nimetus, aktiivsuse tunnus."),
     ("ruumi_varustuse_omamine", "Ruumi olemasolev varustus ja kogus.", "PK ruumi_kood + varustuse_kood, FK ruum ja varustus, CHECK kogus > 0."),
-    ("treeninguliigi_varustuse_noue", "Treeninguliigi kohustuslik või soovituslik varustuse nõue.", "PK treeninguliigi_kood + varustuse_kood, FK treeninguliik ja varustus, CHECK minimaalne_kogus > 0."),
-    ("treeneri_padevus", "Treeneri lubatud treeninguliigid.", "PK tootaja_e_meil + treeninguliigi_kood, FK tootaja ja treeninguliik."),
+    ("treeninguliigi_varustuse_noue", "Treeninguliigi kohustuslik või soovituslik varustuse nõue.", "PK treeninguliigi_id + varustuse_kood, FK treeninguliik ja varustus, CHECK minimaalne_kogus > 0."),
+    ("treeneri_padevus", "Treeneri lubatud treeninguliigid.", "PK tootaja_e_meil + treeninguliigi_id, FK tootaja ja treeninguliik."),
     ("treeningukorra_seisundi_liik", "Konkreetse treeningukorra elutsükkel.", "KAVAND, AVATUD, SULETUD, TOIMUNUD, TYHIST."),
     ("treeningukord", "Ajakavas toimuv konkreetne rühmatund.", "FK treeninguliik, treener, ruum, seisund; aja- ja mahupiirangud."),
     ("registreeringu_seisundi_liik", "Registreeringu elutsükkel.", "KINNIT, OOTEJRK, TYH_KL, TYH_SYS."),
-    ("registreering", "Kliendi kinnitatud või ootejärjekorra kirje.", "PK registreeringu_kood, partial UNIQUE aktiivsele kliendile ja treeningukorrale."),
-    ("osalemine", "Kohalolu tulemus.", "PK/FK registreeringu_kood, FK markija_e_meil."),
+    ("registreering", "Kliendi kinnitatud või ootejärjekorra kirje.", "PK registreeringu_id, partial UNIQUE aktiivsele kliendile ja treeningukorrale."),
+    ("ootejarjekorra_koht", "Ootejärjekorras oleva registreeringu järjekorrakoht.", "PK/FK registreeringu_id, UNIQUE treeningukorra_id ja ootejarjekorra_nr."),
+    ("osalemine", "Kohalolu tulemus.", "PK/FK registreeringu_id, FK markija_e_meil."),
 ]
 
 
 VIEWS = [
-    ("v_avalikud_treeningukorrad", "Kliendile nähtav avatud ajakava koos vabade kohtade ja ootejärjekorraga."),
-    ("v_kliendi_registreeringud", "Kliendi enda registreeringud, seisundid, ootejärjekorra number ja osalemise tulemus."),
-    ("v_treeneri_tunniplaan", "Treeneri töölaud tulevaste ja toimunud treeningukordade vaatamiseks."),
-    ("v_treeningukorra_osalejad", "Treeneri ja juhataja osalejate nimekiri koos kohalolu tulemustega."),
-    ("v_juhataja_treeningukordade_ulevaade", "Juhataja haldusvaade kõigi treeningukordade täituvuse ja seisunditega."),
-    ("v_treeningute_taituvuse_statistika", "Koondstatistika treeninguliigi kaupa."),
-    ("v_treeninguliigid_kategooriatega", "Treeninguliikide loend koos kategooriatega."),
-    ("v_ruumide_varustus", "Ruumide varustuse ülevaade juhataja planeerimisvormi ja kontrolli selgitamiseks."),
-    ("v_treeninguliigi_varustuse_nouded", "Treeninguliikide kohustuslikud ja soovituslikud varustuse nõuded."),
+    ("avalikud_treeningukorrad", "Kliendile nähtav avatud ajakava koos vabade kohtade ja ootejärjekorraga."),
+    ("kliendi_registreeringud", "Kliendi enda registreeringud, seisundid, ootejärjekorra number ja osalemise tulemus."),
+    ("treeneri_tunniplaan", "Treeneri töölaud tulevaste ja toimunud treeningukordade vaatamiseks."),
+    ("treeningukorra_osalejad", "Treeneri ja juhataja osalejate nimekiri koos kohalolu tulemustega."),
+    ("juhataja_treeningukordade_ulevaade", "Juhataja haldusvaade kõigi treeningukordade täituvuse ja seisunditega."),
+    ("treeningute_taituvuse_statistika", "Koondstatistika treeninguliigi kaupa."),
+    ("treeninguliigid_kategooriatega", "Treeninguliikide loend koos kategooriatega."),
+    ("ruumide_varustus", "Ruumide varustuse ülevaade juhataja planeerimisvormi ja kontrolli selgitamiseks."),
+    ("treeninguliigi_varustuse_nouded", "Treeninguliikide kohustuslikud ja soovituslikud varustuse nõuded."),
 ]
 
 STRATEGIC_STATEMENTS = [
@@ -402,45 +403,129 @@ ENTITY_DEFINITIONS = [
 
 
 ATTRIBUTE_DEFINITIONS = [
-    ("isik", "eesnimi", "Isiku ametlik eesnimi. {@Kohustuslik. Väärtus ei tohi olla tühi.}", "Mari"),
-    ("isik", "perenimi", "Isiku ametlik perekonnanimi. {@Kohustuslik. Väärtus ei tohi olla tühi.}", "Tamm"),
-    ("kasutajakonto", "e_meil", "Kasutaja autentimiseks ja teavitamiseks kasutatav e-posti aadress. {@Kohustuslik. Peab sisaldama märki @ ja olema kontode hulgas kordumatu.}", "klient@jousaal.ee"),
-    ("kasutajakonto", "parooli_rasi", "Kasutaja parooli turvaline räsi. {@Kohustuslik. Selge tekstina parooli ei talletata.}", "pbkdf2:sha256:..."),
-    ("tootaja", "e_meil", "Töötajat tuvastav kasutajakonto e-posti aadress. {@Kohustuslik. Töötaja peab olema seotud olemasoleva kasutajakontoga.}", "treener@jousaal.ee"),
-    ("tootaja", "seisundi_kood", "Töötaja kasutatavuse seisund. {@Kohustuslik. Lubatud väärtus pärineb töötaja seisundite klassifikaatorist.}", "AKTIIVNE"),
-    ("klient", "e_meil", "Klienti tuvastav kasutajakonto e-posti aadress. {@Kohustuslik. Klient peab olema seotud olemasoleva kasutajakontoga.}", "klient@jousaal.ee"),
-    ("klient", "registreerimise_aeg", "Kliendiks registreerimise aeg. {@Kohustuslik. Ei tohi olla tulevikus sisestushetkest hilisem.}", "2026-05-20 09:00"),
-    ("treeninguliik", "treeninguliigi_kood", "Treeninguliigi äriline kood. {@Kohustuslik. Positiivne täisarv. Väärtus peab olema treeninguliikide hulgas kordumatu.}", "1000"),
-    ("treeninguliik", "nimetus", "Kliendile ja juhatajale nähtav treeninguliigi nimi. {@Kohustuslik. Väärtus ei tohi olla tühi ja peab olema treeninguliikide hulgas kordumatu.}", "Jooga algajatele"),
-    ("treeninguliik", "kestus_minutites", "Tavapärane kestus minutites. {@Kohustuslik. Täisarv vahemikus 15 kuni 240.}", "60"),
-    ("treeninguliik", "seisundi_kood", "Treeninguliigi elutsükli seisund. {@Kohustuslik. Lubatud väärtus pärineb treeninguliigi seisundite klassifikaatorist.}", "AKTIIVNE"),
-    ("ruum", "ruumi_kood", "Ruumi lühikood. {@Kohustuslik. Väärtus peab olema ruumide hulgas kordumatu.}", "SAAL_A"),
-    ("ruum", "nimetus", "Ruumile kasutajaliideses kuvatav nimi. {@Kohustuslik. Väärtus ei tohi olla tühi.}", "Saal A"),
-    ("ruum", "mahutavus", "Maksimaalne füüsiline osalejate arv ruumis. {@Kohustuslik. Positiivne täisarv.}", "12"),
-    ("varustus", "varustuse_kood", "Varustuse lühikood. {@Kohustuslik. Väärtus ei tohi olla tühi ja peab olema varustuse hulgas kordumatu.}", "MATID"),
-    ("varustus", "nimetus", "Varustuse kasutajale arusaadav nimetus. {@Kohustuslik. Väärtus ei tohi olla tühi ja peab olema varustuse hulgas kordumatu.}", "Treeningmatid"),
-    ("ruumi_varustuse_omamine", "kogus", "Ruumis olemas oleva varustuse kogus. {@Kohustuslik. Positiivne täisarv.}", "12"),
-    ("treeninguliigi_varustuse_noue", "minimaalne_kogus", "Treeninguliigi jaoks vajalik minimaalne varustuse kogus. {@Kohustuslik. Positiivne täisarv.}", "6"),
-    ("treeninguliigi_varustuse_noue", "on_kohustuslik", "Tõeväärtus, kas puuduv varustus peab treeningukorra planeerimise peatama. {@Kohustuslik. Jah väärtus blokeerib sobimatu ruumi; ei väärtus on soovituslik.}", "true"),
-    ("treeneri_padevus", "tootaja_e_meil", "Pädeva treeneri e-posti aadress. {@Kohustuslik. Viitab aktiivsele töötajale, kellel on treeneri roll.}", "treener@jousaal.ee"),
-    ("treeneri_padevus", "treeninguliigi_kood", "Treeninguliik, mida treener võib juhendada. {@Kohustuslik. Viitab olemasolevale aktiivsele treeninguliigile.}", "1000"),
-    ("treeneri_padevus", "alates", "Kuupäev, millest alates pädevus kehtib. {@Kohustuslik. Ei tohi olla hilisem kui pädevuse lõppkuupäev.}", "2026-01-01"),
-    ("treeneri_padevus", "kuni", "Kuupäev, milleni pädevus kehtib. {@Valikuline. Puuduv väärtus tähendab tähtajatut pädevust.}", "2026-12-31"),
-    ("treeningukord", "treeningukorra_kood", "Kalendris toimuva treeningukorra kood. {@Kohustuslik. Positiivne täisarv. Väärtus peab olema treeningukordade hulgas kordumatu.}", "5001"),
-    ("treeningukord", "alguse_aeg", "Konkreetse treeningukorra alguse ajatempel. {@Kohustuslik. Algus peab olema enne lõppu.}", "2026-06-01 18:00"),
-    ("treeningukord", "lopu_aeg", "Konkreetse treeningukorra lõpu ajatempel. {@Kohustuslik. Lõpp peab olema pärast algust.}", "2026-06-01 19:00"),
-    ("treeningukord", "maksimaalne_osalejate_arv", "Selle treeningukorra lubatud osalejate arv. {@Kohustuslik. Positiivne täisarv, mis ei tohi ületada ruumi mahutavust.}", "10"),
-    ("treeningukord", "seisundi_kood", "Treeningukorra elutsükli seisund. {@Kohustuslik. Lubatud väärtus pärineb treeningukorra seisundite klassifikaatorist.}", "AVATUD"),
-    ("registreering", "registreeringu_kood", "Kliendi registreeringu kood. {@Kohustuslik. Positiivne täisarv. Väärtus peab olema registreeringute hulgas kordumatu.}", "9001"),
-    ("registreering", "seisundi_kood", "Registreeringu seisund. {@Kohustuslik. Lubatud väärtus pärineb registreeringu seisundite klassifikaatorist.}", "KINNIT"),
-    ("registreering", "ootejarjekorra_nr", "Ootejärjekorras oleva kliendi järjekorranumber. {@Valikuline. Positiivne täisarv ainult ootejärjekorras oleva registreeringu korral.}", "1"),
-    ("osalemine", "osales", "Tõeväärtus, kas klient osales treeningukorral. {@Kohustuslik. Väärtus on jah või ei.}", "true"),
-    ("osalemine", "markimise_aeg", "Osalemise märkimise aeg. {@Kohustuslik. Ei tohi olla enne treeningukorra algust.}", "2026-06-01 19:05"),
+    ('riik', 'riigi_kood', 'Riigi klassifikaatori lühikood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK, mittetühi domeen.', 'EE'),
+    ('riik', 'nimetus', 'Riigi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Eesti'),
+    ('riik', 'on_aktiivne', 'Tunnus, kas riiki saab kasutada uute isikute juures. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('isiku_seisundi_liik', 'isiku_seisundi_liigi_kood', 'Isiku seisundi klassifikaatori kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'AKTIIVNE'),
+    ('isiku_seisundi_liik', 'nimetus', 'Isiku seisundi kasutajale loetav nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Aktiivne'),
+    ('isiku_seisundi_liik', 'on_aktiivne', 'Tunnus, kas seisundit saab kasutada. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('tootaja_seisundi_liik', 'tootaja_seisundi_liigi_kood', 'Töötaja seisundi klassifikaatori kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'AKTIIVNE'),
+    ('tootaja_seisundi_liik', 'nimetus', 'Töötaja seisundi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Aktiivne'),
+    ('tootaja_seisundi_liik', 'on_aktiivne', 'Tunnus, kas töötaja seisundit saab kasutada. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('tootaja_roll', 'tootaja_rolli_kood', 'Töötaja rolli lühikood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'TREENER, JUHATAJA'),
+    ('tootaja_roll', 'nimetus', 'Rolli nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Treener'),
+    ('tootaja_roll', 'on_aktiivne', 'Tunnus, kas rolli saab töötajale määrata. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('tootaja_roll', 'kirjeldus', 'Rolli sisuline kirjeldus. Andmetüüp: TEXT. Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Treener märgib osalemist.'),
+    ('treeninguliigi_seisundi_liik', 'treeninguliigi_seisundi_kood', 'Treeninguliigi elutsükli seisundi kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'KOOST, AKTIIVNE, MITTEAKT, LOPETATUD'),
+    ('treeninguliigi_seisundi_liik', 'nimetus', 'Treeninguliigi seisundi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Aktiivne'),
+    ('treeninguliigi_seisundi_liik', 'on_aktiivne', 'Tunnus, kas seisund on kasutatav. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('treeningukorra_seisundi_liik', 'treeningukorra_seisundi_kood', 'Treeningukorra elutsükli seisundi kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'KAVAND, AVATUD, SULETUD, TOIMUNUD, TYHIST'),
+    ('treeningukorra_seisundi_liik', 'nimetus', 'Treeningukorra seisundi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Avatud'),
+    ('treeningukorra_seisundi_liik', 'on_aktiivne', 'Tunnus, kas seisund on kasutatav. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('treeningukorra_seisundi_liik', 'kirjeldus', 'Treeningukorra seisundi tähendus. Andmetüüp: TEXT. Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Klient saab registreeruda.'),
+    ('registreeringu_seisundi_liik', 'registreeringu_seisundi_kood', 'Registreeringu seisundi kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'KINNIT, OOTEJRK, TYH_KL, TYH_SYS'),
+    ('registreeringu_seisundi_liik', 'nimetus', 'Registreeringu seisundi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Kinnitatud'),
+    ('registreeringu_seisundi_liik', 'on_aktiivne', 'Tunnus, kas seisund on kasutatav. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('registreeringu_seisundi_liik', 'kirjeldus', 'Registreeringu seisundi tähendus. Andmetüüp: TEXT. Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Kliendil on kinnitatud koht.'),
+    ('treeningu_kategooria_tyyp', 'treeningu_kategooria_tyybi_kood', 'Treeningukategooria tüübi kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'INTENS'),
+    ('treeningu_kategooria_tyyp', 'nimetus', 'Kategooria tüübi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Intensiivsus'),
+    ('treeningu_kategooria_tyyp', 'on_aktiivne', 'Tunnus, kas kategooria tüüpi saab kasutada. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('treeningu_kategooria', 'treeningu_kategooria_kood', 'Treeningukategooria kood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'JOUD'),
+    ('treeningu_kategooria', 'treeningu_kategooria_tyybi_kood', 'Kategooria tüübi viide. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK treeningu_kategooria_tyyp.', 'INTENS'),
+    ('treeningu_kategooria', 'nimetus', 'Treeningukategooria nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: mittetühi väärtus.', 'Jõutreening'),
+    ('treeningu_kategooria', 'on_aktiivne', 'Tunnus, kas kategooriat saab treeninguliigile määrata. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('isik', 'e_meil', 'Isiku e-posti aadress ja peamine identifikaator. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK, domeen nõuab @ märki.', 'klient@jousaal.ee'),
+    ('isik', 'isikukood', 'Isiku riiklik või organisatsiooniline isikukood. Andmetüüp: VARCHAR(50). Nullitavus: valikuline. Piirangud: unikaalne, kui väärtus on olemas.', '50101010001'),
+    ('isik', 'riigi_kood', 'Isiku riigi viide. Andmetüüp: kood_10. Nullitavus: valikuline. Piirangud: FK riik, ON UPDATE CASCADE.', 'EE'),
+    ('isik', 'isiku_seisundi_liigi_kood', 'Isiku kasutatavuse seisund. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK isiku_seisundi_liik.', 'AKTIIVNE'),
+    ('isik', 'synni_kp', 'Isiku sünnikuupäev. Andmetüüp: DATE. Nullitavus: valikuline. Piirangud: ei tohi olla tulevikus.', '1990-05-20'),
+    ('isik', 'registreerimise_aeg', 'Isiku andmete loomise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP.', '2026-05-26 10:00'),
+    ('isik', 'viimase_muutmise_aeg', 'Isiku viimase muutmise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: trigger uuendab UPDATE korral.', '2026-05-26 10:05'),
+    ('isik', 'eesnimi', 'Isiku eesnimi või ainus nimekomponent. Andmetüüp: VARCHAR(100). Nullitavus: valikuline. Piirangud: vähemalt üks nimekomponent peab olema olemas, antud väärtus ei tohi olla tühi.', 'Mari'),
+    ('isik', 'perenimi', 'Isiku perekonnanimi. Andmetüüp: VARCHAR(100). Nullitavus: valikuline. Piirangud: vähemalt üks nimekomponent peab olema olemas, antud väärtus ei tohi olla tühi.', 'Tamm'),
+    ('isik', 'elukoht', 'Isiku elukoha vabatekstiline kirjeldus. Andmetüüp: VARCHAR(255). Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Tallinn'),
+    ('kasutajakonto', 'e_meil', 'Konto e-posti aadress ja seos isikuga. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK, FK isik ON DELETE/UPDATE CASCADE.', 'klient@jousaal.ee'),
+    ('kasutajakonto', 'parool', 'Parooli räsi. Andmetüüp: VARCHAR(255). Nullitavus: kohustuslik. Piirangud: mittetühi; selget parooli ei salvestata.', 'pbkdf2:sha256:...'),
+    ('kasutajakonto', 'on_aktiivne', 'Tunnus, kas kontoga saab sisse logida. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('klient', 'e_meil', 'Kliendi konto e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK, FK kasutajakonto ON DELETE/UPDATE CASCADE.', 'klient@jousaal.ee'),
+    ('klient', 'registreerimise_aeg', 'Kliendiks registreerimise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP.', '2026-05-20 09:00'),
+    ('klient', 'on_aktiivne', 'Tunnus, kas klient saab registreeruda treeningukordadele. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('tootaja', 'e_meil', 'Töötaja konto e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK, FK kasutajakonto ON DELETE/UPDATE CASCADE.', 'treener@jousaal.ee'),
+    ('tootaja', 'tootaja_seisundi_liigi_kood', 'Töötaja seisund. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK tootaja_seisundi_liik.', 'AKTIIVNE'),
+    ('tootaja_rolli_omamine', 'tootaja_e_meil', 'Rolli omava töötaja e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK osa, FK tootaja ON DELETE/UPDATE CASCADE.', 'treener@jousaal.ee'),
+    ('tootaja_rolli_omamine', 'tootaja_rolli_kood', 'Töötajale määratud roll. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK osa, FK tootaja_roll.', 'TREENER'),
+    ('tootaja_rolli_omamine', 'alguse_aeg', 'Rolli kehtivuse algus. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: PK osa.', '2026-01-01 00:00'),
+    ('tootaja_rolli_omamine', 'kehtivuse_lopu_aeg', 'Rolli kehtivuse lõpp. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: valikuline. Piirangud: lõpp peab olema pärast algust; aktiivsele rollile osaline unikaalne indeks.', '2026-12-31 23:59'),
+    ('treeninguliik', 'treeninguliigi_id', 'Treeninguliigi sisemine identifikaator. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, sequence vaikeväärtus, positiivne väärtus.', '1000'),
+    ('treeninguliik', 'nimetus', 'Treeninguliigi nimi. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: UNIQUE, mittetühi.', 'Jooga algajatele'),
+    ('treeninguliik', 'kirjeldus', 'Treeninguliigi sisu kirjeldus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Rahulik joogatund algajatele.'),
+    ('treeninguliik', 'kestus_minutites', 'Tüüpiline kestus minutites. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK 15 kuni 240.', '60'),
+    ('treeninguliik', 'vajalik_varustus', 'Kliendile nähtav varustuse lühikirjeldus. Andmetüüp: VARCHAR(255). Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Matid'),
+    ('treeninguliik', 'treeninguliigi_seisundi_kood', 'Treeninguliigi seisund. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK treeninguliigi_seisundi_liik, vaikeväärtus KOOST.', 'AKTIIVNE'),
+    ('treeninguliik', 'registreerija_e_meil', 'Treeninguliigi loonud töötaja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja.', 'juhataja@jousaal.ee'),
+    ('treeninguliik', 'viimase_muutja_e_meil', 'Treeninguliigi viimati muutnud töötaja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja.', 'juhataja@jousaal.ee'),
+    ('treeninguliik', 'registreerimise_aeg', 'Treeninguliigi loomise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP.', '2026-05-20 09:00'),
+    ('treeninguliik', 'viimase_muutmise_aeg', 'Treeninguliigi viimase muutmise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: trigger uuendab UPDATE korral.', '2026-05-20 09:05'),
+    ('treeninguliigi_kategooria_omamine', 'treeninguliigi_id', 'Kategooriat omava treeninguliigi viide. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK osa, FK treeninguliik.', '1000'),
+    ('treeninguliigi_kategooria_omamine', 'treeningu_kategooria_kood', 'Treeninguliigile määratud kategooria. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK osa, FK treeningu_kategooria.', 'JOUD'),
+    ('varustus', 'varustuse_kood', 'Varustuse lühikood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'MATID'),
+    ('varustus', 'nimetus', 'Varustuse nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: UNIQUE, mittetühi.', 'Treeningmatid'),
+    ('varustus', 'kirjeldus', 'Varustuse kirjeldus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Joogatunnis kasutatav matt.'),
+    ('varustus', 'on_aktiivne', 'Tunnus, kas varustust saab nõuetes ja ruumides kasutada. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('treeninguliigi_varustuse_noue', 'treeninguliigi_id', 'Treeninguliik, millele nõue kehtib. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK osa, FK treeninguliik.', '1000'),
+    ('treeninguliigi_varustuse_noue', 'varustuse_kood', 'Nõutud varustuse viide. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK osa, FK varustus.', 'MATID'),
+    ('treeninguliigi_varustuse_noue', 'minimaalne_kogus', 'Treeninguliigile vajalik minimaalne kogus. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0.', '6'),
+    ('treeninguliigi_varustuse_noue', 'on_kohustuslik', 'Tunnus, kas nõude rikkumine keelab planeerimise. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('treeninguliigi_varustuse_noue', 'markus', 'Nõude täpsustav märkus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Matid peavad olema terved.'),
+    ('ruum', 'ruumi_kood', 'Ruumi lühikood. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK.', 'SAAL_A'),
+    ('ruum', 'nimetus', 'Ruumi nimetus. Andmetüüp: VARCHAR(100). Nullitavus: kohustuslik. Piirangud: UNIQUE, mittetühi.', 'Saal A'),
+    ('ruum', 'asukoht', 'Ruumi asukoha kirjeldus. Andmetüüp: VARCHAR(255). Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', '2. korrus'),
+    ('ruum', 'mahutavus', 'Ruumi maksimaalne osalejate arv. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0.', '12'),
+    ('ruum', 'on_aktiivne', 'Tunnus, kas ruumi saab treeningukorrale määrata. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: vaikeväärtus TRUE.', 'TRUE/FALSE'),
+    ('ruumi_varustuse_omamine', 'ruumi_kood', 'Ruum, kus varustus asub. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK osa, FK ruum ON DELETE/UPDATE CASCADE.', 'SAAL_A'),
+    ('ruumi_varustuse_omamine', 'varustuse_kood', 'Ruumis oleva varustuse viide. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: PK osa, FK varustus ON DELETE/UPDATE CASCADE.', 'MATID'),
+    ('ruumi_varustuse_omamine', 'kogus', 'Ruumis oleva varustuse kogus. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0.', '12'),
+    ('ruumi_varustuse_omamine', 'markus', 'Ruumi varustuse täpsustav märkus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Kapis ukse kõrval.'),
+    ('treeneri_padevus', 'tootaja_e_meil', 'Pädeva treeneri e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: PK osa, FK tootaja ON DELETE/UPDATE CASCADE; trigger nõuab TREENER rolli.', 'treener@jousaal.ee'),
+    ('treeneri_padevus', 'treeninguliigi_id', 'Treeninguliik, mida treener võib juhendada. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK osa, FK treeninguliik.', '1000'),
+    ('treeneri_padevus', 'alates', 'Pädevuse alguskuupäev. Andmetüüp: DATE. Nullitavus: kohustuslik. Piirangud: CHECK kuni puudub või kuni >= alates.', '2026-01-01'),
+    ('treeneri_padevus', 'kuni', 'Pädevuse lõppkuupäev. Andmetüüp: DATE. Nullitavus: valikuline. Piirangud: kui väärtus on antud, ei tohi see olla enne algust.', '2026-12-31'),
+    ('treeningukord', 'treeningukorra_id', 'Kalendris toimuva treeningukorra identifikaator. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, sequence vaikeväärtus, positiivne väärtus.', '5001'),
+    ('treeningukord', 'treeninguliigi_id', 'Treeninguliik, mille alusel kord toimub. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: FK treeninguliik.', '1000'),
+    ('treeningukord', 'treener_e_meil', 'Treeningukorda juhendav treener. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja; trigger kontrollib rolli, pädevust ja kattuvusi.', 'treener@jousaal.ee'),
+    ('treeningukord', 'ruumi_kood', 'Ruum, kus kord toimub. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK ruum; trigger kontrollib mahutavust, varustust ja ruumi kattuvusi.', 'SAAL_A'),
+    ('treeningukord', 'alguse_aeg', 'Treeningukorra alguse aeg. Andmetüüp: ajakava_ajahetk. Nullitavus: kohustuslik. Piirangud: peab olema enne lõppu.', '2026-06-01 18:00'),
+    ('treeningukord', 'lopu_aeg', 'Treeningukorra lõpu aeg. Andmetüüp: ajakava_ajahetk. Nullitavus: kohustuslik. Piirangud: peab olema pärast algust.', '2026-06-01 19:00'),
+    ('treeningukord', 'registreerimise_lopp', 'Registreerimise lõpptähtaeg. Andmetüüp: ajakava_ajahetk. Nullitavus: kohustuslik. Piirangud: peab olema enne treeningukorra algust.', '2026-06-01 17:00'),
+    ('treeningukord', 'tyhistamise_lopp', 'Kliendi tühistamise lõpptähtaeg. Andmetüüp: ajakava_ajahetk. Nullitavus: kohustuslik. Piirangud: peab olema hiljemalt treeningukorra alguseks.', '2026-06-01 16:00'),
+    ('treeningukord', 'maksimaalne_osalejate_arv', 'Selle korra osalejate piirarv. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0; trigger ei luba ületada ruumi mahutavust.', '10'),
+    ('treeningukord', 'treeningukorra_seisundi_kood', 'Treeningukorra seisund. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK treeningukorra_seisundi_liik; trigger lubab ainult määratud siirdeid.', 'KAVAND/AVATUD/SULETUD/TOIMUNUD/TYHIST'),
+    ('treeningukord', 'looja_e_meil', 'Treeningukorra loonud juhataja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja.', 'juhataja@jousaal.ee'),
+    ('treeningukord', 'viimase_muutja_e_meil', 'Treeningukorra viimati muutnud töötaja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja.', 'juhataja@jousaal.ee'),
+    ('treeningukord', 'loomise_aeg', 'Treeningukorra loomise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP.', '2026-05-26 10:00'),
+    ('treeningukord', 'viimase_muutmise_aeg', 'Treeningukorra viimase muutmise ajatempel. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: trigger uuendab UPDATE korral.', '2026-05-26 10:05'),
+    ('treeningukord', 'tyhistamise_pohjus', 'Treeningukorra tühistamise põhjus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: TYHIST seisundis peab põhjus olema sisuline; antud väärtus ei tohi olla tühi.', 'Treener haigestus.'),
+    ('registreering', 'registreeringu_id', 'Registreeringu identifikaator. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, sequence vaikeväärtus, positiivne väärtus.', '9001'),
+    ('registreering', 'treeningukorra_id', 'Treeningukord, millele klient registreerub. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: FK treeningukord.', '5001'),
+    ('registreering', 'klient_e_meil', 'Registreeruva kliendi e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK klient; osaline UNIQUE keelab mitu aktiivset registreeringut samale korrale.', 'klient@jousaal.ee'),
+    ('registreering', 'registreeringu_seisundi_kood', 'Registreeringu seisund. Andmetüüp: kood_10. Nullitavus: kohustuslik. Piirangud: FK registreeringu_seisundi_liik; trigger lubab ainult määratud siirdeid.', 'KINNIT/OOTEJRK/TYH_KL/TYH_SYS'),
+    ('registreering', 'registreerimise_aeg', 'Registreeringu loomise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP.', '2026-05-26 11:00'),
+    ('registreering', 'tyhistamise_aeg', 'Registreeringu tühistamise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: valikuline. Piirangud: täidetakse tühistamise korral.', '2026-05-27 09:00'),
+    ('registreering', 'edendamise_aeg', 'Ootejärjekorrast kinnitatuks edendamise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: valikuline. Piirangud: täidetakse OOTEJRK -> KINNIT siirdel.', '2026-05-27 09:05'),
+    ('registreering', 'tyhistamise_pohjus', 'Registreeringu tühistamise põhjus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Klient haigestus.'),
+    ('ootejarjekorra_koht', 'registreeringu_id', 'Ootejärjekorras oleva registreeringu viide. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, FK registreering ON DELETE CASCADE.', '9002'),
+    ('ootejarjekorra_koht', 'treeningukorra_id', 'Treeningukord, mille ootejärjekorras koht asub. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: FK treeningukord; UNIQUE koos ootejarjekorra_nr.', '5001'),
+    ('ootejarjekorra_koht', 'ootejarjekorra_nr', 'Kliendi järjekorranumber sama treeningukorra ootejärjekorras. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0, treeningukorra piires unikaalne.', '1'),
+    ('osalemine', 'registreeringu_id', 'Registreering, mille kohta osalemist märgitakse. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, FK registreering ON DELETE CASCADE; trigger nõuab KINNIT registreeringut.', '9001'),
+    ('osalemine', 'on_osalenud', 'Tunnus, kas klient osales treeningukorral. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: väärtus TRUE või FALSE.', 'TRUE/FALSE'),
+    ('osalemine', 'markija_e_meil', 'Osalemise märkinud treener või juhataja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja; funktsioon kontrollib rolli.', 'treener@jousaal.ee'),
+    ('osalemine', 'markimise_aeg', 'Osalemise märkimise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP; ei tohi olla enne treeningukorra algust.', '2026-06-01 19:05'),
+    ('osalemine', 'markus', 'Osalemise kohta käiv märkus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Osales kogu treeningus.'),
 ]
 
 
 POSTGRESQL_REQUIREMENTS = [
-    ("Domeenid", "SQL loob domeenid kood_10 ja e_meil_aadress."),
+    ("Domeenid", "SQL loob korduvkasutatavad domeenid kood_10, e_meil_aadress ja ajakava_ajahetk."),
     ("Tabelid", "SQL loob üle seitsme tabeli, sh klient, treeninguliik, ruum, varustus, treeningukord, registreering ja osalemine."),
     ("Vaated", "SQL loob vähemalt neli vaadet; projektis on üheksa rakenduse, põhiandmete ja aruandluse vaadet."),
     ("Triggerid", "SQL loob triggerid rolli, seisundimuutuste, invariandi ja osalemise kontrolliks."),
@@ -711,6 +796,11 @@ def add_report_content(doc: Document) -> None:
         "Allsüsteemi eesmärk on hallata rühmatreeningute tegelikku tööprotsessi: juhataja planeerib konkreetsed treeningukorrad, "
         "avab registreerimise, klient registreerub või satub ootejärjekorda, süsteem edendab vabanenud kohale esimese ootel kliendi "
         "ning treener märgib pärast tundi osalemise.",
+        "Käesolev projekt käsitleb jõusaali infosüsteemi rühmatreeningute funktsionaalset allsüsteemi. Projekti skoobis on "
+        "rühmatreeningute, treeningukordade, treenerite, klientide, registreeringute ja osalemiste haldamine. Hinnakirjad, "
+        "kampaaniad, õnnetused, sissepääsud ja hooldustööd kuuluvad jõusaali terviksüsteemi teistesse allsüsteemidesse ning "
+        "neid käesolevas töös ei modelleerita. Selline piiritlus võimaldab keskenduda valitud allsüsteemi andmemudelile, "
+        "ärireeglitele, andmebaasioperatsioonidele ja kasutusjuhtudele.",
         "Varasem treeningukaardi keskne lahendus oli liiga lähedal töövihiku näitele, sest selle põhisisu oli treeningu nimetuse, "
         "kategooria ja seisundi haldus. Uues lahenduses ei ole põhiobjekt kirjelduskaart, vaid kalendris toimuv treeningukord koos "
         "ruumi, treeneri pädevuse, mahutavuse, registreeringute, ootejärjekorra ja osalemisega.",
@@ -735,6 +825,13 @@ def add_report_content(doc: Document) -> None:
     ])
     doc.add_heading("1.1.3 Lausendid", level=3)
     add_bullets(doc, STRATEGIC_STATEMENTS)
+    doc.add_heading("1.1.3.1 Skoobi piiritlus", level=4)
+    add_table(doc, state, "Skoobi piirid jõusaali terviksüsteemis", ["Valdkond", "Otsus", "Põhjendus"], [
+        ("Rühmatreeningud ja treeningukorrad", "Skoobis", "Valitud funktsionaalse allsüsteemi keskne tööprotsess."),
+        ("Treenerid, kliendid, registreeringud ja osalemised", "Skoobis", "Need objektid on vajalikud treeningukorra planeerimiseks, täitumuse kontrolliks ja kohalolu märkimiseks."),
+        ("Seisundid, rollid ja klassifikaatorid", "Skoobis", "Need annavad kontrollitud lubatud väärtused ja õiguste aluse."),
+        ("Sissepääsud, hinnakirjad, kampaaniad, õnnetused ja hooldustööd", "Väljaspool skoopi", "Need on jõusaali terviksüsteemi teised võimalikud registrid, kuid ei ole rühmatreeningute registreerimise ja osalemise töövoo jaoks vajalikud."),
+    ])
     doc.add_heading("1.1.4 Põhiobjektid", level=3)
     add_table(doc, state, "Terviksüsteemi põhiobjektid", ["Objekt", "Selgitus"], CORE_OBJECTS)
     doc.add_heading("1.1.5 Mõned põhiprotsessid ja neid käivitavad sündmused", level=3)
@@ -827,11 +924,11 @@ def add_report_content(doc: Document) -> None:
     ])
     add_table(doc, state, "Täpsustatud kasutusjuhud ja andmebaasioperatsioonid", ["Kasutusjuht", "Lugemisoperatsioonid", "Muutmisoperatsioonid"], [
         ("Planeeri treeningukord", "treeninguliik, ruum, treeneri_padevus, varustus, ruumi_varustuse_omamine, treeninguliigi_varustuse_noue", "fn_planeeri_treeningukord"),
-        ("Ava/sulge/lõpeta/tühista treeningukord", "v_juhataja_treeningukordade_ulevaade", "fn_ava_treeningukord, fn_sulge_treeningukord, fn_lopeta_treeningukord, fn_tyhista_treeningukord"),
-        ("Registreeru treeningukorrale", "v_avalikud_treeningukorrad", "fn_registreeri_klient_treeningukorrale"),
-        ("Tühista registreering", "v_kliendi_registreeringud", "fn_tyhista_registreering ja fn_edenda_ootejarjekorrast"),
-        ("Märgi osalemine", "v_treeningukorra_osalejad", "fn_marki_osalemine"),
-        ("Vaata aruandeid", "v_treeningute_taituvuse_statistika", "-"),
+        ("Ava/sulge/lõpeta/tühista treeningukord", "juhataja_treeningukordade_ulevaade", "fn_ava_treeningukord, fn_sulge_treeningukord, fn_lopeta_treeningukord, fn_tyhista_treeningukord"),
+        ("Registreeru treeningukorrale", "avalikud_treeningukorrad", "fn_registreeri_klient_treeningukorrale"),
+        ("Tühista registreering", "kliendi_registreeringud", "fn_tyhista_registreering ja fn_edenda_ootejarjekorrast"),
+        ("Märgi osalemine", "treeningukorra_osalejad", "fn_marki_osalemine"),
+        ("Vaata aruandeid", "treeningute_taituvuse_statistika", "-"),
     ])
     add_paragraphs(doc, [
         "Järgnevalt on samad kasutusjuhud esitatud laiendatud formaadis. Kirjeldused seovad tegutseja eesmärgi, eel- ja järeltingimused, tüüpilise sündmuste järjestuse, alternatiivid ning andmebaasioperatsioonid.",
@@ -854,9 +951,9 @@ def add_report_content(doc: Document) -> None:
     add_table(doc, state, "Olemitüüpide definitsioonid", ["Olemitüübi nimi", "Kuuluvus registrisse", "Definitsioon"], ENTITY_DEFINITIONS)
     doc.add_heading("2.2.1.3 Atribuutide definitsioonid", level=4)
     add_paragraphs(doc, [
-        "Atribuutide definitsioonides on loogelistes sulgudes esitatud piirangud. Tähis @Kohustuslik tähendab, et väärtus peab olema olemas; @Valikuline tähendab, et väärtus võib ärireegliga lubatud juhul puududa.",
+        "Atribuutide definitsioonid katavad valitud allsüsteemi põhitabelid, seostabelid, seisundite ja rollide klassifikaatorid, välisvõtmed, auditi ajatemplid ning valikulised märkuseväljad. Iga rea kirjeldus seob atribuudi tähenduse SQL-andmetüübi, nullitavuse ja peamiste piirangutega.",
     ])
-    add_table(doc, state, "Atribuutide definitsioonid", ["Olemitüüp", "Atribuut", "Definitsioon", "Näiteväärtus"], ATTRIBUTE_DEFINITIONS)
+    add_table(doc, state, "Atribuutide definitsioonid", ["Olemitüüp", "Atribuut", "Tähendus, andmetüüp ja piirangud", "Näide või lubatud väärtused"], ATTRIBUTE_DEFINITIONS)
     doc.add_heading("2.2.2 Andmebaasioperatsioonide lepingud", level=3)
     add_table(doc, state, "Andmebaasirutiinide lepingud", ["Rutiin", "Tegutseja", "Eeltingimused, järeltingimused ja vead"], ROUTINES)
     add_paragraphs(doc, [
@@ -897,6 +994,9 @@ def add_report_content(doc: Document) -> None:
     doc.add_heading("3 Füüsiline disain", level=1)
     doc.add_heading("3.1 Rühmatreeningute funktsionaalse allsüsteemi vajatavate registrite füüsiline disain", level=2)
     add_figure(doc, state, *DIAGRAMS[7])
+    add_paragraphs(doc, [
+        "Paketi süsteem on esitatud EAP mudelis paketidiagrammina „Rühmatreeningute pädevusalad ja registrid”. DOCX-is toetavad sama jaotust süsteemi kontekst, õiguste ja andmebaasirutiinide diagramm ning rakenduse ja andmebaasi arhitektuuri diagramm.",
+    ])
     add_table(doc, state, "Olulisemad tabelid ja piirangud", ["Tabel", "Eesmärk", "Võtmed ja piirangud"], TABLES)
     add_table(doc, state, "Rakenduse ja aruandluse vaated", ["Vaade", "Kasutus"], VIEWS)
     add_figure(doc, state, *DIAGRAMS[8])
@@ -909,11 +1009,11 @@ def add_report_content(doc: Document) -> None:
 
     doc.add_heading("4 Realisatsioon PostgreSQLis", level=1)
     doc.add_heading("4.1 Andmebaasi loomine", level=2)
-    add_paragraphs(doc, ["Andmebaas luuakse PostgreSQLis. Esitatav skript eeldab olemasolevat andmebaasi ning loob vajalikud objektid public skeemis."])
+    add_paragraphs(doc, ["Andmebaas luuakse PostgreSQLis. Esitatav skript eeldab hindamiseks eraldatud olemasolevat andmebaasi, loob public skeemi uuesti ning lisab sinna vajalikud objektid."])
     doc.add_heading("4.2 Skeemid", level=2)
     add_paragraphs(doc, ["Käesolevas prototüübis kasutatakse public skeemi. Rakenduse ja vaatleja rollidele antakse õigused sellele skeemile."])
     doc.add_heading("4.3 Domeenid", level=2)
-    add_paragraphs(doc, ["SQL loob domeenid kood_10 ja e_meil_aadress, mida kasutatakse klassifikaatorikoodide ja e-posti aadresside järjepidevaks kirjeldamiseks."])
+    add_paragraphs(doc, ["SQL loob korduvkasutatavad domeenid kood_10, e_meil_aadress ja ajakava_ajahetk. Domeenid kirjeldavad klassifikaatorikoode, e-posti aadressi salvestust ning ajakava ajatemplite vahemikku. Isiku nimeosad on tabelis piiritletud lühikesed tekstiveerud koos mittetühjuse kontrollidega."])
     doc.add_heading("4.4 Tabelid ja arvujada generaatorid", level=2)
     add_table(doc, state, "PostgreSQL tabelid ja põhipiirangud", ["Tabel", "Eesmärk", "Võtmed ja piirangud"], TABLES)
     doc.add_heading("4.5 Vaated", level=2)
@@ -936,10 +1036,10 @@ def add_report_content(doc: Document) -> None:
     doc.add_heading("4.9 Rutiinid", level=2)
     add_table(doc, state, "Rakendusest kutsutavad rutiinid", ["Rutiin", "Tegutseja", "Eeltingimused, järeltingimused ja vead"], ROUTINES)
     doc.add_heading("4.9.1 Rutiinide testimise laused", level=3)
-    add_paragraphs(doc, ["Validaatori live SQL režiim kutsub registreerimise, tühistamise, ootejärjekorra edendamise ja treeningukorra planeerimise funktsioone. Varustuse sobivust kontrollitakse fn_ruum_sobib_treeninguliigile abifunktsiooni kaudu. SQL skript sisaldab ka demoandmeid, mille põhjal saab rutiine käsitsi välja kutsuda."])
+    add_paragraphs(doc, ["Validaatori live SQL režiim kutsub registreerimise, tühistamise, ootejärjekorra edendamise ja treeningukorra planeerimise funktsioone. Varustuse sobivust kontrollitakse on_ruum_sobiv_treeninguliigile abifunktsiooni kaudu. SQL skript sisaldab ka demoandmeid, mille põhjal saab rutiine käsitsi välja kutsuda."])
     doc.add_heading("4.10 Indeksid", level=2)
     doc.add_heading("4.10.1 Välisvõtmete veergudele lisatavad indeksid", level=3)
-    add_paragraphs(doc, ["SQL lisab indeksid välisvõtmete veergudele, sh treeningukord.treeninguliigi_kood, treeningukord.treener_e_meil, treeningukord.ruumi_kood, registreering.treeningukorra_kood, registreering.klient_e_meil ning varustuse seostabelite varustuse_kood veerud."])
+    add_paragraphs(doc, ["SQL lisab indeksid välisvõtmete veergudele, sh treeningukord.treeninguliigi_id, treeningukord.treener_e_meil, treeningukord.ruumi_kood, registreering.treeningukorra_id, registreering.klient_e_meil ning varustuse seostabelite varustuse_kood veerud."])
     doc.add_heading("4.10.2 Täiendavad sekundaarsed indeksid", level=3)
     add_paragraphs(doc, ["Täiendav osaline unikaalne indeks uq_registreering_aktiivne_klient_kord keelab sama kliendi mitu aktiivset registreeringut samale treeningukorrale."])
     doc.add_heading("4.10.3 Funktsioonil põhinevad indeksid", level=3)
@@ -953,15 +1053,15 @@ def add_report_content(doc: Document) -> None:
     doc.add_heading("4.14 Andmebaasi statistika kogumine", level=2)
     add_paragraphs(doc, ["Andmebaasi statistika kogumiseks käivitab skript pärast objektide ja testandmete loomist käsu ANALYZE. See loob optimeerijale värske statistika demoandmete põhjal."])
     doc.add_heading("4.15 Päringu täitmisplaani näide", level=2)
-    add_paragraphs(doc, ["Päringuplaani kontrolliks sobib näiteks EXPLAIN SELECT * FROM v_avalikud_treeningukorrad WHERE vabu_kohti > 0. Vaade kasutab treeningukorra ja registreeringu indekseid ning koondab kinnitatud/ootejärjekorra loendusi."])
+    add_paragraphs(doc, ["Päringuplaani kontrolliks sobib näiteks EXPLAIN SELECT treeningukorra_id, treeninguliigi_nimetus, vabu_kohti FROM avalikud_treeningukorrad WHERE vabu_kohti > 0. Vaade kasutab treeningukorra ja registreeringu indekseid ning koondab kinnitatud/ootejärjekorra loendusi."])
     doc.add_heading("4.16 Rollid ja kasutajad", level=2)
     add_paragraphs(doc, ["SQL proovib luua rollid jousaali_rakendus ja jousaali_vaatleja. Kui kasutajal puudub CREATE ROLE õigus, annab skript NOTICE teate ega katkesta põhiskeemi loomist."])
     doc.add_heading("4.17 Üleliigsete õiguste äravõtmine", level=2)
-    add_paragraphs(doc, ["Skript proovib eemaldada PUBLIC rollilt public skeemi CREATE õiguse. Kui käivitajal puudub selleks õigus, väljastatakse NOTICE ning põhiskeemi loomist ei katkestata. Prototüübi lihtsustamiseks jääb rakenduse rollile tabelite kirjutusõigus, kuid tavapärased töövood kasutavad funktsioone ja ärireeglid jäävad andmebaasis jõusse."])
+    add_paragraphs(doc, ["Skript proovib eemaldada PUBLIC rollilt public skeemi CREATE õiguse. Kui käivitajal puudub selleks õigus, väljastatakse NOTICE ning põhiskeemi loomist ei katkestata. Rakenduse roll ei saa tavapärastes õigustes põhitabelitesse otse INSERT, UPDATE või DELETE käske teha; andmeid muutvad töövood käivad PostgreSQL funktsioonide kaudu."])
     doc.add_heading("4.18 Õiguste jagamine", level=2)
     add_paragraphs(doc, ["Rakenduse roll saab skeemi kasutusõiguse, tabelite lugemisõiguse, järjestuste kasutusõiguse ja funktsioonide käivitamise õiguse. Vaatleja roll saab lugemisõiguse."])
     doc.add_heading("4.19 Andmebaasiobjektide kustutamine", level=2)
-    add_paragraphs(doc, ["Kustutamislaused tuleb käivitada vastupidises sõltuvusjärjekorras: õigused, vaated, triggerid, funktsioonid, tabelid, domeenid, rollid. Esitatav loomisskript sisaldab kustutamise näidisplokki kommentaaridena, et tavapärane käivitamine ei kustutaks loodud hindamisandmebaasi."])
+    add_paragraphs(doc, ["Kustutamislaused tuleb käivitada vastupidises sõltuvusjärjekorras: õigused, vaated, triggerid, funktsioonid, tabelid, domeenid, rollid. Esitatav loomisskript alustab public skeemi taasloomisega, mistõttu seda tuleb käivitada ainult hindamiseks eraldatud andmebaasis. Täiendav kustutamise näidisplokk on skripti lõpus kommentaaridena."])
 
     doc.add_heading("4.20 Rakenduse prototüüp", level=2)
     add_paragraphs(doc, [
@@ -989,6 +1089,7 @@ def add_report_content(doc: Document) -> None:
         "treeneri, registreeringute, ootejärjekorra ja osalemisega. Andmebaas kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, "
         "kohustuslikku varustust, registreerimise tähtaegu, seisundimuutusi ja ootejärjekorra edendamist.",
         "Lisaks mahutavusele ja pädevusele kontrollib andmebaas ka seda, et treeningukorra ruumis oleks treeninguliigi jaoks nõutav varustus. See ei muuda projekti inventarihalduseks, vaid lisab ajakava planeerimisele sisulise ruumi sobivuse reegli.",
+        "Vaba teema nõue on täidetud valitud allsüsteemi sügavuse kaudu: töös on eraldi kasutajarollid, mitu seotud põhiobjekti, seisundimudelid, ootejärjekorra transaktsiooniline edendamine, ruumi ja treeneri kattuvuste kontroll, pädevuse kontroll, mahutavuse kontroll ning rollipõhised vaated. Seetõttu ei ole vaja modelleerida kõiki jõusaali võimalikke ärivaldkondi.",
         "Vaba teema tugevus tuleb sellest, et protsessil on mitu osalist, mitu töökohta ja mitu üksteisest sõltuvat ärireeglit. "
         "Juhataja, treener ja klient näevad erinevaid vaateid ja saavad teha erinevaid toiminguid, kuid sisulised reeglid paiknevad andmebaasis.",
     ])

@@ -14,7 +14,7 @@ sequenceDiagram
         T->>E: fn_edenda_ootejarjekorrast(treeningukord)
         E->>R: lukusta esimene OOTEJRK rida
         E->>R: muuda OOTEJRK -> KINNIT, märgi edendamise aeg
-        E-->>T: edendatud registreeringu kood
+        E-->>T: edendatud registreeringu id
     else tühistati ootejärjekorra rida
         T-->>F: edendamist ei ole
     end

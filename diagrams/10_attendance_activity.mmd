@@ -1,13 +1,35 @@
 flowchart TB
-    START([Treener valib enda treeningukorra osalejad])
-    ROUTE["Flask POST /trainer/sessions/&lt;kood&gt;/attendance"]
-    FN["fn_marki_osalemine"]
-    CHECKS["DB kontrollid:\nroll sobib\nseisund SULETUD või TOIMUNUD\nalguse_aeg on möödas\nregistreering on KINNIT\nkord ei ole TYHIST"]
-    OK{"Kõik tingimused täidetud?"}
-    SAVE["Lisa või uuenda\nosalemine"]
-    ERR["Tõsta eestikeelne DB viga"]
-    VIEW["v_treeningukorra_osalejad\nnäitab tulemust"]
+    subgraph LANE_T["Treener või juhataja"]
+        START((Algus))
+        CHOOSE["Valib enda või hallatava treeningukorra"]
+        MARK["Märgib on_osalenud väärtused"]
+        ENDOK((Lõpp))
+        ENDERR((Lõpp veaga))
+    end
 
-    START --> ROUTE --> FN --> CHECKS --> OK
-    OK -->|"[jah]"| SAVE --> VIEW
-    OK -->|"[ei: vale tegutseja, vale seisund,\nliiga vara või registreering ei ole KINNIT]"| ERR
+    subgraph LANE_F["Flask rakendus"]
+        ROSTER["Loeb treeningukorra_osalejad vaadet"]
+        ROUTE["POST /trainer/sessions/&lt;id&gt;/attendance"]
+        VIEW["Kuvab uuendatud osalejate nimekirja"]
+        ERR["Kuvab DB vea"]
+    end
+
+    subgraph LANE_DB["PostgreSQL"]
+        FN["fn_marki_osalemine"]
+        ROLE{"Roll sobib?"}
+        STATE{"Seisund SULETUD või TOIMUNUD?"}
+        TIME{"Alguse_aeg on möödas?\nMitte liiga vara"}
+        REG{"registreering on KINNIT?"}
+        SAVE["Lisa või uuenda osalemine"]
+    end
+
+    START --> CHOOSE --> ROSTER --> MARK --> ROUTE --> FN --> ROLE
+    ROLE -->|"[jah]"| STATE
+    STATE -->|"[jah]"| TIME
+    TIME -->|"[jah]"| REG
+    REG -->|"[jah]"| SAVE --> VIEW --> ENDOK
+
+    ROLE -->|"[ei]"| ERR --> ENDERR
+    STATE -->|"[ei]"| ERR
+    TIME -->|"[ei: liiga vara]"| ERR
+    REG -->|"[ei]"| ERR

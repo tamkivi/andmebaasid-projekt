@@ -32,36 +32,36 @@
                 <tbody>
                     {% for row in sessions %}
                         <tr>
-                            <td><code>#{{ row.treeningukorra_kood }}</code></td>
+                            <td><code>#{{ row.treeningukorra_id }}</code></td>
                             <td>
-                                <strong>{{ row.treeninguliik }}</strong><br>
+                                <strong>{{ row.treeninguliigi_nimetus }}</strong><br>
                                 {{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}
                             </td>
-                            <td>{{ row.treener_nimi }}<br><small class="text-muted">{{ row.ruum }}</small></td>
+                            <td>{{ row.treener_nimi }}<br><small class="text-muted">{{ row.ruumi_nimetus }}</small></td>
                             <td>
-                                {{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }}<br>
-                                <small class="text-muted">{{ row.ootejarjekorra_arv }} ootel · {{ row.vabu_kohti }} vaba</small>
+                                {{ row.kinnitatud_osalejate_arv }}/{{ row.maksimaalne_osalejate_arv }}<br>
+                                <small class="text-muted">{{ row.ootel_registreeringute_arv }} ootel · {{ row.vabu_kohti }} vaba</small>
                             </td>
-                            <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                            <td><span class="badge badge-{{ row.korra_seisundi_kood }}">{{ session_status_label(row.korra_seisundi_kood) }}</span></td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1 flex-wrap">
-                                    {% if row.seisundi_kood == 'KAVAND' %}
-                                        <form method="post" action="{{ url_for('manager_open_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    {% if row.korra_seisundi_kood == 'KAVAND' %}
+                                        <form method="post" action="{{ url_for('manager_open_session', treeningukorra_id=row.treeningukorra_id) }}">
                                             <button class="btn btn-sm btn-outline-success" type="submit">Ava</button>
                                         </form>
                                     {% endif %}
-                                    {% if row.seisundi_kood == 'AVATUD' %}
-                                        <form method="post" action="{{ url_for('manager_close_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    {% if row.korra_seisundi_kood == 'AVATUD' %}
+                                        <form method="post" action="{{ url_for('manager_close_session', treeningukorra_id=row.treeningukorra_id) }}">
                                             <button class="btn btn-sm btn-outline-primary" type="submit">Sulge</button>
                                         </form>
                                     {% endif %}
-                                    {% if row.seisundi_kood == 'SULETUD' %}
-                                        <form method="post" action="{{ url_for('manager_complete_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    {% if row.korra_seisundi_kood == 'SULETUD' %}
+                                        <form method="post" action="{{ url_for('manager_complete_session', treeningukorra_id=row.treeningukorra_id) }}">
                                             <button class="btn btn-sm btn-outline-dark" type="submit">Toimunud</button>
                                         </form>
                                     {% endif %}
-                                    {% if row.seisundi_kood in ['KAVAND', 'AVATUD', 'SULETUD'] %}
-                                        <form method="post" action="{{ url_for('manager_cancel_session', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                    {% if row.korra_seisundi_kood in ['KAVAND', 'AVATUD', 'SULETUD'] %}
+                                        <form method="post" action="{{ url_for('manager_cancel_session', treeningukorra_id=row.treeningukorra_id) }}">
                                             <input type="hidden" name="reason" value="Juhataja tühistas treeningukorra prototüübis.">
                                             <button class="btn btn-sm btn-outline-danger" type="submit">Tühista</button>
                                         </form>

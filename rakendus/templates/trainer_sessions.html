@@ -26,12 +26,12 @@
                     {% for row in sessions %}
                         <tr>
                             <td>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</td>
-                            <td><strong>{{ row.treeninguliik }}</strong></td>
-                            <td>{{ row.ruum }}</td>
-                            <td>{{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootejarjekorra_arv }} ootel</td>
-                            <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                            <td><strong>{{ row.treeninguliigi_nimetus }}</strong></td>
+                            <td>{{ row.ruumi_nimetus }}</td>
+                            <td>{{ row.kinnitatud_osalejate_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootel_registreeringute_arv }} ootel</td>
+                            <td><span class="badge badge-{{ row.korra_seisundi_kood }}">{{ session_status_label(row.korra_seisundi_kood) }}</span></td>
                             <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('trainer_roster', treeningukorra_kood=row.treeningukorra_kood) }}">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('trainer_roster', treeningukorra_id=row.treeningukorra_id) }}">
                                     <i class="bi bi-people"></i> Osalejad
                                 </a>
                             </td>

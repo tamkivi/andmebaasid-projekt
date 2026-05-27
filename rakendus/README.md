@@ -77,11 +77,11 @@ Järgmised kasutajad ja paroolid on ainult lokaalse demoandmebaasi testimiseks. 
 - `/manager/sessions/new` - uue treeningukorra planeerimine koos ruumi varustuse infoga
 - `/manager/report` - täituvuse statistika
 - `/trainer/sessions` - treeneri tunniplaan
-- `/trainer/sessions/<treeningukorra_kood>/roster` - osalejate nimekiri ja osalemise märkimine
+- `/trainer/sessions/<treeningukorra_id>/roster` - osalejate nimekiri ja osalemise märkimine
 
 ## Andmebaasi funktsioonid, mida rakendus kasutab
 
-- `fn_kasutaja_tuvastamise_andmed`
+- `fn_tuvasta_kasutaja_e_meili_jargi`
 - `fn_planeeri_treeningukord`
 - `fn_ava_treeningukord`
 - `fn_sulge_treeningukord`

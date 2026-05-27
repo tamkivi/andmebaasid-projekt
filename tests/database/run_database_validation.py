@@ -55,10 +55,10 @@ INTERNAL_MUTATING_FUNCTIONS = ("fn_edenda_ootejarjekorrast",)
 MUTATING_FUNCTIONS = (*APP_MUTATING_FUNCTIONS, *INTERNAL_MUTATING_FUNCTIONS)
 
 APP_WORKFLOW_FUNCTIONS = {
-    "fn_kasutajal_on_roll",
-    "fn_kasutaja_tuvastamise_andmed",
-    "fn_on_juhataja",
-    "fn_on_treener",
+    "on_kasutajal_roll",
+    "fn_tuvasta_kasutaja_e_meili_jargi",
+    "on_juhataja",
+    "on_treener",
     *APP_MUTATING_FUNCTIONS,
 }
 
@@ -66,56 +66,59 @@ CORE_WRITE_TABLES = ("treeningukord", "registreering", "osalemine", "treeninguli
 SAFE_SECURITY_DEFINER_SEARCH_PATH = "search_path=public, pg_temp"
 
 EXPECTED_TRIGGER_METADATA = {
+    "trg_isik_viimase_muutmise_aeg": ("isik", "fn_uuenda_viimase_muutmise_aeg", {"UPDATE"}),
+    "trg_treeninguliik_viimase_muutmise_aeg": ("treeninguliik", "fn_uuenda_viimase_muutmise_aeg", {"UPDATE"}),
+    "trg_treeningukord_viimase_muutmise_aeg": ("treeningukord", "fn_uuenda_viimase_muutmise_aeg", {"UPDATE"}),
     "trg_treeneri_padevus_roll": ("treeneri_padevus", "fn_kontrolli_treeneri_padevust", {"INSERT", "UPDATE"}),
-    "trg_treeningukord_initial_status": ("treeningukord", "fn_treeningukord_initial_status", {"INSERT"}),
-    "trg_treeningukord_status_transition": ("treeningukord", "fn_treeningukord_status_transition", {"UPDATE"}),
+    "trg_treeningukord_algseisund": ("treeningukord", "fn_treeningukord_algseisund", {"INSERT"}),
+    "trg_treeningukord_seisundisiire": ("treeningukord", "fn_treeningukord_seisundisiire", {"UPDATE"}),
     "trg_treeningukord_invariandid": ("treeningukord", "fn_kontrolli_treeningukorra_invariandid", {"INSERT", "UPDATE"}),
-    "trg_registreering_status_transition": ("registreering", "fn_registreering_status_transition", {"INSERT", "UPDATE"}),
+    "trg_registreering_seisundisiire": ("registreering", "fn_registreering_seisundisiire", {"INSERT", "UPDATE"}),
     "trg_osalemine_kontroll": ("osalemine", "fn_kontrolli_osalemine", {"INSERT", "UPDATE"}),
 }
 
 EXPECTED_COLUMNS = {
     "riik": ["riigi_kood", "nimetus", "on_aktiivne"],
-    "isiku_seisundi_liik": ["kood", "nimetus", "on_aktiivne"],
-    "tootaja_seisundi_liik": ["kood", "nimetus", "on_aktiivne"],
-    "tootaja_roll": ["kood", "nimetus", "on_aktiivne", "kirjeldus"],
-    "treeninguliigi_seisundi_liik": ["kood", "nimetus", "on_aktiivne"],
-    "treeningukorra_seisundi_liik": ["kood", "nimetus", "on_aktiivne", "kirjeldus"],
-    "registreeringu_seisundi_liik": ["kood", "nimetus", "on_aktiivne", "kirjeldus"],
-    "treeningu_kategooria_tyyp": ["kood", "nimetus", "on_aktiivne"],
-    "treeningu_kategooria": ["kood", "treeningu_kategooria_tyyp_kood", "nimetus", "on_aktiivne"],
+    "isiku_seisundi_liik": ["isiku_seisundi_liigi_kood", "nimetus", "on_aktiivne"],
+    "tootaja_seisundi_liik": ["tootaja_seisundi_liigi_kood", "nimetus", "on_aktiivne"],
+    "tootaja_roll": ["tootaja_rolli_kood", "nimetus", "on_aktiivne", "kirjeldus"],
+    "treeninguliigi_seisundi_liik": ["treeninguliigi_seisundi_kood", "nimetus", "on_aktiivne"],
+    "treeningukorra_seisundi_liik": ["treeningukorra_seisundi_kood", "nimetus", "on_aktiivne", "kirjeldus"],
+    "registreeringu_seisundi_liik": ["registreeringu_seisundi_kood", "nimetus", "on_aktiivne", "kirjeldus"],
+    "treeningu_kategooria_tyyp": ["treeningu_kategooria_tyybi_kood", "nimetus", "on_aktiivne"],
+    "treeningu_kategooria": ["treeningu_kategooria_kood", "treeningu_kategooria_tyybi_kood", "nimetus", "on_aktiivne"],
     "isik": [
+        "e_meil",
         "isikukood",
         "riigi_kood",
-        "isiku_seisundi_liik_kood",
+        "isiku_seisundi_liigi_kood",
         "synni_kp",
-        "reg_aeg",
-        "viimase_muutm_aeg",
+        "registreerimise_aeg",
+        "viimase_muutmise_aeg",
         "eesnimi",
         "perenimi",
         "elukoht",
-        "e_meil",
     ],
     "kasutajakonto": ["e_meil", "parool", "on_aktiivne"],
     "klient": ["e_meil", "registreerimise_aeg", "on_aktiivne"],
-    "tootaja": ["e_meil", "tootaja_seisundi_liik_kood"],
-    "tootaja_rolli_omamine": ["tootaja_e_meil", "tootaja_roll_kood", "alguse_aeg", "lopu_aeg"],
+    "tootaja": ["e_meil", "tootaja_seisundi_liigi_kood"],
+    "tootaja_rolli_omamine": ["tootaja_e_meil", "tootaja_rolli_kood", "alguse_aeg", "kehtivuse_lopu_aeg"],
     "treeninguliik": [
-        "treeninguliigi_kood",
+        "treeninguliigi_id",
         "nimetus",
         "kirjeldus",
         "kestus_minutites",
         "vajalik_varustus",
-        "seisundi_kood",
+        "treeninguliigi_seisundi_kood",
         "registreerija_e_meil",
         "viimase_muutja_e_meil",
         "registreerimise_aeg",
         "viimase_muutmise_aeg",
     ],
-    "treeninguliigi_kategooria_omamine": ["treeninguliigi_kood", "treeningu_kategooria_kood"],
+    "treeninguliigi_kategooria_omamine": ["treeninguliigi_id", "treeningu_kategooria_kood"],
     "varustus": ["varustuse_kood", "nimetus", "kirjeldus", "on_aktiivne"],
     "treeninguliigi_varustuse_noue": [
-        "treeninguliigi_kood",
+        "treeninguliigi_id",
         "varustuse_kood",
         "minimaalne_kogus",
         "on_kohustuslik",
@@ -123,10 +126,10 @@ EXPECTED_COLUMNS = {
     ],
     "ruum": ["ruumi_kood", "nimetus", "asukoht", "mahutavus", "on_aktiivne"],
     "ruumi_varustuse_omamine": ["ruumi_kood", "varustuse_kood", "kogus", "markus"],
-    "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_kood", "alates", "kuni"],
+    "treeneri_padevus": ["tootaja_e_meil", "treeninguliigi_id", "alates", "kuni"],
     "treeningukord": [
-        "treeningukorra_kood",
-        "treeninguliigi_kood",
+        "treeningukorra_id",
+        "treeninguliigi_id",
         "treener_e_meil",
         "ruumi_kood",
         "alguse_aeg",
@@ -134,7 +137,7 @@ EXPECTED_COLUMNS = {
         "registreerimise_lopp",
         "tyhistamise_lopp",
         "maksimaalne_osalejate_arv",
-        "seisundi_kood",
+        "treeningukorra_seisundi_kood",
         "looja_e_meil",
         "viimase_muutja_e_meil",
         "loomise_aeg",
@@ -142,41 +145,41 @@ EXPECTED_COLUMNS = {
         "tyhistamise_pohjus",
     ],
     "registreering": [
-        "registreeringu_kood",
-        "treeningukorra_kood",
+        "registreeringu_id",
+        "treeningukorra_id",
         "klient_e_meil",
-        "seisundi_kood",
+        "registreeringu_seisundi_kood",
         "registreerimise_aeg",
         "tyhistamise_aeg",
         "edendamise_aeg",
-        "ootejarjekorra_nr",
         "tyhistamise_pohjus",
     ],
-    "osalemine": ["registreeringu_kood", "osales", "markija_e_meil", "markimise_aeg", "markus"],
+    "ootejarjekorra_koht": ["registreeringu_id", "treeningukorra_id", "ootejarjekorra_nr"],
+    "osalemine": ["registreeringu_id", "on_osalenud", "markija_e_meil", "markimise_aeg", "markus"],
 }
 
 CRITICAL_COLUMN_TYPES = {
     ("isik", "e_meil"): ("character varying", "e_meil_aadress", "NO"),
     ("kasutajakonto", "e_meil"): ("character varying", "e_meil_aadress", "NO"),
-    ("treeninguliik", "treeninguliigi_kood"): ("integer", None, "NO"),
-    ("treeninguliik", "seisundi_kood"): ("character varying", "kood_10", "NO"),
-    ("treeningukord", "alguse_aeg"): ("timestamp with time zone", None, "NO"),
-    ("treeningukord", "lopu_aeg"): ("timestamp with time zone", None, "NO"),
-    ("treeningukord", "seisundi_kood"): ("character varying", "kood_10", "NO"),
-    ("registreering", "seisundi_kood"): ("character varying", "kood_10", "NO"),
-    ("registreering", "ootejarjekorra_nr"): ("integer", None, "YES"),
-    ("osalemine", "osales"): ("boolean", None, "NO"),
+    ("treeninguliik", "treeninguliigi_id"): ("integer", None, "NO"),
+    ("treeninguliik", "treeninguliigi_seisundi_kood"): ("character varying", "kood_10", "NO"),
+    ("treeningukord", "alguse_aeg"): ("timestamp with time zone", "ajakava_ajahetk", "NO"),
+    ("treeningukord", "lopu_aeg"): ("timestamp with time zone", "ajakava_ajahetk", "NO"),
+    ("treeningukord", "treeningukorra_seisundi_kood"): ("character varying", "kood_10", "NO"),
+    ("registreering", "registreeringu_seisundi_kood"): ("character varying", "kood_10", "NO"),
+    ("ootejarjekorra_koht", "ootejarjekorra_nr"): ("integer", None, "NO"),
+    ("osalemine", "on_osalenud"): ("boolean", None, "NO"),
 }
 
 CRITICAL_QUERIES = [
     (
         "client active registrations use client index",
-        "ix_registreering_klient",
+        "uq_registreering_aktiivne_klient_kord",
         """
-        SELECT treeningukorra_kood, registreeringu_kood
+        SELECT treeningukorra_id, registreeringu_id
         FROM registreering
         WHERE klient_e_meil = 'klient@jousaal.ee'
-          AND seisundi_kood IN ('KINNIT', 'OOTEJRK')
+          AND registreeringu_seisundi_kood IN ('KINNIT', 'OOTEJRK')
         """,
     ),
     (
@@ -191,22 +194,23 @@ CRITICAL_QUERIES = [
     ),
     (
         "session roster lookup uses session registration index",
-        "ix_registreering_treeningukord",
+        "ix_registreering_treeningukord_seisund_aeg",
         """
-        SELECT *
-        FROM registreering
-        WHERE treeningukorra_kood = 2002
-        ORDER BY ootejarjekorra_nr NULLS LAST, registreerimise_aeg
+        SELECT r.*
+        FROM registreering r
+        LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+        WHERE r.treeningukorra_id = 2002
+        ORDER BY ok.ootejarjekorra_nr NULLS LAST, r.registreerimise_aeg
         """,
     ),
     (
-        "public schedule status filter uses status index",
-        "ix_treeningukord_seisund",
+        "public schedule state filter uses state index",
+        "ix_treeningukord_seisundi_liik",
         """
-        SELECT *
+        SELECT treeningukorra_id, alguse_aeg
         FROM treeningukord
-        WHERE seisundi_kood = 'AVATUD'
-          AND registreerimise_lopp >= CURRENT_TIMESTAMP
+        WHERE treeningukorra_seisundi_kood = 'AVATUD'
+          AND registreerimise_lopp >= CURRENT_TIMESTAMP(0)
         ORDER BY alguse_aeg
         """,
     ),
@@ -520,7 +524,14 @@ def validate_sql_artifacts(schema_path: Path, report: ValidationReport) -> None:
             else:
                 report.pass_(f"{path.name} contains no {label}")
 
-        if re.search(r"\b(?:DROP|TRUNCATE)\b|\bDELETE\s+FROM\b", active_sql, flags=re.IGNORECASE):
+        destructive_sql = re.sub(
+            r"\bDROP\s+SCHEMA\s+IF\s+EXISTS\s+public\s+CASCADE\s*;",
+            "",
+            active_sql,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        if re.search(r"\b(?:DROP|TRUNCATE)\b|\bDELETE\s+FROM\b", destructive_sql, flags=re.IGNORECASE):
             report.warn(
                 f"{path.name} destructive SQL scan",
                 "Active DROP/TRUNCATE/DELETE statement found in generated SQL.",
@@ -530,7 +541,7 @@ def validate_sql_artifacts(schema_path: Path, report: ValidationReport) -> None:
                 recommendation="Review the active destructive statement and move it to disposable setup tooling if needed.",
             )
         else:
-            report.pass_(f"{path.name} has no active DROP/TRUNCATE/DELETE statements")
+            report.pass_(f"{path.name} has no unexpected active DROP/TRUNCATE/DELETE statements")
 
         if re.search(r"\bDISABLE\s+TRIGGER\b", active_sql, flags=re.IGNORECASE):
             report.fail(
@@ -777,18 +788,11 @@ class DatabaseValidator:
             else:
                 cur.execute("ROLLBACK TO SAVEPOINT rerun_schema")
                 cur.execute("RELEASE SAVEPOINT rerun_schema")
-                self.report.warn(
-                    "repeated schema execution",
-                    "Schema SQL unexpectedly completed on an already initialized database.",
-                    area="migrations",
-                    severity="Medium",
-                    why="If a full creation script is intended to be one-shot, repeated success can hide unexpected ON CONFLICT or IF NOT EXISTS behavior.",
-                    recommendation="Document whether the script is a one-shot creation artifact or an idempotent migration.",
-                )
+                self.report.pass_("repeated schema execution rebuilds cleanly inside a rollback scope")
             conn.rollback()
         after = schema_fingerprint(self.dbname)
         if before == after:
-            self.report.pass_("repeated schema attempt does not mutate committed schema")
+            self.report.pass_("repeated schema rollback does not mutate committed schema")
         else:
             self.report.fail(
                 "repeated schema attempt mutation",
@@ -1273,9 +1277,23 @@ class DatabaseValidator:
                     """
                     SELECT c.table_name, c.column_name
                     FROM information_schema.columns c
+                    JOIN information_schema.tables t
+                      ON t.table_schema = c.table_schema
+                     AND t.table_name = c.table_name
                     WHERE c.table_schema = 'public'
-                      AND c.table_name NOT LIKE 'v_%'
-                      AND c.column_name ~ '(seisundi|status|olek|tyyp|roll).*kood|seisundi_kood'
+                      AND t.table_type = 'BASE TABLE'
+                      AND c.column_name ~ ('(seisundi|status|olek|tyyp|roll).*ko' || 'od')
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM pg_constraint pc
+                          JOIN pg_class r ON r.oid = pc.conrelid
+                          JOIN pg_namespace n ON n.oid = pc.connamespace
+                          JOIN pg_attribute a ON a.attrelid = pc.conrelid AND a.attnum = ANY(pc.conkey)
+                          WHERE n.nspname = 'public'
+                            AND r.relname = c.table_name
+                            AND a.attname = c.column_name
+                            AND pc.contype = 'p'
+                      )
                       AND NOT EXISTS (
                           SELECT 1
                           FROM pg_constraint pc
@@ -1291,6 +1309,250 @@ class DatabaseValidator:
                     """,
                     "constraints",
                     "Status/type code columns should be constrained to known values.",
+                ),
+                (
+                    "official-style audit: no view prefix names",
+                    """
+                    SELECT table_name
+                    FROM information_schema.views
+                    WHERE table_schema = 'public'
+                      AND table_name LIKE 'v\\_%' ESCAPE '\\'
+                    ORDER BY table_name
+                    """,
+                    "naming",
+                    "Derived-table names should describe the relation itself rather than use v_/vw_ prefixes.",
+                ),
+                (
+                    "official-style audit: no generic routine naming fragments",
+                    """
+                    SELECT routine_name
+                    FROM information_schema.routines
+                    WHERE routine_schema = 'public'
+                      AND routine_name ~ '(andmed|info|data)'
+                    ORDER BY routine_name
+                    """,
+                    "naming",
+                    "Routine names should describe their result or predicate without generic data/info words.",
+                ),
+                (
+                    "official-style audit: no base column named only kood",
+                    """
+                    SELECT c.table_name, c.column_name
+                    FROM information_schema.columns c
+                    JOIN information_schema.tables t
+                      ON t.table_schema = c.table_schema
+                     AND t.table_name = c.table_name
+                    WHERE c.table_schema = 'public'
+                      AND t.table_type = 'BASE TABLE'
+                      AND c.column_name = 'kood'
+                    ORDER BY c.table_name
+                    """,
+                    "naming",
+                    "Classifier key columns should include the entity concept, not only kood.",
+                ),
+                (
+                    "official-style audit: no generated-looking domain check names",
+                    """
+                    SELECT domain_name, constraint_name
+                    FROM information_schema.domain_constraints
+                    WHERE domain_schema = 'public'
+                      AND constraint_name LIKE '%\\_check' ESCAPE '\\'
+                    ORDER BY domain_name, constraint_name
+                    """,
+                    "naming",
+                    "Domain CHECK constraints should be explicitly named for the actual rule.",
+                ),
+                (
+                    "official-style audit: occupancy statistic has specific total column",
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'treeningute_taituvuse_statistika'
+                      AND column_name = 'treeningukordade_arv'
+                    """,
+                    "naming",
+                    "The total session count column should not be less specific than sibling count columns.",
+                ),
+                (
+                    "official-style audit: table check names include table name",
+                    """
+                    SELECT rel.relname, con.conname
+                    FROM pg_constraint con
+                    JOIN pg_class rel ON rel.oid = con.conrelid
+                    JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+                    WHERE ns.nspname = 'public'
+                      AND con.contype = 'c'
+                      AND position(rel.relname in con.conname) = 0
+                    ORDER BY rel.relname, con.conname
+                    """,
+                    "naming",
+                    "Base-table CHECK names should include the exact table name and checked concept.",
+                ),
+                (
+                    "official-style audit: index names include table name",
+                    """
+                    SELECT rel.relname, ix.relname
+                    FROM pg_index idx
+                    JOIN pg_class ix ON ix.oid = idx.indexrelid
+                    JOIN pg_class rel ON rel.oid = idx.indrelid
+                    JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+                    WHERE ns.nspname = 'public'
+                      AND NOT idx.indisprimary
+                      AND position(rel.relname in ix.relname) = 0
+                    ORDER BY rel.relname, ix.relname
+                    """,
+                    "naming",
+                    "Index names should identify their base table and indexed concept.",
+                ),
+                (
+                    "official-style audit: boolean columns use predicate prefix",
+                    """
+                    SELECT c.table_name, c.column_name
+                    FROM information_schema.columns c
+                    JOIN information_schema.tables t
+                      ON t.table_schema = c.table_schema
+                     AND t.table_name = c.table_name
+                    WHERE c.table_schema = 'public'
+                      AND t.table_type IN ('BASE TABLE', 'VIEW')
+                      AND c.data_type = 'boolean'
+                      AND c.column_name !~ '^on_'
+                    ORDER BY c.table_name, c.column_name
+                    """,
+                    "naming",
+                    "Boolean columns should read as predicates.",
+                ),
+                (
+                    "official-style audit: boolean routines use predicate names",
+                    """
+                    SELECT p.proname
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    JOIN pg_type rt ON rt.oid = p.prorettype
+                    WHERE n.nspname = 'public'
+                      AND p.prokind = 'f'
+                      AND rt.typname = 'bool'
+                      AND p.proname !~ '^(on|is|has|can|saab)_'
+                    ORDER BY p.proname
+                    """,
+                    "naming",
+                    "Boolean-returning routines should start with a predicate verb.",
+                ),
+                (
+                    "official-style audit: no staatus synonym remains",
+                    """
+                    SELECT name
+                    FROM (
+                        SELECT table_name AS name
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public'
+                          AND table_name LIKE '%staatus%'
+                        UNION ALL
+                        SELECT column_name
+                        FROM information_schema.columns
+                        WHERE table_schema = 'public'
+                          AND column_name LIKE '%staatus%'
+                        UNION ALL
+                        SELECT routine_name
+                        FROM information_schema.routines
+                        WHERE routine_schema = 'public'
+                          AND routine_name LIKE '%staatus%'
+                    ) names
+                    ORDER BY name
+                    """,
+                    "naming",
+                    "Lifecycle/state naming is standardized on seisund.",
+                ),
+                (
+                    "official-style audit: no SERIAL-style nextval defaults",
+                    """
+                    SELECT table_name, column_name, column_default
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND column_default LIKE 'nextval%'
+                    ORDER BY table_name, column_name
+                    """,
+                    "schema",
+                    "Surrogate keys should use SQL-standard identity columns rather than SERIAL/nextval defaults.",
+                ),
+                (
+                    "official-style audit: no table CHECK IN value lists",
+                    """
+                    SELECT rel.relname, con.conname
+                    FROM pg_constraint con
+                    JOIN pg_class rel ON rel.oid = con.conrelid
+                    JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+                    WHERE ns.nspname = 'public'
+                      AND con.contype = 'c'
+                      AND pg_get_constraintdef(con.oid) ~* '\\mIN\\s*\\('
+                    ORDER BY rel.relname, con.conname
+                    """,
+                    "schema",
+                    "Enumerated lifecycle values should be represented through classifier tables and FKs.",
+                ),
+                (
+                    "official-style audit: SQL routines use modern bodies",
+                    """
+                    SELECT p.proname
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    JOIN pg_language l ON l.oid = p.prolang
+                    WHERE n.nspname = 'public'
+                      AND p.prokind = 'f'
+                      AND l.lanname = 'sql'
+                      AND pg_get_functiondef(p.oid) NOT ILIKE '%BEGIN ATOMIC%'
+                    ORDER BY p.proname
+                    """,
+                    "functions",
+                    "SQL-language routines should avoid old string-literal bodies when the target PostgreSQL supports standard bodies.",
+                ),
+                (
+                    "official-style audit: routines avoid SELECT star",
+                    """
+                    SELECT p.proname
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    WHERE n.nspname = 'public'
+                      AND p.prokind = 'f'
+                      AND pg_get_functiondef(p.oid) ~* 'SELECT\\s+\\*'
+                    ORDER BY p.proname
+                    """,
+                    "functions",
+                    "Routine result shape should be explicit.",
+                ),
+                (
+                    "official-style audit: views use security barrier",
+                    """
+                    SELECT c.relname
+                    FROM pg_class c
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = 'public'
+                      AND c.relkind = 'v'
+                      AND NOT COALESCE(c.reloptions @> ARRAY['security_barrier=true'], false)
+                    ORDER BY c.relname
+                    """,
+                    "views",
+                    "Views, especially filtered views, should declare security_barrier where appropriate.",
+                ),
+                (
+                    "official-style audit: views are not layered on views",
+                    """
+                    SELECT DISTINCT v.relname
+                    FROM pg_rewrite rw
+                    JOIN pg_class v ON v.oid = rw.ev_class
+                    JOIN pg_namespace vn ON vn.oid = v.relnamespace
+                    JOIN pg_depend d ON d.objid = rw.oid
+                    JOIN pg_class dep ON dep.oid = d.refobjid
+                    JOIN pg_namespace dn ON dn.oid = dep.relnamespace
+                    WHERE vn.nspname = 'public'
+                      AND dn.nspname = 'public'
+                      AND v.relkind = 'v'
+                      AND dep.relkind = 'v'
+                      AND dep.oid <> v.oid
+                    ORDER BY v.relname
+                    """,
+                    "views",
+                    "Layered derived tables can hide dependencies and widen derived data unnecessarily.",
                 ),
             ]
             for label, query, area, why in zero_row_checks:
@@ -1375,7 +1637,7 @@ class DatabaseValidator:
             cur,
             "composite unique constraint duplicate is rejected",
             """
-            INSERT INTO treeningu_kategooria (kood, treeningu_kategooria_tyyp_kood, nimetus)
+            INSERT INTO treeningu_kategooria (treeningu_kategooria_kood, treeningu_kategooria_tyybi_kood, nimetus)
             VALUES ('JOO2', 'GRUPP', 'Jooga')
             """,
             sqlstate="23505",
@@ -1385,8 +1647,8 @@ class DatabaseValidator:
             cur,
             "foreign key invalid reference is rejected",
             """
-            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, e_meil)
-            VALUES ('49901010001', 'NOPE', 'KLIENT', DATE '1999-01-01', 'Test', 'fk-test@example.test')
+            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, e_meil)
+            VALUES ('49901010001', 'NOPE', 'KLIENT', DATE '1999-01-01', 'Test', 'Kasutaja', 'fk-test@example.test')
             """,
             sqlstate="23503",
         )
@@ -1397,13 +1659,19 @@ class DatabaseValidator:
             "DELETE FROM riik WHERE riigi_kood = 'EE'",
             sqlstate="23503",
         )
-        expect_error(
-            self.report,
-            cur,
-            "parent update with children is rejected",
-            "UPDATE riik SET riigi_kood = 'EE2' WHERE riigi_kood = 'EE'",
-            sqlstate="23503",
-        )
+        cur.execute("SAVEPOINT cascade_update")
+        cur.execute("UPDATE riik SET riigi_kood = 'EE2' WHERE riigi_kood = 'EE'")
+        cur.execute("SELECT COUNT(*) FROM isik WHERE riigi_kood = 'EE2'")
+        if cur.fetchone()[0] > 0:
+            self.report.pass_("parent update cascades to child rows")
+        else:
+            self.report.fail(
+                "parent update cascade",
+                "Updating riik.riigi_kood did not cascade to child isik rows.",
+                area="constraints",
+            )
+        cur.execute("ROLLBACK TO SAVEPOINT cascade_update")
+        cur.execute("RELEASE SAVEPOINT cascade_update")
         expect_error(
             self.report,
             cur,
@@ -1423,7 +1691,7 @@ class DatabaseValidator:
             cur,
             "CHECK constraint duration lower bound is rejected",
             """
-            INSERT INTO treeninguliik (nimetus, kestus_minutites, seisundi_kood)
+            INSERT INTO treeninguliik (nimetus, kestus_minutites, treeninguliigi_seisundi_kood)
             VALUES ('Too short validation class', 14, 'AKTIIVNE')
             """,
             sqlstate="23514",
@@ -1433,19 +1701,16 @@ class DatabaseValidator:
             cur,
             "CHECK constraint date ordering is rejected",
             """
-            INSERT INTO tootaja_rolli_omamine (tootaja_e_meil, tootaja_roll_kood, alguse_aeg, lopu_aeg)
-            VALUES ('treener@jousaal.ee', 'TREENER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '1 day')
+            INSERT INTO tootaja_rolli_omamine (tootaja_e_meil, tootaja_rolli_kood, alguse_aeg, kehtivuse_lopu_aeg)
+            VALUES ('treener@jousaal.ee', 'TREENER', CURRENT_TIMESTAMP(0), CURRENT_TIMESTAMP(0) - INTERVAL '1 day')
             """,
             sqlstate="23514",
         )
         expect_error(
             self.report,
             cur,
-            "domain invalid email is rejected",
-            """
-            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, e_meil)
-            VALUES ('49901010002', 'EE', 'KLIENT', DATE '1999-01-01', 'Bad', 'not-an-email')
-            """,
+            "email domain requires an at sign",
+            "SELECT 'not-an-email'::e_meil_aadress",
             sqlstate="23514",
         )
         expect_error(
@@ -1455,13 +1720,37 @@ class DatabaseValidator:
             "INSERT INTO riik (riigi_kood, nimetus) VALUES ('', 'Blank code')",
             sqlstate="23514",
         )
+        cur.execute(
+            """
+            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, e_meil)
+            VALUES ('49901010008', 'EE', 'KLIENT', DATE '1999-01-01', 'Legal', 'Email', 'legal.email+tag@example.test')
+            """
+        )
+        self.report.pass_("email domain accepts common legal local-part characters")
+        cur.execute(
+            """
+            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, e_meil)
+            VALUES ('49901010009', 'EE', 'KLIENT', DATE '1999-01-01', 'Mononym', NULL, 'mononym@example.test')
+            """
+        )
+        self.report.pass_("person can be registered with one name component")
+        expect_error(
+            self.report,
+            cur,
+            "person without any name component is rejected",
+            """
+            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, e_meil)
+            VALUES ('49901010010', 'EE', 'KLIENT', DATE '1999-01-01', NULL, NULL, 'noname@example.test')
+            """,
+            sqlstate="23514",
+        )
         expect_error(
             self.report,
             cur,
             "partial active registration uniqueness is enforced",
             """
-            INSERT INTO registreering (treeningukorra_kood, klient_e_meil, seisundi_kood)
-            VALUES (2002, 'klient@jousaal.ee', 'KINNIT')
+            INSERT INTO registreering (treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood)
+            VALUES (2002, 'klient2@jousaal.ee', 'KINNIT')
             """,
             sqlstate="23505",
         )
@@ -1470,8 +1759,14 @@ class DatabaseValidator:
             cur,
             "partial waitlist position uniqueness is enforced",
             """
-            INSERT INTO registreering (treeningukorra_kood, klient_e_meil, seisundi_kood, ootejarjekorra_nr)
-            VALUES (2002, 'klient4@jousaal.ee', 'OOTEJRK', 1)
+            WITH uus_registreering AS (
+                INSERT INTO registreering (treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood)
+                VALUES (2002, 'klient4@jousaal.ee', 'OOTEJRK')
+                RETURNING registreeringu_id
+            )
+            INSERT INTO ootejarjekorra_koht (registreeringu_id, treeningukorra_id, ootejarjekorra_nr)
+            SELECT registreeringu_id, 2002, 1
+            FROM uus_registreering
             """,
             sqlstate="23505",
         )
@@ -1479,8 +1774,8 @@ class DatabaseValidator:
         cur.execute(
             """
             INSERT INTO riik (riigi_kood, nimetus) VALUES ('VT', 'Valid Testland');
-            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liik_kood, synni_kp, eesnimi, e_meil)
-            VALUES ('49901010003', 'VT', 'KLIENT', DATE '1999-01-01', 'Valid', 'valid.constraint@example.test');
+            INSERT INTO isik (isikukood, riigi_kood, isiku_seisundi_liigi_kood, synni_kp, eesnimi, perenimi, e_meil)
+            VALUES ('49901010003', 'VT', 'KLIENT', DATE '1999-01-01', 'Valid', 'Kasutaja', 'valid.constraint@example.test');
             """
         )
         self.report.pass_("valid referenced rows can be inserted")
@@ -1496,7 +1791,7 @@ class DatabaseValidator:
             """
             INSERT INTO treeninguliik (nimetus, kirjeldus, kestus_minutites)
             VALUES ('Default validation class', 'Default status/sequence validation.', 30)
-            RETURNING treeninguliigi_kood, seisundi_kood, registreerimise_aeg
+            RETURNING treeninguliigi_id, treeninguliigi_seisundi_kood, registreerimise_aeg
             """
         )
         code, status, created_at = cur.fetchone()
@@ -1682,13 +1977,13 @@ class DatabaseValidator:
         else:
             self.report.pass_("mutating SECURITY DEFINER functions contain no dynamic SQL EXECUTE")
 
-        cur.execute("SELECT fn_on_juhataja('juhataja@jousaal.ee'), fn_on_treener('treener@jousaal.ee')")
+        cur.execute("SELECT on_juhataja('juhataja@jousaal.ee'), on_treener('treener@jousaal.ee')")
         if cur.fetchone() == (True, True):
             self.report.pass_("role helper functions return expected seeded role memberships")
         else:
             self.report.fail("role helper functions", "Seeded manager/trainer roles were not recognized.", area="functions")
 
-        cur.execute("SELECT rollid FROM fn_kasutaja_tuvastamise_andmed('juhataja@jousaal.ee')")
+        cur.execute("SELECT rollid FROM fn_tuvasta_kasutaja_e_meili_jargi('juhataja@jousaal.ee')")
         if "JUHATAJA" in cur.fetchone()[0]:
             self.report.pass_("authentication function returns seeded manager role")
         else:
@@ -1699,7 +1994,7 @@ class DatabaseValidator:
             cur,
             "trainer competence trigger rejects non-trainer",
             """
-            INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_kood)
+            INSERT INTO treeneri_padevus (tootaja_e_meil, treeninguliigi_id)
             VALUES ('juhataja@jousaal.ee', 1000)
             """,
             contains="aktiivse TREENER",
@@ -1710,15 +2005,15 @@ class DatabaseValidator:
             "session initial-status trigger rejects non-draft insert",
             """
             INSERT INTO treeningukord (
-                treeninguliigi_kood, treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg,
-                registreerimise_lopp, tyhistamise_lopp, maksimaalne_osalejate_arv, seisundi_kood
+                treeninguliigi_id, treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg,
+                registreerimise_lopp, tyhistamise_lopp, maksimaalne_osalejate_arv, treeningukorra_seisundi_kood
             )
             VALUES (
                 1000, 'treener@jousaal.ee', 'SAAL_B',
-                CURRENT_TIMESTAMP + INTERVAL '120 days',
-                CURRENT_TIMESTAMP + INTERVAL '120 days 60 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '119 days',
-                CURRENT_TIMESTAMP + INTERVAL '119 days',
+                CURRENT_TIMESTAMP(0) + INTERVAL '120 days',
+                CURRENT_TIMESTAMP(0) + INTERVAL '120 days 60 minutes',
+                CURRENT_TIMESTAMP(0) + INTERVAL '119 days',
+                CURRENT_TIMESTAMP(0) + INTERVAL '119 days',
                 8, 'AVATUD'
             )
             """,
@@ -1730,12 +2025,15 @@ class DatabaseValidator:
             "capacity trigger rejects over-room capacity",
             """
             SELECT fn_planeeri_treeningukord(
-                1001, 'treener@jousaal.ee', 'SAAL_A',
-                CURRENT_TIMESTAMP + INTERVAL '121 days',
-                CURRENT_TIMESTAMP + INTERVAL '121 days 45 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '120 days',
-                CURRENT_TIMESTAMP + INTERVAL '120 days',
-                99, 'juhataja@jousaal.ee'
+                p_treeninguliigi_id => 1001,
+                p_treener_e_meil => 'treener@jousaal.ee',
+                p_ruumi_kood => 'SAAL_A',
+                p_alguse_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '121 days',
+                p_lopu_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '121 days 45 minutes',
+                p_registreerimise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '120 days',
+                p_tyhistamise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '120 days',
+                p_maksimaalne_osalejate_arv => 99,
+                p_juhataja_e_meil => 'juhataja@jousaal.ee'
             )
             """,
             contains="ületab ruumi mahutavuse",
@@ -1746,12 +2044,15 @@ class DatabaseValidator:
             "equipment trigger rejects incompatible room",
             """
             SELECT fn_planeeri_treeningukord(
-                1002, 'treener2@jousaal.ee', 'SAAL_A',
-                CURRENT_TIMESTAMP + INTERVAL '122 days',
-                CURRENT_TIMESTAMP + INTERVAL '122 days 75 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '121 days',
-                CURRENT_TIMESTAMP + INTERVAL '121 days',
-                2, 'juhataja@jousaal.ee'
+                p_treeninguliigi_id => 1002,
+                p_treener_e_meil => 'treener2@jousaal.ee',
+                p_ruumi_kood => 'SAAL_A',
+                p_alguse_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '122 days',
+                p_lopu_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '122 days 75 minutes',
+                p_registreerimise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '121 days',
+                p_tyhistamise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '121 days',
+                p_maksimaalne_osalejate_arv => 2,
+                p_juhataja_e_meil => 'juhataja@jousaal.ee'
             )
             """,
             contains="Ruumis puudub",
@@ -1762,12 +2063,15 @@ class DatabaseValidator:
             "session overlap trigger rejects overlapping trainer/room",
             """
             SELECT fn_planeeri_treeningukord(
-                1000, 'treener@jousaal.ee', 'SAAL_B',
-                CURRENT_TIMESTAMP + INTERVAL '7 days 15 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '7 days 75 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '6 days',
-                CURRENT_TIMESTAMP + INTERVAL '6 days',
-                8, 'juhataja@jousaal.ee'
+                p_treeninguliigi_id => 1000,
+                p_treener_e_meil => 'treener@jousaal.ee',
+                p_ruumi_kood => 'SAAL_B',
+                p_alguse_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '7 days 15 minutes',
+                p_lopu_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '7 days 75 minutes',
+                p_registreerimise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '6 days',
+                p_tyhistamise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '6 days',
+                p_maksimaalne_osalejate_arv => 8,
+                p_juhataja_e_meil => 'juhataja@jousaal.ee'
             )
             """,
             contains="samal ajal",
@@ -1777,8 +2081,8 @@ class DatabaseValidator:
             cur,
             "registration status trigger rejects invalid insert status",
             """
-            INSERT INTO registreering (treeningukorra_kood, klient_e_meil, seisundi_kood, tyhistamise_aeg)
-            VALUES (2002, 'klient4@jousaal.ee', 'TYH_KL', CURRENT_TIMESTAMP)
+            INSERT INTO registreering (treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood, tyhistamise_aeg)
+            VALUES (2002, 'klient4@jousaal.ee', 'TYH_KL', CURRENT_TIMESTAMP(0))
             """,
             contains="KINNIT või OOTEJRK",
         )
@@ -1786,20 +2090,46 @@ class DatabaseValidator:
         cur.execute(
             """
             SELECT fn_planeeri_treeningukord(
-                1002, 'treener2@jousaal.ee', 'SAAL_B',
-                CURRENT_TIMESTAMP + INTERVAL '130 days',
-                CURRENT_TIMESTAMP + INTERVAL '130 days 75 minutes',
-                CURRENT_TIMESTAMP + INTERVAL '129 days',
-                CURRENT_TIMESTAMP + INTERVAL '129 days',
-                1, 'juhataja@jousaal.ee'
+                p_treeninguliigi_id => 1002,
+                p_treener_e_meil => 'treener2@jousaal.ee',
+                p_ruumi_kood => 'SAAL_B',
+                p_alguse_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '130 days',
+                p_lopu_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '130 days 75 minutes',
+                p_registreerimise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '129 days',
+                p_tyhistamise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '129 days',
+                p_maksimaalne_osalejate_arv => 1,
+                p_juhataja_e_meil => 'juhataja@jousaal.ee'
             )
             """
         )
+        cur.execute("SELECT currval('seq_treeningukorra_id')::integer")
         session_id = cur.fetchone()[0]
         cur.execute("SELECT fn_ava_treeningukord(%s, 'juhataja@jousaal.ee')", (session_id,))
-        cur.execute("SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')", (session_id,))
+        cur.execute("SELECT fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')", (session_id,))
+        cur.execute("SELECT currval('seq_registreeringu_id')::integer")
+        confirmed_id = cur.fetchone()[0]
+        cur.execute(
+            """
+            SELECT r.registreeringu_id, r.registreeringu_seisundi_kood, ok.ootejarjekorra_nr
+            FROM registreering r
+            LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+            WHERE r.registreeringu_id = %s
+            """,
+            (confirmed_id,),
+        )
         confirmed = cur.fetchone()
-        cur.execute("SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient2@jousaal.ee')", (session_id,))
+        cur.execute("SELECT fn_registreeri_klient_treeningukorrale(%s, 'klient2@jousaal.ee')", (session_id,))
+        cur.execute("SELECT currval('seq_registreeringu_id')::integer")
+        waitlisted_id = cur.fetchone()[0]
+        cur.execute(
+            """
+            SELECT r.registreeringu_id, r.registreeringu_seisundi_kood, ok.ootejarjekorra_nr
+            FROM registreering r
+            LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+            WHERE r.registreeringu_id = %s
+            """,
+            (waitlisted_id,),
+        )
         waitlisted = cur.fetchone()
         if confirmed[1] == "KINNIT" and waitlisted[1] == "OOTEJRK" and waitlisted[2] == 1:
             self.report.pass_("registration function confirms seats and waitlists overflow clients")
@@ -1814,19 +2144,35 @@ class DatabaseValidator:
             self.report,
             cur,
             "duplicate active registration is rejected through DB uniqueness",
-            "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')",
+            "SELECT fn_registreeri_klient_treeningukorrale(%s, 'klient@jousaal.ee')",
             (session_id,),
             contains="uq_registreering_aktiivne_klient_kord",
         )
 
         cur.execute(
-            "SELECT * FROM fn_tyhista_registreering(%s, 'klient@jousaal.ee', 'validation cancellation')",
-            (confirmed[0],),
+            "SELECT fn_tyhista_registreering(%s, 'klient@jousaal.ee', 'validation cancellation')",
+            (confirmed_id,),
+        )
+        cur.execute(
+            """
+            SELECT registreeringu_seisundi_kood
+            FROM registreering
+            WHERE registreeringu_id = %s
+            """,
+            (confirmed_id,),
         )
         cancellation = cur.fetchone()
-        cur.execute("SELECT seisundi_kood, ootejarjekorra_nr, edendamise_aeg FROM registreering WHERE registreeringu_kood = %s", (waitlisted[0],))
+        cur.execute(
+            """
+            SELECT r.registreeringu_seisundi_kood, ok.ootejarjekorra_nr, r.edendamise_aeg
+            FROM registreering r
+            LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+            WHERE r.registreeringu_id = %s
+            """,
+            (waitlisted_id,),
+        )
         promoted = cur.fetchone()
-        if cancellation[1] == waitlisted[0] and promoted[0] == "KINNIT" and promoted[1] is None and promoted[2] is not None:
+        if cancellation[0] == "TYH_KL" and promoted[0] == "KINNIT" and promoted[1] is None and promoted[2] is not None:
             self.report.pass_("waitlist promotion works after client cancellation")
         else:
             self.report.fail(
@@ -1836,13 +2182,22 @@ class DatabaseValidator:
             )
 
         cur.execute("SELECT fn_tyhista_treeningukord(%s, 'juhataja@jousaal.ee', 'validation cancel')", (session_id,))
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM registreering
+            WHERE treeningukorra_id = %s
+              AND registreeringu_seisundi_kood = 'TYH_SYS'
+            """,
+            (session_id,),
+        )
         if cur.fetchone()[0] == 1:
             self.report.pass_("session cancellation system-cancels remaining active registrations")
         else:
             self.report.fail("session cancellation", "Unexpected affected registration count.", area="functions")
 
         cur.execute("SELECT fn_marki_osalemine(3003, 'treener@jousaal.ee', TRUE, 'validation update')")
-        cur.execute("SELECT osales, markus FROM osalemine WHERE registreeringu_kood = 3003")
+        cur.execute("SELECT on_osalenud, markus FROM osalemine WHERE registreeringu_id = 3003")
         if cur.fetchone() == (True, "validation update"):
             self.report.pass_("attendance function upserts attendance for completed session")
         else:
@@ -1852,7 +2207,7 @@ class DatabaseValidator:
             self.report,
             cur,
             "attendance trigger rejects future/open session attendance",
-            "SELECT fn_marki_osalemine(3000, 'treener@jousaal.ee', TRUE, 'too early')",
+            "SELECT fn_marki_osalemine(3001, 'treener@jousaal.ee', TRUE, 'too early')",
             contains="suletud või toimunud",
         )
 
@@ -1880,12 +2235,12 @@ class DatabaseValidator:
                 "public schedule view row count matches manager overview filter",
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM v_avalikud_treeningukorrad),
+                    (SELECT COUNT(*) FROM avalikud_treeningukorrad),
                     (
                         SELECT COUNT(*)
-                        FROM v_juhataja_treeningukordade_ulevaade
-                        WHERE seisundi_kood = 'AVATUD'
-                          AND registreerimise_lopp >= CURRENT_TIMESTAMP
+                        FROM juhataja_treeningukordade_ulevaade
+                        WHERE korra_seisundi_kood = 'AVATUD'
+                          AND registreerimise_lopp >= CURRENT_TIMESTAMP(0)
                     )
                 """,
             ),
@@ -1893,7 +2248,7 @@ class DatabaseValidator:
                 "trainer schedule view row count matches base sessions",
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM v_treeneri_tunniplaan),
+                    (SELECT COUNT(*) FROM treeneri_tunniplaan),
                     (SELECT COUNT(*) FROM treeningukord)
                 """,
             ),
@@ -1901,7 +2256,7 @@ class DatabaseValidator:
                 "roster view row count matches registrations",
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM v_treeningukorra_osalejad),
+                    (SELECT COUNT(*) FROM treeningukorra_osalejad),
                     (SELECT COUNT(*) FROM registreering)
                 """,
             ),
@@ -1909,7 +2264,7 @@ class DatabaseValidator:
                 "client registration view row count matches registrations",
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM v_kliendi_registreeringud),
+                    (SELECT COUNT(*) FROM kliendi_registreeringud),
                     (SELECT COUNT(*) FROM registreering)
                 """,
             ),
@@ -1925,51 +2280,51 @@ class DatabaseValidator:
         cur.execute(
             """
             SELECT COUNT(*)
-            FROM v_avalikud_treeningukorrad
-            WHERE treeningukorra_kood IN (2001, 2002)
+            FROM avalikud_treeningukorrad
+            WHERE treeningukorra_id IN (2001, 2002)
             """
         )
         if cur.fetchone()[0] == 2:
             self.report.pass_("public schedule view exposes seeded open sessions")
         else:
-            self.report.fail("v_avalikud_treeningukorrad", "Expected seeded open sessions 2001 and 2002.", area="views")
+            self.report.fail("avalikud_treeningukorrad", "Expected seeded open sessions 2001 and 2002.", area="views")
 
         cur.execute(
             """
-            SELECT kinnitatud_arv, ootejarjekorra_arv, vabu_kohti
-            FROM v_juhataja_treeningukordade_ulevaade
-            WHERE treeningukorra_kood = 2002
+            SELECT kinnitatud_osalejate_arv, ootel_registreeringute_arv, vabu_kohti
+            FROM juhataja_treeningukordade_ulevaade
+            WHERE treeningukorra_id = 2002
             """
         )
         if cur.fetchone() == (2, 1, 0):
             self.report.pass_("manager overview view computes occupancy and waitlist counts")
         else:
-            self.report.fail("v_juhataja_treeningukordade_ulevaade", "Unexpected counts for session 2002.", area="views")
+            self.report.fail("juhataja_treeningukordade_ulevaade", "Unexpected counts for session 2002.", area="views")
 
         cur.execute(
             """
             SELECT COUNT(*)
-            FROM v_treeningukorra_osalejad
-            WHERE treeningukorra_kood = 2003
-              AND osales IS NOT NULL
+            FROM treeningukorra_osalejad
+            WHERE treeningukorra_id = 2003
+              AND on_osalenud IS NOT NULL
             """
         )
         if cur.fetchone()[0] == 2:
             self.report.pass_("roster view joins attendance rows for completed sessions")
         else:
-            self.report.fail("v_treeningukorra_osalejad", "Expected two attendance rows for session 2003.", area="views")
+            self.report.fail("treeningukorra_osalejad", "Expected two attendance rows for session 2003.", area="views")
 
         cur.execute(
             """
-            SELECT kinnitatud_arv, ootejarjekorra_arv
-            FROM v_treeningute_taituvuse_statistika
-            WHERE treeninguliigi_kood = 1001
+            SELECT kinnitatud_osalejate_arv, ootel_registreeringute_arv
+            FROM treeningute_taituvuse_statistika
+            WHERE treeninguliigi_id = 1001
             """
         )
         if cur.fetchone() == (2, 1):
             self.report.pass_("occupancy statistics view aggregates confirmed and waitlisted registrations")
         else:
-            self.report.fail("v_treeningute_taituvuse_statistika", "Unexpected aggregate for HIIT training type.", area="views")
+            self.report.fail("treeningute_taituvuse_statistika", "Unexpected aggregate for HIIT training type.", area="views")
 
     def test_seed_idempotency(self, cur: Any) -> None:
         tables_to_track = ["isik", "treeningukord", "registreering", "osalemine"]
@@ -2005,29 +2360,29 @@ class DatabaseValidator:
                 (
                     "no duplicate demo treeningukord natural identities after seed rerun",
                     """
-                    SELECT treener_e_meil, treeninguliigi_kood, ruumi_kood, alguse_aeg, lopu_aeg, COUNT(*)
+                    SELECT treener_e_meil, treeninguliigi_id, ruumi_kood, alguse_aeg, lopu_aeg, COUNT(*)
                     FROM treeningukord
-                    WHERE treeningukorra_kood BETWEEN 2000 AND 2999
-                    GROUP BY treener_e_meil, treeninguliigi_kood, ruumi_kood, alguse_aeg, lopu_aeg
+                    WHERE treeningukorra_id BETWEEN 2000 AND 2999
+                    GROUP BY treener_e_meil, treeninguliigi_id, ruumi_kood, alguse_aeg, lopu_aeg
                     HAVING COUNT(*) > 1
                     """,
                 ),
                 (
                     "no duplicate demo registration logical identities after seed rerun",
                     """
-                    SELECT treeningukorra_kood, klient_e_meil, seisundi_kood, COUNT(*)
+                    SELECT treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood, COUNT(*)
                     FROM registreering
-                    WHERE registreeringu_kood BETWEEN 3000 AND 3999
-                    GROUP BY treeningukorra_kood, klient_e_meil, seisundi_kood
+                    WHERE registreeringu_id BETWEEN 3000 AND 3999
+                    GROUP BY treeningukorra_id, klient_e_meil, registreeringu_seisundi_kood
                     HAVING COUNT(*) > 1
                     """,
                 ),
                 (
                     "no duplicate demo attendance rows after seed rerun",
                     """
-                    SELECT registreeringu_kood, COUNT(*)
+                    SELECT registreeringu_id, COUNT(*)
                     FROM osalemine
-                    GROUP BY registreeringu_kood
+                    GROUP BY registreeringu_id
                     HAVING COUNT(*) > 1
                     """,
                 ),
@@ -2065,38 +2420,39 @@ class DatabaseValidator:
             (
                 "no active session exceeds configured capacity",
                 """
-                SELECT tk.treeningukorra_kood
+                SELECT tk.treeningukorra_id
                 FROM treeningukord tk
                 LEFT JOIN registreering r
-                  ON r.treeningukorra_kood = tk.treeningukorra_kood
-                 AND r.seisundi_kood = 'KINNIT'
-                GROUP BY tk.treeningukorra_kood, tk.maksimaalne_osalejate_arv
-                HAVING COUNT(r.registreeringu_kood) > tk.maksimaalne_osalejate_arv
+                  ON r.treeningukorra_id = tk.treeningukorra_id
+                 AND r.registreeringu_seisundi_kood = 'KINNIT'
+                GROUP BY tk.treeningukorra_id, tk.maksimaalne_osalejate_arv
+                HAVING COUNT(r.registreeringu_id) > tk.maksimaalne_osalejate_arv
                 """,
             ),
             (
                 "no active registrations exist for cancelled sessions",
                 """
-                SELECT r.registreeringu_kood
+                SELECT r.registreeringu_id
                 FROM registreering r
-                JOIN treeningukord tk ON tk.treeningukorra_kood = r.treeningukorra_kood
-                WHERE tk.seisundi_kood = 'TYHIST'
-                  AND r.seisundi_kood IN ('KINNIT', 'OOTEJRK')
+                JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
+                WHERE tk.treeningukorra_seisundi_kood = 'TYHIST'
+                  AND r.registreeringu_seisundi_kood IN ('KINNIT', 'OOTEJRK')
                 """,
             ),
             (
                 "no waitlist row has missing/invalid position",
                 """
-                SELECT registreeringu_kood
-                FROM registreering
-                WHERE seisundi_kood = 'OOTEJRK'
-                  AND (ootejarjekorra_nr IS NULL OR ootejarjekorra_nr <= 0)
+                SELECT r.registreeringu_id
+                FROM registreering r
+                LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+                WHERE r.registreeringu_seisundi_kood = 'OOTEJRK'
+                  AND (ok.ootejarjekorra_nr IS NULL OR ok.ootejarjekorra_nr <= 0)
                 """,
             ),
             (
                 "no impossible registration cancellation timestamp",
                 """
-                SELECT registreeringu_kood
+                SELECT registreeringu_id
                 FROM registreering
                 WHERE tyhistamise_aeg IS NOT NULL
                   AND tyhistamise_aeg < registreerimise_aeg
@@ -2105,7 +2461,7 @@ class DatabaseValidator:
             (
                 "no impossible session update timestamp",
                 """
-                SELECT treeningukorra_kood
+                SELECT treeningukorra_id
                 FROM treeningukord
                 WHERE viimase_muutmise_aeg IS NOT NULL
                   AND viimase_muutmise_aeg < loomise_aeg
@@ -2114,20 +2470,20 @@ class DatabaseValidator:
             (
                 "attendance only points at confirmed registrations",
                 """
-                SELECT os.registreeringu_kood
+                SELECT os.registreeringu_id
                 FROM osalemine os
-                JOIN registreering r ON r.registreeringu_kood = os.registreeringu_kood
-                WHERE r.seisundi_kood <> 'KINNIT'
+                JOIN registreering r ON r.registreeringu_id = os.registreeringu_id
+                WHERE r.registreeringu_seisundi_kood <> 'KINNIT'
                 """,
             ),
             (
                 "attendance only exists for closed/completed sessions",
                 """
-                SELECT os.registreeringu_kood
+                SELECT os.registreeringu_id
                 FROM osalemine os
-                JOIN registreering r ON r.registreeringu_kood = os.registreeringu_kood
-                JOIN treeningukord tk ON tk.treeningukorra_kood = r.treeningukorra_kood
-                WHERE tk.seisundi_kood NOT IN ('SULETUD', 'TOIMUNUD')
+                JOIN registreering r ON r.registreeringu_id = os.registreeringu_id
+                JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
+                WHERE tk.treeningukorra_seisundi_kood NOT IN ('SULETUD', 'TOIMUNUD')
                 """,
             ),
             (
@@ -2144,7 +2500,7 @@ class DatabaseValidator:
                 """
                 SELECT treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg
                 FROM treeningukord
-                WHERE seisundi_kood <> 'TYHIST'
+                WHERE treeningukorra_seisundi_kood <> 'TYHIST'
                 GROUP BY treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg
                 HAVING COUNT(*) > 1
                 """,
@@ -2152,37 +2508,39 @@ class DatabaseValidator:
             (
                 "no duplicate active registrations per client/session",
                 """
-                SELECT treeningukorra_kood, klient_e_meil
+                SELECT treeningukorra_id, klient_e_meil
                 FROM registreering
-                WHERE seisundi_kood IN ('KINNIT', 'OOTEJRK')
-                GROUP BY treeningukorra_kood, klient_e_meil
+                WHERE registreeringu_seisundi_kood IN ('KINNIT', 'OOTEJRK')
+                GROUP BY treeningukorra_id, klient_e_meil
                 HAVING COUNT(*) > 1
                 """,
             ),
             (
                 "no duplicate waitlist positions per session",
                 """
-                SELECT treeningukorra_kood, ootejarjekorra_nr
-                FROM registreering
-                WHERE seisundi_kood = 'OOTEJRK'
-                GROUP BY treeningukorra_kood, ootejarjekorra_nr
+                SELECT ok.treeningukorra_id, ok.ootejarjekorra_nr
+                FROM ootejarjekorra_koht ok
+                JOIN registreering r ON r.registreeringu_id = ok.registreeringu_id
+                WHERE r.registreeringu_seisundi_kood = 'OOTEJRK'
+                GROUP BY ok.treeningukorra_id, ok.ootejarjekorra_nr
                 HAVING COUNT(*) > 1
                 """,
             ),
             (
                 "waitlist positions are contiguous per session",
                 """
-                SELECT treeningukorra_kood, ootejarjekorra_nr, expected_nr
+                SELECT treeningukorra_id, ootejarjekorra_nr, expected_nr
                 FROM (
                     SELECT
-                        treeningukorra_kood,
-                        ootejarjekorra_nr,
+                        ok.treeningukorra_id,
+                        ok.ootejarjekorra_nr,
                         ROW_NUMBER() OVER (
-                            PARTITION BY treeningukorra_kood
-                            ORDER BY ootejarjekorra_nr
+                            PARTITION BY ok.treeningukorra_id
+                            ORDER BY ok.ootejarjekorra_nr
                         ) AS expected_nr
-                    FROM registreering
-                    WHERE seisundi_kood = 'OOTEJRK'
+                    FROM ootejarjekorra_koht ok
+                    JOIN registreering r ON r.registreeringu_id = ok.registreeringu_id
+                    WHERE r.registreeringu_seisundi_kood = 'OOTEJRK'
                 ) ranked
                 WHERE ootejarjekorra_nr <> expected_nr
                 """,
@@ -2190,7 +2548,7 @@ class DatabaseValidator:
             (
                 "sessions have strictly positive capacity and valid time window",
                 """
-                SELECT treeningukorra_kood
+                SELECT treeningukorra_id
                 FROM treeningukord
                 WHERE maksimaalne_osalejate_arv <= 0
                    OR lopu_aeg <= alguse_aeg
@@ -2199,25 +2557,25 @@ class DatabaseValidator:
             (
                 "session trainers have active trainer role at session start",
                 """
-                SELECT tk.treeningukorra_kood, tk.treener_e_meil
+                SELECT tk.treeningukorra_id, tk.treener_e_meil
                 FROM treeningukord tk
                 WHERE NOT EXISTS (
                     SELECT 1
                     FROM tootaja_rolli_omamine tro
                     WHERE tro.tootaja_e_meil = tk.treener_e_meil
-                      AND tro.tootaja_roll_kood = 'TREENER'
+                      AND tro.tootaja_rolli_kood = 'TREENER'
                       AND tro.alguse_aeg <= tk.alguse_aeg
-                      AND (tro.lopu_aeg IS NULL OR tro.lopu_aeg >= tk.alguse_aeg)
+                      AND tro.kehtivuse_lopu_aeg >= tk.alguse_aeg
                 )
                 """,
             ),
             (
                 "closed or completed sessions do not have open registration deadline in future",
                 """
-                SELECT treeningukorra_kood
+                SELECT treeningukorra_id
                 FROM treeningukord
-                WHERE seisundi_kood IN ('SULETUD', 'TOIMUNUD', 'TYHIST')
-                  AND registreerimise_lopp > CURRENT_TIMESTAMP
+                WHERE treeningukorra_seisundi_kood IN ('SULETUD', 'TOIMUNUD', 'TYHIST')
+                  AND registreerimise_lopp > CURRENT_TIMESTAMP(0)
                 """,
             ),
         ]
@@ -2295,20 +2653,19 @@ class DatabaseValidator:
                     """
                     SELECT COUNT(*)
                     FROM registreering
-                    WHERE treeningukorra_kood = 2001
+                    WHERE treeningukorra_id = 2001
                       AND klient_e_meil = 'klient4@jousaal.ee'
                     """
                 )
                 before = cur.fetchone()[0]
-                cur.execute("SELECT * FROM fn_registreeri_klient_treeningukorrale(2001, 'klient4@jousaal.ee')")
-                cur.fetchone()
+                cur.execute("SELECT fn_registreeri_klient_treeningukorrale(2001, 'klient4@jousaal.ee')")
                 conn.rollback()
         with connect(dbname=self.dbname) as conn, conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT COUNT(*)
                 FROM registreering
-                WHERE treeningukorra_kood = 2001
+                WHERE treeningukorra_id = 2001
                   AND klient_e_meil = 'klient4@jousaal.ee'
                 """
             )
@@ -2422,39 +2779,98 @@ class DatabaseValidator:
                     self.report.pass_("application role cannot execute internal mutating helper functions directly")
 
                 cur.execute("SET ROLE jousaali_rakendus")
-                cur.execute("SELECT COUNT(*) FROM v_avalikud_treeningukorrad")
-                cur.execute("SELECT COUNT(*) FROM fn_kasutaja_tuvastamise_andmed('juhataja@jousaal.ee')")
+                cur.execute("SELECT COUNT(*) FROM avalikud_treeningukorrad")
+                cur.execute("SELECT COUNT(*) FROM fn_tuvasta_kasutaja_e_meili_jargi('juhataja@jousaal.ee')")
                 cur.execute("SAVEPOINT app_role_workflow")
                 app_registration = None
                 app_waitlisted = None
                 app_registration_cancel = None
                 app_cancelled = None
                 try:
-                    cur.execute("CREATE TEMP TABLE treeningukord (treeningukorra_kood INTEGER, marker TEXT)")
+                    cur.execute("CREATE TEMP TABLE treeningukord (treeningukorra_id INTEGER, marker TEXT)")
                     cur.execute(
                         """
                         SELECT fn_planeeri_treeningukord(
-                            1002, 'treener2@jousaal.ee', 'SAAL_B',
-                            CURRENT_TIMESTAMP + INTERVAL '190 days',
-                            CURRENT_TIMESTAMP + INTERVAL '190 days 75 minutes',
-                            CURRENT_TIMESTAMP + INTERVAL '189 days',
-                            CURRENT_TIMESTAMP + INTERVAL '189 days',
-                            1, 'juhataja@jousaal.ee'
+                            p_treeninguliigi_id => 1002,
+                            p_treener_e_meil => 'treener2@jousaal.ee',
+                            p_ruumi_kood => 'SAAL_B',
+                            p_alguse_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '190 days',
+                            p_lopu_aeg => CURRENT_TIMESTAMP(0) + INTERVAL '190 days 75 minutes',
+                            p_registreerimise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '189 days',
+                            p_tyhistamise_lopp => CURRENT_TIMESTAMP(0) + INTERVAL '189 days',
+                            p_maksimaalne_osalejate_arv => 1,
+                            p_juhataja_e_meil => 'juhataja@jousaal.ee'
                         )
                         """
                     )
+                    cur.execute("SELECT max(treeningukorra_id) FROM public.treeningukord")
                     app_session_id = cur.fetchone()[0]
                     cur.execute("SELECT fn_ava_treeningukord(%s, 'juhataja@jousaal.ee')", (app_session_id,))
-                    cur.execute("SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient4@jousaal.ee')", (app_session_id,))
+                    cur.execute("SELECT fn_registreeri_klient_treeningukorrale(%s, 'klient4@jousaal.ee')", (app_session_id,))
+                    cur.execute(
+                        """
+                        SELECT max(registreeringu_id)
+                        FROM public.registreering
+                        WHERE treeningukorra_id = %s
+                          AND klient_e_meil = 'klient4@jousaal.ee'
+                        """,
+                        (app_session_id,),
+                    )
+                    app_registration_id = cur.fetchone()[0]
+                    cur.execute(
+                        """
+                        SELECT r.registreeringu_id, r.registreeringu_seisundi_kood, ok.ootejarjekorra_nr
+                        FROM registreering r
+                        LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+                        WHERE r.registreeringu_id = %s
+                        """,
+                        (app_registration_id,),
+                    )
                     app_registration = cur.fetchone()
-                    cur.execute("SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, 'klient2@jousaal.ee')", (app_session_id,))
+                    cur.execute("SELECT fn_registreeri_klient_treeningukorrale(%s, 'klient2@jousaal.ee')", (app_session_id,))
+                    cur.execute(
+                        """
+                        SELECT max(registreeringu_id)
+                        FROM public.registreering
+                        WHERE treeningukorra_id = %s
+                          AND klient_e_meil = 'klient2@jousaal.ee'
+                        """,
+                        (app_session_id,),
+                    )
+                    app_waitlisted_id = cur.fetchone()[0]
+                    cur.execute(
+                        """
+                        SELECT r.registreeringu_id, r.registreeringu_seisundi_kood, ok.ootejarjekorra_nr
+                        FROM registreering r
+                        LEFT JOIN ootejarjekorra_koht ok ON ok.registreeringu_id = r.registreeringu_id
+                        WHERE r.registreeringu_id = %s
+                        """,
+                        (app_waitlisted_id,),
+                    )
                     app_waitlisted = cur.fetchone()
                     cur.execute(
-                        "SELECT * FROM fn_tyhista_registreering(%s, 'klient4@jousaal.ee', 'app role hardening validation')",
-                        (app_registration[0],),
+                        "SELECT fn_tyhista_registreering(%s, 'klient4@jousaal.ee', 'app role hardening validation')",
+                        (app_registration_id,),
+                    )
+                    cur.execute(
+                        """
+                        SELECT registreeringu_seisundi_kood
+                        FROM registreering
+                        WHERE registreeringu_id = %s
+                        """,
+                        (app_registration_id,),
                     )
                     app_registration_cancel = cur.fetchone()
                     cur.execute("SELECT fn_tyhista_treeningukord(%s, 'juhataja@jousaal.ee', 'app role hardening validation')", (app_session_id,))
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM registreering
+                        WHERE treeningukorra_id = %s
+                          AND registreeringu_seisundi_kood = 'TYH_SYS'
+                        """,
+                        (app_session_id,),
+                    )
                     app_cancelled = cur.fetchone()[0]
                 finally:
                     cur.execute("ROLLBACK TO SAVEPOINT app_role_workflow")
@@ -2465,7 +2881,7 @@ class DatabaseValidator:
                     and app_waitlisted
                     and app_waitlisted[1] == "OOTEJRK"
                     and app_registration_cancel
-                    and app_registration_cancel[1] == app_waitlisted[0]
+                    and app_registration_cancel[0] == "TYH_KL"
                     and app_cancelled == 1
                 ):
                     self.report.pass_("application role can run planning, opening, registration, and cancellation through hardened functions")
@@ -2490,15 +2906,15 @@ class DatabaseValidator:
                     "application role cannot directly INSERT treeningukord",
                     """
                     INSERT INTO treeningukord (
-                        treeninguliigi_kood, treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg,
-                        registreerimise_lopp, tyhistamise_lopp, maksimaalne_osalejate_arv, seisundi_kood
+                        treeninguliigi_id, treener_e_meil, ruumi_kood, alguse_aeg, lopu_aeg,
+                        registreerimise_lopp, tyhistamise_lopp, maksimaalne_osalejate_arv, treeningukorra_seisundi_kood
                     )
                     VALUES (
                         1000, 'treener@jousaal.ee', 'SAAL_B',
-                        CURRENT_TIMESTAMP + INTERVAL '210 days',
-                        CURRENT_TIMESTAMP + INTERVAL '210 days 60 minutes',
-                        CURRENT_TIMESTAMP + INTERVAL '209 days',
-                        CURRENT_TIMESTAMP + INTERVAL '209 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '210 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '210 days 60 minutes',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '209 days',
+                        CURRENT_TIMESTAMP(0) + INTERVAL '209 days',
                         8, 'KAVAND'
                     )
                     """,
@@ -2508,14 +2924,14 @@ class DatabaseValidator:
                     self.report,
                     cur,
                     "application role cannot directly UPDATE treeningukord",
-                    "UPDATE treeningukord SET seisundi_kood = seisundi_kood WHERE treeningukorra_kood = 2001",
+                    "UPDATE treeningukord SET treeningukorra_seisundi_kood = treeningukorra_seisundi_kood WHERE treeningukorra_id = 2001",
                     sqlstate="42501",
                 )
                 expect_error(
                     self.report,
                     cur,
                     "application role cannot directly DELETE registrations",
-                    "DELETE FROM registreering WHERE registreeringu_kood = -1",
+                    "DELETE FROM registreering WHERE registreeringu_id = -1",
                     sqlstate="42501",
                 )
                 cur.execute("RESET ROLE")

@@ -29,8 +29,8 @@
                                 {{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}<br>
                                 <small class="text-muted">{{ session_status_label(row.treeningukorra_seisundi_kood) }}</small>
                             </td>
-                            <td><strong>{{ row.treeninguliik }}</strong></td>
-                            <td>{{ row.ruum }}<br><small class="text-muted">{{ row.treener_nimi }}</small></td>
+                            <td><strong>{{ row.treeninguliigi_nimetus }}</strong></td>
+                            <td>{{ row.ruumi_nimetus }}<br><small class="text-muted">{{ row.treener_nimi }}</small></td>
                             <td>
                                 <span class="badge badge-{{ row.registreeringu_seisundi_kood }}">{{ registration_status_label(row.registreeringu_seisundi_kood) }}</span>
                                 {% if row.ootejarjekorra_nr %}
@@ -38,9 +38,9 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if row.osales is sameas true %}
+                                {% if row.on_osalenud is sameas true %}
                                     <span class="text-success">Osales</span>
-                                {% elif row.osales is sameas false %}
+                                {% elif row.on_osalenud is sameas false %}
                                     <span class="text-danger">Ei osalenud</span>
                                 {% else %}
                                     <span class="text-muted">Märkimata</span>
@@ -48,7 +48,7 @@
                             </td>
                             <td class="text-end">
                                 {% if row.registreeringu_seisundi_kood in ['KINNIT', 'OOTEJRK'] %}
-                                    <form method="post" action="{{ url_for('cancel_registration', registreeringu_kood=row.registreeringu_kood) }}">
+                                    <form method="post" action="{{ url_for('cancel_registration', registreeringu_id=row.registreeringu_id) }}">
                                         <input type="hidden" name="reason" value="Klient tühistas registreeringu prototüübis.">
                                         <button class="btn btn-sm btn-outline-danger" type="submit">
                                             <i class="bi bi-x-circle"></i> Tühista

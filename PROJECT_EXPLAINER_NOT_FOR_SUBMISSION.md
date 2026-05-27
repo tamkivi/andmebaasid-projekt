@@ -62,10 +62,10 @@ The database, not just Flask, checks:
 ## Flask Workflows
 
 - Manager: `/manager/sessions`, `/manager/sessions/new`, `/manager/report`
-- Trainer: `/trainer/sessions`, `/trainer/sessions/<treeningukorra_kood>/roster`
+- Trainer: `/trainer/sessions`, `/trainer/sessions/<treeningukorra_id>/roster`
 - Client: `/schedule`, `/client/registrations`
 
-Normal write routes call database functions. Reads use views such as `v_avalikud_treeningukorrad`, `v_kliendi_registreeringud`, `v_treeneri_tunniplaan` and `v_juhataja_treeningukordade_ulevaade`.
+Normal write routes call database functions. Reads use views such as `avalikud_treeningukorrad`, `kliendi_registreeringud`, `treeneri_tunniplaan` and `juhataja_treeningukordade_ulevaade`.
 
 ## Diagrams
 

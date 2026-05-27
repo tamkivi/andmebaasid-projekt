@@ -30,13 +30,13 @@
                         <tbody>
                             {% for row in occupancy %}
                                 <tr>
-                                    <td><strong>{{ row.treeninguliik }}</strong></td>
-                                    <td>{{ row.treeningukordade_arv }}</td>
-                                    <td>{{ row.avatud_arv }}</td>
-                                    <td>{{ row.toimunud_arv }}</td>
-                                    <td>{{ row.kohti_kokku }}</td>
-                                    <td>{{ row.kinnitatud_arv }}</td>
-                                    <td>{{ row.ootejarjekorra_arv }}</td>
+                                    <td><strong>{{ row.treeninguliigi_nimetus }}</strong></td>
+                                    <td>{{ row.treeningukordade_koguarv }}</td>
+                                    <td>{{ row.avatud_treeningukordade_arv }}</td>
+                                    <td>{{ row.toimunud_treeningukordade_arv }}</td>
+                                    <td>{{ row.maksimaalsete_kohtade_arv }}</td>
+                                    <td>{{ row.kinnitatud_osalejate_arv }}</td>
+                                    <td>{{ row.ootel_registreeringute_arv }}</td>
                                     <td>{{ row.taituvus_protsent }}%</td>
                                 </tr>
                             {% endfor %}
@@ -65,11 +65,11 @@
                             {% for row in sessions %}
                                 <tr>
                                     <td>{{ row.alguse_aeg.strftime('%d.%m.%Y %H:%M') if row.alguse_aeg else '' }}</td>
-                                    <td>{{ row.treeninguliik }}</td>
-                                    <td>{{ row.ruum }}</td>
+                                    <td>{{ row.treeninguliigi_nimetus }}</td>
+                                    <td>{{ row.ruumi_nimetus }}</td>
                                     <td>{{ row.treener_nimi }}</td>
-                                    <td>{{ row.kinnitatud_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootejarjekorra_arv }} ootel</td>
-                                    <td><span class="badge badge-{{ row.seisundi_kood }}">{{ session_status_label(row.seisundi_kood) }}</span></td>
+                                    <td>{{ row.kinnitatud_osalejate_arv }}/{{ row.maksimaalne_osalejate_arv }} · {{ row.ootel_registreeringute_arv }} ootel</td>
+                                    <td><span class="badge badge-{{ row.korra_seisundi_kood }}">{{ session_status_label(row.korra_seisundi_kood) }}</span></td>
                                 </tr>
                             {% endfor %}
                         </tbody>

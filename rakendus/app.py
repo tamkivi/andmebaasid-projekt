@@ -143,9 +143,9 @@ def template_user():
 
 def fetch_form_options(cur):
     cur.execute("""
-        SELECT treeninguliigi_kood, nimetus, kestus_minutites
+        SELECT treeninguliigi_id, nimetus, kestus_minutites
         FROM treeninguliik
-        WHERE seisundi_kood = 'AKTIIVNE'
+        WHERE treeninguliigi_seisundi_kood = 'AKTIIVNE'
         ORDER BY nimetus
     """)
     training_types = cur.fetchall()
@@ -156,11 +156,11 @@ def fetch_form_options(cur):
             r.nimetus,
             r.mahutavus,
             COALESCE(
-                string_agg(rv.varustus || ' ' || rv.kogus::text || ' tk', ', ' ORDER BY rv.varustus),
+                string_agg(rv.varustuse_nimetus || ' ' || rv.ruumi_varustuse_kogus::text || ' tk', ', ' ORDER BY rv.varustuse_nimetus),
                 'varustus märkimata'
             ) AS varustuse_kokkuvote
         FROM ruum r
-        LEFT JOIN v_ruumide_varustus rv ON rv.ruumi_kood = r.ruumi_kood
+        LEFT JOIN ruumide_varustus rv ON rv.ruumi_kood = r.ruumi_kood
         WHERE r.on_aktiivne
         GROUP BY r.ruumi_kood, r.nimetus, r.mahutavus
         ORDER BY r.nimetus
@@ -169,13 +169,13 @@ def fetch_form_options(cur):
 
     cur.execute("""
         SELECT
-            treeninguliigi_kood,
-            treeninguliik,
-            varustus,
+            treeninguliigi_id,
+            treeninguliigi_nimetus,
+            varustuse_nimetus,
             minimaalne_kogus,
             on_kohustuslik
-        FROM v_treeninguliigi_varustuse_nouded
-        ORDER BY treeninguliik, on_kohustuslik DESC, varustus
+        FROM treeninguliigi_varustuse_nouded
+        ORDER BY treeninguliigi_nimetus, on_kohustuslik DESC, varustuse_nimetus
     """)
     equipment_requirements = cur.fetchall()
 
@@ -183,7 +183,7 @@ def fetch_form_options(cur):
         SELECT t.e_meil, concat_ws(' ', i.eesnimi, i.perenimi) AS nimi
         FROM tootaja t
         JOIN isik i ON i.e_meil = t.e_meil
-        WHERE fn_on_treener(t.e_meil)
+        WHERE on_treener(t.e_meil)
         ORDER BY i.perenimi, i.eesnimi
     """)
     trainers = cur.fetchall()
@@ -221,7 +221,7 @@ def login():
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM fn_kasutaja_tuvastamise_andmed(%s)", (email,))
+            cur.execute("SELECT * FROM fn_tuvasta_kasutaja_e_meili_jargi(%s)", (email,))
             user = cur.fetchone()
 
         if not user:
@@ -262,10 +262,10 @@ def dashboard():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT
-                    (SELECT COUNT(*) FROM v_avalikud_treeningukorrad) AS avatud_kordi,
-                    (SELECT COUNT(*) FROM treeningukord WHERE seisundi_kood = 'KAVAND') AS kavandatud_kordi,
-                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
-                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid,
+                    (SELECT COUNT(*) FROM avalikud_treeningukorrad) AS avatud_kordi,
+                    (SELECT COUNT(*) FROM treeningukord WHERE treeningukorra_seisundi_kood = 'KAVAND') AS kavandatud_kordi,
+                    (SELECT COUNT(*) FROM registreering WHERE registreeringu_seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
+                    (SELECT COUNT(*) FROM registreering WHERE registreeringu_seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid,
                     (SELECT COUNT(*) FROM klient WHERE on_aktiivne) AS aktiivseid_kliente
             """)
             stats = cur.fetchone()
@@ -287,20 +287,20 @@ def schedule():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM v_avalikud_treeningukorrad
-                ORDER BY alguse_aeg, treeninguliik
+                FROM avalikud_treeningukorrad
+                ORDER BY alguse_aeg, treeninguliigi_nimetus
             """)
             sessions = cur.fetchall()
 
             registrations = {}
             if session.get("role") == "klient":
                 cur.execute("""
-                    SELECT treeningukorra_kood, registreeringu_kood, registreeringu_seisundi_kood, ootejarjekorra_nr
-                    FROM v_kliendi_registreeringud
+                    SELECT treeningukorra_id, registreeringu_id, registreeringu_seisundi_kood, ootejarjekorra_nr
+                    FROM kliendi_registreeringud
                     WHERE klient_e_meil = %s
                       AND registreeringu_seisundi_kood IN ('KINNIT', 'OOTEJRK')
                 """, (session["user_id"],))
-                registrations = {row["treeningukorra_kood"]: row for row in cur.fetchall()}
+                registrations = {row["treeningukorra_id"]: row for row in cur.fetchall()}
 
         return render_template("schedule.html", sessions=sessions, registrations=registrations, user=template_user())
     except psycopg2.Error as exc:
@@ -310,10 +310,10 @@ def schedule():
         conn.close()
 
 
-@app.route("/client/sessions/<int:treeningukorra_kood>/register", methods=["POST"])
+@app.route("/client/sessions/<int:treeningukorra_id>/register", methods=["POST"])
 @login_required
 @client_required
-def client_register_session(treeningukorra_kood):
+def client_register_session(treeningukorra_id):
     conn = get_db_connection()
     if not conn:
         flash("Andmebaasi ühendus ebaõnnestus.", "danger")
@@ -321,12 +321,16 @@ def client_register_session(treeningukorra_kood):
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                "SELECT * FROM fn_registreeri_klient_treeningukorrale(%s, %s)",
-                (treeningukorra_kood, session["user_id"]),
+                """
+                SELECT fn_registreeri_klient_treeningukorrale(
+                    p_treeningukorra_id => %s,
+                    p_klient_e_meil => %s
+                )
+                """,
+                (treeningukorra_id, session["user_id"]),
             )
-            result = cur.fetchone()
         conn.commit()
-        flash(result["teade"], "success")
+        flash("Registreering salvestati.", "success")
     except psycopg2.Error as exc:
         conn.rollback()
         flash(db_error_message(exc), "danger")
@@ -346,9 +350,9 @@ def client_registrations():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM v_kliendi_registreeringud
+                FROM kliendi_registreeringud
                 WHERE klient_e_meil = %s
-                ORDER BY alguse_aeg DESC, registreeringu_kood DESC
+                ORDER BY alguse_aeg DESC, registreeringu_id DESC
             """, (session["user_id"],))
             registrations = cur.fetchall()
         return render_template("client_registrations.html", registrations=registrations, user=template_user())
@@ -359,9 +363,9 @@ def client_registrations():
         conn.close()
 
 
-@app.route("/client/registrations/<int:registreeringu_kood>/cancel", methods=["POST"])
+@app.route("/client/registrations/<int:registreeringu_id>/cancel", methods=["POST"])
 @login_required
-def cancel_registration(registreeringu_kood):
+def cancel_registration(registreeringu_id):
     if session.get("role") != "klient" and "JUHATAJA" not in session.get("roles", []):
         return render_template("error.html", error="Ligipääs keelatud"), 403
     reason = (request.form.get("reason") or "Kasutaja tühistas registreeringu.").strip()
@@ -372,12 +376,17 @@ def cancel_registration(registreeringu_kood):
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                "SELECT * FROM fn_tyhista_registreering(%s, %s, %s)",
-                (registreeringu_kood, session["user_id"], reason),
+                """
+                SELECT fn_tyhista_registreering(
+                    p_registreeringu_id => %s,
+                    p_actor_e_meil => %s,
+                    p_pohjus => %s
+                )
+                """,
+                (registreeringu_id, session["user_id"], reason),
             )
-            result = cur.fetchone()
         conn.commit()
-        flash(result["teade"], "success")
+        flash("Registreering tühistati.", "success")
     except psycopg2.Error as exc:
         conn.rollback()
         flash(db_error_message(exc), "danger")
@@ -397,8 +406,8 @@ def manager_sessions():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM v_juhataja_treeningukordade_ulevaade
-                ORDER BY alguse_aeg DESC, treeningukorra_kood DESC
+                FROM juhataja_treeningukordade_ulevaade
+                ORDER BY alguse_aeg DESC, treeningukorra_id DESC
             """)
             sessions = cur.fetchall()
         return render_template("manager_sessions.html", sessions=sessions, user=template_user())
@@ -430,7 +439,7 @@ def manager_new_session():
                 )
 
             values = {
-                "treeninguliigi_kood": request.form.get("treeninguliigi_kood"),
+                "treeninguliigi_id": request.form.get("treeninguliigi_id"),
                 "treener_e_meil": request.form.get("treener_e_meil"),
                 "ruumi_kood": request.form.get("ruumi_kood"),
                 "alguse_aeg": request.form.get("alguse_aeg"),
@@ -441,10 +450,20 @@ def manager_new_session():
             }
             cur.execute(
                 """
-                SELECT fn_planeeri_treeningukord(%s, %s, %s, %s, %s, %s, %s, %s, %s) AS treeningukorra_kood
+                SELECT fn_planeeri_treeningukord(
+                    p_treeninguliigi_id => %s,
+                    p_treener_e_meil => %s,
+                    p_ruumi_kood => %s,
+                    p_alguse_aeg => %s,
+                    p_lopu_aeg => %s,
+                    p_registreerimise_lopp => %s,
+                    p_tyhistamise_lopp => %s,
+                    p_maksimaalne_osalejate_arv => %s,
+                    p_juhataja_e_meil => %s
+                )
                 """,
                 (
-                    values["treeninguliigi_kood"],
+                    values["treeninguliigi_id"],
                     values["treener_e_meil"],
                     values["ruumi_kood"],
                     values["alguse_aeg"],
@@ -455,9 +474,8 @@ def manager_new_session():
                     session["user_id"],
                 ),
             )
-            new_id = cur.fetchone()["treeningukorra_kood"]
         conn.commit()
-        flash(f"Treeningukord #{new_id} planeeriti.", "success")
+        flash("Treeningukord planeeriti.", "success")
         return redirect(url_for("manager_sessions"))
     except psycopg2.Error as exc:
         conn.rollback()
@@ -477,18 +495,39 @@ def manager_new_session():
         conn.close()
 
 
-def call_session_function(function_name: str, treeningukorra_kood: int, *extra_args):
+def call_session_function(function_name: str, treeningukorra_id: int, *extra_args):
     conn = get_db_connection()
     if not conn:
         flash("Andmebaasi ühendus ebaõnnestus.", "danger")
         return redirect(url_for("manager_sessions"))
-    try:
-        placeholders = ", ".join(["%s"] * (2 + len(extra_args)))
-        with conn.cursor() as cur:
-            cur.execute(
-                f"SELECT {function_name}({placeholders})",
-                (treeningukorra_kood, session["user_id"], *extra_args),
+    session_calls = {
+        "fn_ava_treeningukord": (
+            "SELECT fn_ava_treeningukord(p_treeningukorra_id => %s, p_juhataja_e_meil => %s)",
+            (treeningukorra_id, session["user_id"]),
+        ),
+        "fn_sulge_treeningukord": (
+            "SELECT fn_sulge_treeningukord(p_treeningukorra_id => %s, p_juhataja_e_meil => %s)",
+            (treeningukorra_id, session["user_id"]),
+        ),
+        "fn_lopeta_treeningukord": (
+            "SELECT fn_lopeta_treeningukord(p_treeningukorra_id => %s, p_juhataja_e_meil => %s)",
+            (treeningukorra_id, session["user_id"]),
+        ),
+        "fn_tyhista_treeningukord": (
+            """
+            SELECT fn_tyhista_treeningukord(
+                p_treeningukorra_id => %s,
+                p_juhataja_e_meil => %s,
+                p_pohjus => %s
             )
+            """,
+            (treeningukorra_id, session["user_id"], extra_args[0] if extra_args else None),
+        ),
+    }
+    try:
+        query, params = session_calls[function_name]
+        with conn.cursor() as cur:
+            cur.execute(query, params)
         conn.commit()
         flash("Toiming õnnestus.", "success")
     except psycopg2.Error as exc:
@@ -499,33 +538,33 @@ def call_session_function(function_name: str, treeningukorra_kood: int, *extra_a
     return redirect(request.referrer or url_for("manager_sessions"))
 
 
-@app.route("/manager/sessions/<int:treeningukorra_kood>/open", methods=["POST"])
+@app.route("/manager/sessions/<int:treeningukorra_id>/open", methods=["POST"])
 @login_required
 @role_required("JUHATAJA")
-def manager_open_session(treeningukorra_kood):
-    return call_session_function("fn_ava_treeningukord", treeningukorra_kood)
+def manager_open_session(treeningukorra_id):
+    return call_session_function("fn_ava_treeningukord", treeningukorra_id)
 
 
-@app.route("/manager/sessions/<int:treeningukorra_kood>/close", methods=["POST"])
+@app.route("/manager/sessions/<int:treeningukorra_id>/close", methods=["POST"])
 @login_required
 @role_required("JUHATAJA")
-def manager_close_session(treeningukorra_kood):
-    return call_session_function("fn_sulge_treeningukord", treeningukorra_kood)
+def manager_close_session(treeningukorra_id):
+    return call_session_function("fn_sulge_treeningukord", treeningukorra_id)
 
 
-@app.route("/manager/sessions/<int:treeningukorra_kood>/complete", methods=["POST"])
+@app.route("/manager/sessions/<int:treeningukorra_id>/complete", methods=["POST"])
 @login_required
 @role_required("JUHATAJA")
-def manager_complete_session(treeningukorra_kood):
-    return call_session_function("fn_lopeta_treeningukord", treeningukorra_kood)
+def manager_complete_session(treeningukorra_id):
+    return call_session_function("fn_lopeta_treeningukord", treeningukorra_id)
 
 
-@app.route("/manager/sessions/<int:treeningukorra_kood>/cancel", methods=["POST"])
+@app.route("/manager/sessions/<int:treeningukorra_id>/cancel", methods=["POST"])
 @login_required
 @role_required("JUHATAJA")
-def manager_cancel_session(treeningukorra_kood):
+def manager_cancel_session(treeningukorra_id):
     reason = (request.form.get("reason") or "Juhataja tühistas treeningukorra.").strip()
-    return call_session_function("fn_tyhista_treeningukord", treeningukorra_kood, reason)
+    return call_session_function("fn_tyhista_treeningukord", treeningukorra_id, reason)
 
 
 @app.route("/manager/report")
@@ -537,11 +576,11 @@ def manager_report():
         return render_template("manager_report.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM v_treeningute_taituvuse_statistika ORDER BY treeninguliik")
+            cur.execute("SELECT * FROM treeningute_taituvuse_statistika ORDER BY treeninguliigi_nimetus")
             occupancy = cur.fetchall()
             cur.execute("""
                 SELECT *
-                FROM v_juhataja_treeningukordade_ulevaade
+                FROM juhataja_treeningukordade_ulevaade
                 ORDER BY alguse_aeg DESC
                 LIMIT 20
             """)
@@ -565,9 +604,9 @@ def trainer_sessions():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM v_treeneri_tunniplaan
+                FROM treeneri_tunniplaan
                 WHERE treener_e_meil = %s
-                ORDER BY alguse_aeg DESC, treeningukorra_kood DESC
+                ORDER BY alguse_aeg DESC, treeningukorra_id DESC
             """, (session["user_id"],))
             sessions = cur.fetchall()
         return render_template("trainer_sessions.html", sessions=sessions, user=template_user())
@@ -578,10 +617,10 @@ def trainer_sessions():
         conn.close()
 
 
-@app.route("/trainer/sessions/<int:treeningukorra_kood>/roster")
+@app.route("/trainer/sessions/<int:treeningukorra_id>/roster")
 @login_required
 @role_required("TREENER")
-def trainer_roster(treeningukorra_kood):
+def trainer_roster(treeningukorra_id):
     conn = get_db_connection()
     if not conn:
         return render_template("trainer_roster.html", error="Andmebaasi ühendus ebaõnnestus.", user=template_user()), 500
@@ -589,30 +628,30 @@ def trainer_roster(treeningukorra_kood):
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT *
-                FROM v_treeneri_tunniplaan
-                WHERE treeningukorra_kood = %s
+                FROM treeneri_tunniplaan
+                WHERE treeningukorra_id = %s
                   AND treener_e_meil = %s
-            """, (treeningukorra_kood, session["user_id"]))
+            """, (treeningukorra_id, session["user_id"]))
             session_row = cur.fetchone()
             if not session_row and "JUHATAJA" not in session.get("roles", []):
                 return render_template("error.html", error="Seda treeningukorda ei leitud sinu tunniplaanist."), 404
             if not session_row:
                 cur.execute("""
                     SELECT *
-                    FROM v_juhataja_treeningukordade_ulevaade
-                    WHERE treeningukorra_kood = %s
-                """, (treeningukorra_kood,))
+                    FROM juhataja_treeningukordade_ulevaade
+                    WHERE treeningukorra_id = %s
+                """, (treeningukorra_id,))
                 session_row = cur.fetchone()
 
             cur.execute("""
                 SELECT *
-                FROM v_treeningukorra_osalejad
-                WHERE treeningukorra_kood = %s
+                FROM treeningukorra_osalejad
+                WHERE treeningukorra_id = %s
                 ORDER BY
                     CASE registreeringu_seisundi_kood WHEN 'KINNIT' THEN 1 WHEN 'OOTEJRK' THEN 2 ELSE 3 END,
                     ootejarjekorra_nr NULLS LAST,
                     registreerimise_aeg
-            """, (treeningukorra_kood,))
+            """, (treeningukorra_id,))
             roster = cur.fetchall()
         return render_template("trainer_roster.html", session_row=session_row, roster=roster, user=template_user())
     except psycopg2.Error as exc:
@@ -622,23 +661,30 @@ def trainer_roster(treeningukorra_kood):
         conn.close()
 
 
-@app.route("/trainer/sessions/<int:treeningukorra_kood>/attendance", methods=["POST"])
+@app.route("/trainer/sessions/<int:treeningukorra_id>/attendance", methods=["POST"])
 @login_required
 @role_required("TREENER")
-def trainer_mark_attendance(treeningukorra_kood):
+def trainer_mark_attendance(treeningukorra_id):
     conn = get_db_connection()
     if not conn:
         flash("Andmebaasi ühendus ebaõnnestus.", "danger")
-        return redirect(url_for("trainer_roster", treeningukorra_kood=treeningukorra_kood))
+        return redirect(url_for("trainer_roster", treeningukorra_id=treeningukorra_id))
     try:
-        registration_ids = request.form.getlist("registreeringu_kood")
+        registration_ids = request.form.getlist("registreeringu_id")
         with conn.cursor() as cur:
             for raw_id in registration_ids:
-                osales = request.form.get(f"osales_{raw_id}") == "on"
+                on_osalenud = request.form.get(f"osales_{raw_id}") == "on"
                 markus = (request.form.get(f"markus_{raw_id}") or "").strip() or None
                 cur.execute(
-                    "SELECT fn_marki_osalemine(%s, %s, %s, %s)",
-                    (raw_id, session["user_id"], osales, markus),
+                    """
+                    SELECT fn_marki_osalemine(
+                        p_registreeringu_id => %s,
+                        p_markija_e_meil => %s,
+                        p_on_osalenud => %s,
+                        p_markus => %s
+                    )
+                    """,
+                    (raw_id, session["user_id"], on_osalenud, markus),
                 )
         conn.commit()
         flash("Osalemised salvestati.", "success")
@@ -647,7 +693,7 @@ def trainer_mark_attendance(treeningukorra_kood):
         flash(db_error_message(exc), "danger")
     finally:
         conn.close()
-    return redirect(url_for("trainer_roster", treeningukorra_kood=treeningukorra_kood))
+    return redirect(url_for("trainer_roster", treeningukorra_id=treeningukorra_id))
 
 
 @app.route("/api/stats")
@@ -660,9 +706,9 @@ def api_stats():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT
-                    (SELECT COUNT(*) FROM v_avalikud_treeningukorrad) AS avatud_kordi,
-                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
-                    (SELECT COUNT(*) FROM registreering WHERE seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid
+                    (SELECT COUNT(*) FROM avalikud_treeningukorrad) AS avatud_kordi,
+                    (SELECT COUNT(*) FROM registreering WHERE registreeringu_seisundi_kood = 'KINNIT') AS kinnitatud_registreeringuid,
+                    (SELECT COUNT(*) FROM registreering WHERE registreeringu_seisundi_kood = 'OOTEJRK') AS ootel_registreeringuid
             """)
             return jsonify(cur.fetchone())
     except psycopg2.Error as exc:

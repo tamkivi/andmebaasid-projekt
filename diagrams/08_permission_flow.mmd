@@ -10,14 +10,14 @@ flowchart LR
     MGR -->|"kutsub"| FT["fn_tyhista_treeningukord"]
     MGR -->|"loeb"| STAT["statistikavaated"]
 
-    TRN -->|"loeb"| TV["v_treeneri_tunniplaan"]
-    TRN -->|"loeb"| RO["v_treeningukorra_osalejad"]
+    TRN -->|"loeb"| TV["treeneri_tunniplaan"]
+    TRN -->|"loeb"| RO["treeningukorra_osalejad"]
     TRN -->|"kutsub"| FO["fn_marki_osalemine"]
 
-    CLI -->|"loeb"| AV["v_avalikud_treeningukorrad"]
+    CLI -->|"loeb"| AV["avalikud_treeningukorrad"]
     CLI -->|"kutsub"| FR["fn_registreeri_klient_treeningukorrale"]
     CLI -->|"kutsub"| FC["fn_tyhista_registreering"]
-    CLI -->|"loeb"| KV["v_kliendi_registreeringud"]
+    CLI -->|"loeb"| KV["kliendi_registreeringud"]
 
     FP -->|"DB kontrollib rolli"| DBVAL["DB kontrollib rolli ja ärireegleid"]
     FA -->|"DB kontrollib rolli"| DBVAL
