@@ -1,4 +1,14 @@
 erDiagram
+    KLASSIFIKAATOR ||--o{ SEISUND : "sisaldab seisundi väärtuseid"
+    KLASSIFIKAATOR ||--o{ ROLL : "sisaldab rolli väärtuseid"
+    KLASSIFIKAATOR ||--o{ RIIK : "sisaldab riigi väärtuseid"
+
+    KLASSIFIKAATOR {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
+        tunnus aktiivsus
+    }
     SEISUND {
         tunnus kood
         nimetus nimetus

@@ -1,9 +1,8 @@
 erDiagram
     REGISTREERING ||--o| OSALEMINE : "annab tulemuse"
     TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
-    TOOTAJA ||--o| JUHATAJA : "võib spetsialiseeruda"
     TREENER ||--o{ OSALEMINE : "märgib juhendajana"
-    JUHATAJA ||--o{ OSALEMINE : "võib märkida"
+    TOOTAJA ||--o{ OSALEMINE : "võib märkida juhataja rollis"
     KLIENT ||--o{ REGISTREERING : "on registreeruja"
     TREENINGUKORD ||--o{ REGISTREERING : "on osalemise alus"
 
@@ -23,9 +22,6 @@ erDiagram
     TREENER {
         tunnus treeneri_tunnus
         aeg rolli_kehtivus
-    }
-    JUHATAJA {
-        tunnus juhataja_roll
     }
     KLIENT {
         tunnus kliendi_tunnus

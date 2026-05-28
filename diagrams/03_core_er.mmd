@@ -2,7 +2,6 @@ erDiagram
     ISIK ||--o| TOOTAJA : "võib olla töötaja"
     ISIK ||--o| KLIENT : "võib olla klient"
     TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
-    TOOTAJA ||--o| JUHATAJA : "võib spetsialiseeruda"
     TREENER ||--o{ TREENINGUKORD : "juhendab"
     TREENER ||--o{ TREENERI_PADEVUS : "omab"
     TREENINGULIIK ||--o{ TREENERI_PADEVUS : "määrab sobivuse"
@@ -12,6 +11,7 @@ erDiagram
     REGISTREERING ||--o| OSALEMINE : "võib lõppeda"
     TREENINGULIIK ||--o{ TREENINGUKORD : "on aluseks"
     RUUM ||--o{ TREENINGUKORD : "võimaldab"
+    KLASSIFIKAATOR ||--o{ SEISUND : "täpsustab liiki"
     SEISUND ||--o{ REGISTREERING : "kirjeldab hetkeseisu"
     SEISUND ||--o{ TREENINGUKORD : "kirjeldab hetkeseisu"
     SEISUND ||--o{ TREENINGULIIK : "kirjeldab kasutatavust"
@@ -19,7 +19,9 @@ erDiagram
     ISIK {
         tunnus e_meil
         tunnus isikukood
-        nimetus nimi
+        nimetus eesnimi
+        nimetus perenimi
+        kirjeldus elukoht
         seisund isiku_seisund
     }
     TOOTAJA {
@@ -30,10 +32,6 @@ erDiagram
         tunnus treeneri_tunnus
         aeg rolli_kehtivus
         kirjeldus padevuste_ulatus
-    }
-    JUHATAJA {
-        tunnus juhataja_roll
-        aeg rolli_kehtivus
     }
     KLIENT {
         tunnus kliendi_tunnus
@@ -80,4 +78,10 @@ erDiagram
         tunnus kood
         nimetus nimetus
         kirjeldus tahendus
+    }
+    KLASSIFIKAATOR {
+        tunnus kood
+        nimetus nimetus
+        kirjeldus tahendus
+        tunnus aktiivsus
     }

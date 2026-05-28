@@ -117,6 +117,109 @@ REQUIRED_EAP_CONNECTORS = [
     ("treeneri_padevus", "treeninguliik"),
 ]
 
+REQUIRED_EAP_CONCEPTUAL_CLASSES = [
+    "Isik",
+    "Kasutajakonto",
+    "Töötaja",
+    "Klient",
+    "Treener",
+    "Töötaja rolli omamine",
+    "Treeningukord",
+    "Registreering",
+    "Ootejärjekorra koht",
+    "Osalemine",
+    "Treeninguliik",
+    "Ruum",
+    "Varustus",
+    "Treeneri pädevus",
+    "Ruumi varustatus",
+    "Varustuse nõue",
+    "Klassifikaator",
+    "Seisund",
+    "Roll",
+    "Riik",
+]
+
+FORBIDDEN_EAP_CONCEPTUAL_CLASSES = {
+    "Juhataja",
+}
+
+REQUIRED_EAP_ACTORS = [
+    "Juhataja",
+    "Töötajate haldur",
+    "Klassifikaatorite haldur",
+    "Treener",
+    "Klient",
+    "Süsteem",
+    "Aeg",
+]
+
+REQUIRED_EAP_USE_CASE_DIAGRAM_ACTORS = [
+    "Juhataja",
+    "Treener",
+    "Klient",
+    "Süsteem",
+    "Aeg",
+]
+
+REQUIRED_EAP_REGISTER_PACKAGES = [
+    "Registreeringute register",
+    "Treeningukordade register",
+    "Treeninguliikide register",
+    "Osalemiste register",
+    "Treenerite register",
+    "Isikute register",
+    "Töötajate register",
+    "Klientide register",
+    "Klassifikaatorite register",
+]
+
+REQUIRED_EAP_USE_CASES = [
+    "Planeeri treeningukord",
+    "Ava registreerimine",
+    "Vaata vabu treeningukordi",
+    "Esita registreering",
+    "Vaata enda registreeringuid",
+    "Tühista enda registreering",
+    "Edenda ootel registreering",
+    "Vaata treeningukorra registreeringuid",
+    "Märgi osalemine",
+    "Sulge registreerimine",
+    "Lõpeta treeningukord",
+    "Tühista treeningukord",
+    "Vaata treeningukordade täituvuse statistikat",
+]
+
+FORBIDDEN_EAP_USE_CASES = {
+    "Vaata täituvuse statistikat",
+    "Vaata tunniplaani",
+    "Sulge enda treeningukorra registreerimine",
+    "Rakenda registreerimise tähtaja tingimus",
+    "Tuvasta kasutaja",
+}
+
+REQUIRED_EAP_ACTOR_USE_CASES = [
+    ("Juhataja", "Planeeri treeningukord"),
+    ("Juhataja", "Ava registreerimine"),
+    ("Juhataja", "Sulge registreerimine"),
+    ("Juhataja", "Lõpeta treeningukord"),
+    ("Juhataja", "Tühista treeningukord"),
+    ("Juhataja", "Vaata treeningukorra registreeringuid"),
+    ("Juhataja", "Märgi osalemine"),
+    ("Juhataja", "Vaata treeningukordade täituvuse statistikat"),
+    ("Treener", "Vaata treeningukorra registreeringuid"),
+    ("Treener", "Märgi osalemine"),
+    ("Treener", "Sulge registreerimine"),
+    ("Treener", "Lõpeta treeningukord"),
+    ("Klient", "Vaata vabu treeningukordi"),
+    ("Klient", "Esita registreering"),
+    ("Klient", "Vaata enda registreeringuid"),
+    ("Klient", "Tühista enda registreering"),
+    ("Süsteem", "Edenda ootel registreering"),
+    ("Aeg", "Sulge registreerimine"),
+    ("Aeg", "Lõpeta treeningukord"),
+]
+
 REQUIRED_DIAGRAMS = [
     "01_system_context",
     "02_use_cases",
@@ -260,7 +363,7 @@ REQUIRED_DOCX_CAPTION_TERMS = [
     "Õiguste ja andmebaasirutiinide seos",
     "Rakenduse ja andmebaasi arhitektuur",
     "Osalemise märkimise tegevusvoog",
-    "Isikute, kasutajakontode",
+    "Isikute registri kontseptuaalne skeem",
     "Treeningukordade registri kontseptuaalne skeem",
     "Registreeringute registri kontseptuaalne skeem",
     "Osalemiste registri kontseptuaalne skeem",
@@ -474,6 +577,35 @@ def validate_diagram_semantics(failures: list[str]) -> None:
             else:
                 fail(f"diagram {source.name} missing explanatory label: {term}", failures)
 
+    use_case_source = DIAGRAM_SRC / "02_use_cases.mmd"
+    if use_case_source.exists():
+        use_case_text = use_case_source.read_text(encoding="utf-8")
+        for use_case_name in REQUIRED_EAP_USE_CASES:
+            if use_case_name in use_case_text:
+                ok(f"use-case diagram contains canonical use case: {use_case_name}")
+            else:
+                fail(f"use-case diagram missing canonical use case: {use_case_name}", failures)
+        stale_use_cases = sorted(name for name in FORBIDDEN_EAP_USE_CASES if name in use_case_text)
+        if stale_use_cases:
+            fail(f"use-case diagram still contains stale diagram-only use cases: {stale_use_cases}", failures)
+        else:
+            ok("use-case diagram contains no stale diagram-only use cases")
+        unsupported_include_patterns = {
+            "Ava registreerimine includes Planeeri treeningukord": [
+                'A -. "&lt;&lt;include&gt;&gt;" .-> P',
+                'A -. "<<include>>" .-> P',
+            ],
+            "Sulge registreerimine includes Rakenda registreerimise tähtaja tingimus": [
+                'SL -. "&lt;&lt;include&gt;&gt;" .-> DL',
+                'SL -. "<<include>>" .-> DL',
+            ],
+        }
+        for label, patterns in unsupported_include_patterns.items():
+            if any(pattern in use_case_text for pattern in patterns):
+                fail(f"use-case diagram still has unsupported include relation: {label}", failures)
+            else:
+                ok(f"use-case diagram omits unsupported include relation: {label}")
+
 
 def validate_docx(failures: list[str]) -> None:
     if not DOCX.exists():
@@ -565,7 +697,7 @@ def validate_eap(failures: list[str]) -> None:
         "Ruum",
         "Varustus",
         "Klient",
-        "Treeneri_padevus",
+        "Treeneri pädevus",
         "treeningukord",
         "registreering",
         "osalemine",
@@ -580,6 +712,8 @@ def validate_eap(failures: list[str]) -> None:
     object_rows = eap_export_rows("t_object")
     attribute_rows = eap_export_rows("t_attribute")
     connector_rows = eap_export_rows("t_connector")
+    package_rows = eap_export_rows("t_package")
+    diagram_object_rows = eap_export_rows("t_diagramobjects")
     stale_treening = [
         row for row in object_rows
         if row.get("Object_Type") == "Class" and row.get("Name") in {"treening", "Treening"}
@@ -601,6 +735,10 @@ def validate_eap(failures: list[str]) -> None:
         "Lõpeta valitud treening",
         "Aktiveeri valitud treening",
         "Kas treening kuulub kategooriasse?",
+        "Vaata täituvuse statistikat",
+        "Vaata tunniplaani",
+        "Sulge enda treeningukorra registreerimine",
+        "Rakenda registreerimise tähtaja tingimus",
     }
     stale_workbook_objects = [
         row for row in object_rows
@@ -622,17 +760,86 @@ def validate_eap(failures: list[str]) -> None:
     else:
         ok("EAP contains no template class artifact named Mallklass")
 
-    generic_classifier_objects = [
+    eap_actor_names = {
+        row.get("Name")
+        for row in object_rows
+        if row.get("Object_Type") == "Actor"
+    }
+    for actor_name in REQUIRED_EAP_ACTORS:
+        if actor_name in eap_actor_names:
+            ok(f"EAP actor exists: {actor_name}")
+        else:
+            fail(f"EAP missing actor: {actor_name}", failures)
+
+    eap_package_names = {row.get("Name") for row in package_rows}
+    for package_name in REQUIRED_EAP_REGISTER_PACKAGES:
+        if package_name in eap_package_names:
+            ok(f"EAP register package exists: {package_name}")
+        else:
+            fail(f"EAP missing register package: {package_name}", failures)
+
+    eap_use_case_names = {
+        row.get("Name")
+        for row in object_rows
+        if row.get("Object_Type") == "UseCase"
+    }
+    for use_case_name in REQUIRED_EAP_USE_CASES:
+        if use_case_name in eap_use_case_names:
+            ok(f"EAP use case exists: {use_case_name}")
+        else:
+            fail(f"EAP missing use case: {use_case_name}", failures)
+    stale_use_cases = sorted(name for name in FORBIDDEN_EAP_USE_CASES if name in eap_use_case_names)
+    if stale_use_cases:
+        fail(f"EAP still contains stale diagram-only or renamed use cases: {stale_use_cases}", failures)
+    else:
+        ok("EAP contains no stale renamed or diagram-only use cases")
+
+    object_ids_by_name_and_type = {
+        (row.get("Name"), row.get("Object_Type")): row.get("Object_ID")
+        for row in object_rows
+    }
+    connector_triples = {
+        (row.get("Start_Object_ID"), row.get("End_Object_ID"), row.get("Connector_Type"))
+        for row in connector_rows
+    }
+    for actor_name, use_case_name in REQUIRED_EAP_ACTOR_USE_CASES:
+        actor_id = object_ids_by_name_and_type.get((actor_name, "Actor"))
+        use_case_id = object_ids_by_name_and_type.get((use_case_name, "UseCase"))
+        if not actor_id or not use_case_id:
+            fail(f"EAP cannot validate actor/use-case association {actor_name} -> {use_case_name}; endpoint missing", failures)
+        elif (actor_id, use_case_id, "Association") in connector_triples:
+            ok(f"EAP actor/use-case association exists: {actor_name} -> {use_case_name}")
+        else:
+            fail(f"EAP missing actor/use-case association: {actor_name} -> {use_case_name}", failures)
+
+    use_case_diagram_object_ids = {
+        row.get("Object_ID")
+        for row in diagram_object_rows
+        if row.get("Diagram_ID") == "2"
+    }
+    for name, object_type in [(name, "UseCase") for name in REQUIRED_EAP_USE_CASES] + [(name, "Actor") for name in REQUIRED_EAP_USE_CASE_DIAGRAM_ACTORS]:
+        object_id = object_ids_by_name_and_type.get((name, object_type))
+        if object_id and object_id in use_case_diagram_object_ids:
+            ok(f"EAP use-case diagram contains {object_type}: {name}")
+        else:
+            fail(f"EAP use-case diagram missing {object_type}: {name}", failures)
+
+    eap_conceptual_class_rows = [
         row for row in object_rows
         if row.get("Object_Type") == "Class"
-        and row.get("Name") == "Klassifikaator"
-        and row.get("Package_ID") == "11"
+        and (row.get("Stereotype") or "").strip().lower() != "table"
     ]
-    if generic_classifier_objects:
-        names = ", ".join(f"{row.get('Name')}:{row.get('Object_ID', '?')}" for row in generic_classifier_objects)
-        fail(f"EAP still contains generic classifier class instead of only concrete classifier concepts ({names})", failures)
+    eap_conceptual_class_names = {row.get("Name") for row in eap_conceptual_class_rows}
+    for class_name in REQUIRED_EAP_CONCEPTUAL_CLASSES:
+        if class_name in eap_conceptual_class_names:
+            ok(f"EAP conceptual class exists: {class_name}")
+        else:
+            fail(f"EAP missing conceptual class: {class_name}", failures)
+    stale_conceptual_classes = sorted(name for name in FORBIDDEN_EAP_CONCEPTUAL_CLASSES if name in eap_conceptual_class_names)
+    if stale_conceptual_classes:
+        fail(f"EAP contains stale conceptual classes not defined as olemitüübid: {stale_conceptual_classes}", failures)
     else:
-        ok("EAP contains no generic Klassifikaator class in the classifier register")
+        ok("EAP contains no stale Juhataja conceptual class")
 
     physical_objects = {
         row.get("Name"): row

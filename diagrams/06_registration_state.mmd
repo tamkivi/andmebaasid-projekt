@@ -1,11 +1,11 @@
 stateDiagram-v2
-    [*] --> KINNIT: Klient esitab registreeringu, vaba koht / esita registreering
-    [*] --> OOTEJRK: Klient esitab registreeringu, kohad täis / esita registreering
-    OOTEJRK --> KINNIT: Süsteem edendab pärast koha vabanemist / edenda ootel registreering
-    KINNIT --> TYH_KL: Klient tühistab enne tähtaega / tühista enda registreering
-    OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / tühista enda registreering
-    KINNIT --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / süsteemne tühistamine
-    OOTEJRK --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / süsteemne tühistamine
+    [*] --> KINNIT: Klient esitab registreeringu, vaba koht / OP5 esita registreering
+    [*] --> OOTEJRK: Klient esitab registreeringu, kohad täis / OP5 esita registreering
+    OOTEJRK --> KINNIT: Süsteem edendab pärast koha vabanemist / OP7 edenda ootel registreering
+    KINNIT --> TYH_KL: Klient tühistab enne tähtaega / OP6 tühista enda registreering
+    OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / OP6 tühista enda registreering
+    KINNIT --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / OP9 süsteemne tühistamine
+    OOTEJRK --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / OP9 süsteemne tühistamine
     TYH_KL --> [*]
     TYH_SYS --> [*]
 

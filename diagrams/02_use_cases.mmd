@@ -9,26 +9,28 @@ flowchart TB
             P(["Planeeri treeningukord"])
             A(["Ava registreerimine"])
             SL(["Sulge registreerimine"])
+            L(["Lõpeta treeningukord"])
             C(["Tühista treeningukord"])
-            S(["Vaata täituvuse statistikat"])
+            R(["Vaata treeningukorra registreeringuid"])
+            O(["Märgi osalemine"])
+            S(["Vaata treeningukordade täituvuse statistikat"])
             JUH --> P
             JUH --> A
             JUH --> SL
+            JUH --> L
             JUH --> C
+            JUH --> R
+            JUH --> O
             JUH --> S
         end
 
         subgraph TRN["Treeneri kasutusmallid"]
             direction LR
             TRE["&lt;&lt;actor&gt;&gt;<br/>Treener<br/>(töötaja roll)"]
-            TT(["Vaata tunniplaani"])
-            R(["Vaata treeningukorra registreeringuid"])
-            O(["Märgi osalemine"])
-            TS(["Sulge enda treeningukorra registreerimine"])
-            TRE --> TT
             TRE --> R
             TRE --> O
-            TRE --> TS
+            TRE --> SL
+            TRE --> L
         end
 
         subgraph CLI["Kliendi kasutusmallid"]
@@ -48,17 +50,14 @@ flowchart TB
             direction LR
             SYS["&lt;&lt;actor&gt;&gt;<br/>Süsteem"]
             AEG["&lt;&lt;trigger&gt;&gt;<br/>Aeg"]
-            ED(["Edenda ootejärjekorrast"])
-            DL(["Rakenda registreerimise tähtaja tingimus"])
+            ED(["Edenda ootel registreering"])
             SYS --> ED
-            AEG --> DL
+            AEG --> SL
+            AEG --> L
         end
     end
 
-    A -. "&lt;&lt;include&gt;&gt;" .-> P
     REG -. "&lt;&lt;include&gt;&gt;" .-> AJ
     TYH -. "&lt;&lt;include&gt;&gt;" .-> MINU
     TYH -. "&lt;&lt;include&gt;&gt;" .-> ED
     O -. "&lt;&lt;include&gt;&gt;" .-> R
-    SL -. "&lt;&lt;include&gt;&gt;" .-> DL
-    TS -. "&lt;&lt;include&gt;&gt;" .-> DL

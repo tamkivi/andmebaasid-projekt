@@ -35,7 +35,7 @@ public class EapRename {
         REPLACEMENTS.put("Vaata kõiki X", "Vaata enda registreeringuid");
         REPLACEMENTS.put("Vaata kõiki X, mida saab lõpetada", "Vaata treeningukordi, mida saab lõpetada");
         REPLACEMENTS.put("Vaata kõiki ootel või mitteaktiivseid X", "Vaata kavandatud või suletud treeningukordi");
-        REPLACEMENTS.put("Vaata X koondaruannet", "Vaata täituvuse statistikat");
+        REPLACEMENTS.put("Vaata X koondaruannet", "Vaata treeningukordade täituvuse statistikat");
         REPLACEMENTS.put("X lõpetamise tegevusdiagramm", "treeningukorra lõpetamise tegevusdiagramm");
         REPLACEMENTS.put("X seisundidiagramm", "treeningukorra seisundidiagramm");
         REPLACEMENTS.put("X FASiga seotud pädevusalad ja registrid", "registreeringukeskse FASiga seotud pädevusalad ja registrid");
