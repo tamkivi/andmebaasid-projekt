@@ -1444,16 +1444,23 @@ def add_report_content(doc: Document) -> None:
 
     doc.add_heading("6 Tehisintellekti kasutus", level=1)
     add_paragraphs(doc, [
-        "Projekti koostamisel kasutati tehisintellekti abi analüüsi, SQL-skeemi, Mermaid diagrammide, DOCX generaatori ja validaatori iteratiivseks parandamiseks. Tehisintellekti kasutati kavandite ja kontrollnimekirjade koostamiseks, koodi muutmiseks ning vigade otsimiseks.",
-        "Kõik lõplikud otsused projekti skoobi, andmemudeli, ärireeglite ja esitatavate failide kohta kontrolliti projekti nõuete, lokaalse buildi, staatilise validaatori ning live SQL testidega. Vastutus lõpliku töö õigsuse eest jääb autoritele.",
+        "Projekti autorid määrasid töö skoobi, valisid põhiobjektid ja tegutsejad, koostasid kasutusjuhtude sisu, kavandasid andmemudeli, kirjeldasid ärireeglid, vormistasid andmebaasioperatsioonide lepingud ning tegid lõplikud otsused SQL-skeemi, diagrammide ja esitatavate failide kohta. Tehisintellekti kasutati abivahendina autorite loodud lahenduste kontrollimiseks, vastuolude otsimiseks ja tehnilise vormistuse parandamiseks.",
+        "Tehisintellekti kasutati eelkõige kavandite võrdlemiseks kursuse juhenditega, kontrollnimekirjade koostamiseks, Mermaid diagrammide, DOCX generaatori ja staatilise validaatori tehniliseks parandamiseks, SQL-i vigade otsimiseks ning sõnastuse parendusettepanekute saamiseks. Tehisintellekti väljundeid ei kasutatud iseseisva autoriteetse allikana.",
+        "Autorid kontrollisid ja valisid kõik lõplikud lahendused ise. Projekti skoopi, andmemudelit, ärireegleid, SQL-i, EAP/DOCX artefakte ja esitatavaid faile kontrolliti kursuse nõuete, lähtejuhendite, lokaalse buildi, staatilise validaatori, EAP ekspordi kontrollide ja PostgreSQL testidega. Vastutus töö sisulise õigsuse eest jääb autoritele.",
     ])
 
     doc.add_heading("7 Kasutatud materjalid", level=1)
+    add_paragraphs(doc, [
+        "Loetelus on esitatud töö koostamisel kasutatud kursusematerjalid, metoodilised allikad ja tehnilised dokumentatsioonid. Veebiallikate puhul on lisatud URL ja kasutamise kuupäev.",
+    ])
     add_bullets(doc, [
-        "Erki Eessaare Andmebaasid I kursuse projektijuhendid ja mallid: AB_projekt_Nullist_tegemiseks_2026.doc ning Projekti_juhend_ITI0206_2026.",
-        "Craig Larman. Applying UML and Patterns. Kasutusjuhtude, tegevusdiagrammide, seisundidiagrammide ja operatsioonilepingute vormistuslik taust.",
-        "AKIT terminibaas mittefunktsionaalsete nõuete mõistete selgitamiseks.",
-        "PostgreSQL dokumentatsioon PL/pgSQL, triggerite, vaadete, indeksite ja piirangute kohta.",
+        "Eessaar, E. Andmebaasid I kursuse projektijuhendid ja mallid: AB_projekt_Nullist_tegemiseks_2026.doc, Iseseisva_too_ylesande_pystitus_ITI0206_2026.pdf, Projekti_mustripohine_juhend_1_52.pdf, Projekti_tyypvead_ITI0206_2026.pdf ja Naidisprojekt_ITI0206_vastuvotuajad_ver6_44.pdf. Kasutatud projekti struktuuri, kontrollreeglite ja näidete allikana.",
+        "TalTech raamatukogu. Kirjalike tööde vormistamine, viitamine. https://taltech.ee/raamatukogu/kirjalike-toode-vormistamine (kasutatud 29.05.2026). Kasutatud allikate loetelu vormistusnõuete kontrollimiseks.",
+        "Larman, C. Applying UML and Patterns: An Introduction to Object-Oriented Analysis and Design and Iterative Development. 3rd ed. Pearson, 2005. Kasutatud kasutusjuhtude, tegevusdiagrammide, seisundidiagrammide ja operatsioonilepingute metoodilise taustana.",
+        "Eesti Keele Instituut. AKIT - andmekaitse ja infoturbe leksikon. https://akit.cyber.ee/ (kasutatud 29.05.2026). Kasutatud mittefunktsionaalsete nõuete ja infoturbe mõistete täpsustamiseks.",
+        "PostgreSQL Global Development Group. PostgreSQL 16 Documentation. https://www.postgresql.org/docs/16/ (kasutatud 29.05.2026). Kasutatud PL/pgSQL, triggerite, vaadete, indeksite ja piirangute tehnilise alusmaterjalina.",
+        "Mermaid. Mermaid documentation. https://mermaid.js.org/intro/ (kasutatud 29.05.2026). Kasutatud Mermaid diagrammide süntaksi kontrollimiseks.",
+        "python-docx contributors. python-docx documentation. https://python-docx.readthedocs.io/ (kasutatud 29.05.2026). Kasutatud DOCX generaatori tehnilise dokumentatsioonina.",
     ])
 
     doc.add_heading("Lisa A. SQL skript", level=1)
