@@ -23,9 +23,13 @@ public class EapFixes {
     private static final int PKG_REGISTER = 15;
     private static final int TEMPLATE_ACTOR = 16;
     private static final int TEMPLATE_USE_CASE = 23;
+    private static final int TEMPLATE_STATE_INITIAL = 55;
+    private static final int TEMPLATE_STATE = 56;
+    private static final int TEMPLATE_STATE_FINAL = 58;
     private static final int TEMPLATE_CLASS = 53;
     private static final int PHYSICAL_PACKAGE = 7;
     private static final int USE_CASE_DIAGRAM = 2;
+    private static final int TRAINING_STATE_DIAGRAM = 6;
     private static final int PHYSICAL_DIAGRAM = 13;
 
     private final Database db;
@@ -54,11 +58,13 @@ public class EapFixes {
         neutralizeTemplateClass();
         removeStaleTreeningPhysicalClass();
         removeStaleWorkbookObjects();
+        ensureCurrentStateModels();
         ensureRegisterPackages();
         ensureActors();
         ensureUseCases();
         ensureUseCaseDiagramParity();
         ensureCoreClasses();
+        removeClassifierGeneralizations();
         ensurePhysicalTables();
         removeOldPaymentLanguage();
         removeNonSubmittedTemplateObjects();
@@ -350,6 +356,245 @@ public class EapFixes {
         deleteConnectorDependencies(staleConnectorIds);
     }
 
+    private int findDiagramId(String name) throws Exception {
+        for (Row row : db.getTable("t_diagram")) {
+            if (name.equals(row.get("Name")) && row.get("Diagram_ID") instanceof Number) {
+                return ((Number) row.get("Diagram_ID")).intValue();
+            }
+        }
+        return 0;
+    }
+
+    private int ensureStateDiagram(int preferredId, String name) throws Exception {
+        int existingId = findDiagramId(name);
+        if (existingId != 0) {
+            updateById("t_diagram", "Diagram_ID", existingId, Map.of(
+                "Name", name,
+                "Package_ID", PKG_STATE_MODELS,
+                "Diagram_Type", "Statechart"
+            ));
+            return existingId;
+        }
+
+        Table table = db.getTable("t_diagram");
+        if (preferredId != 0 && findRow(table, "Diagram_ID", preferredId) != null) {
+            updateById("t_diagram", "Diagram_ID", preferredId, Map.of(
+                "Name", name,
+                "Package_ID", PKG_STATE_MODELS,
+                "Diagram_Type", "Statechart"
+            ));
+            return preferredId;
+        }
+
+        table.setAllowAutoNumberInsert(true);
+        Row template = findRow(table, "Diagram_ID", TRAINING_STATE_DIAGRAM);
+        Map<String, Object> row = copy(template);
+        int id = maxLong(table, "Diagram_ID") + 1;
+        row.put("Diagram_ID", id);
+        row.put("Name", name);
+        row.put("Package_ID", PKG_STATE_MODELS);
+        row.put("Diagram_Type", "Statechart");
+        row.put("ea_guid", guid());
+        row.put("CreatedDate", new Date());
+        row.put("ModifiedDate", new Date());
+        table.addRowFromMap(row);
+        return id;
+    }
+
+    private Map<String, Object> connectorTemplate(String preferredType) throws Exception {
+        Table table = db.getTable("t_connector");
+        for (Row row : table) {
+            if (preferredType.equals(row.get("Connector_Type"))) {
+                return copy(row);
+            }
+        }
+        return copy(table.iterator().next());
+    }
+
+    private void removeStateFlowsForPackage(int packageId) throws Exception {
+        Set<Integer> lifecycleObjectIds = new HashSet<>();
+        for (Row row : db.getTable("t_object")) {
+            Object id = row.get("Object_ID");
+            Object rowPackageId = row.get("Package_ID");
+            Object type = row.get("Object_Type");
+            boolean isLifecycleObject = "State".equals(type) || "StateNode".equals(type);
+            if (id instanceof Number
+                && rowPackageId instanceof Number
+                && ((Number) rowPackageId).intValue() == packageId
+                && isLifecycleObject) {
+                lifecycleObjectIds.add(((Number) id).intValue());
+            }
+        }
+        if (lifecycleObjectIds.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> connectorIds = new HashSet<>();
+        Table connectors = db.getTable("t_connector");
+        Cursor cursor = CursorBuilder.createCursor(connectors);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            Object connectorId = row.get("Connector_ID");
+            Object start = row.get("Start_Object_ID");
+            Object end = row.get("End_Object_ID");
+            boolean stateFlowInPackage =
+                "StateFlow".equals(row.get("Connector_Type"))
+                && connectorId instanceof Number
+                && start instanceof Number
+                && end instanceof Number
+                && (lifecycleObjectIds.contains(((Number) start).intValue())
+                    || lifecycleObjectIds.contains(((Number) end).intValue()));
+            if (stateFlowInPackage) {
+                connectorIds.add(((Number) connectorId).intValue());
+                cursor.deleteCurrentRow();
+            }
+        }
+        deleteConnectorDependencies(connectorIds);
+    }
+
+    private void removeStaleStateObjects() throws Exception {
+        Set<String> staleStateNames = Set.of("Alg", "Ootel", "Aktiivne", "Mitteaktiivne", "Lõpetatud", "Unustatud");
+        Set<Integer> staleObjectIds = new HashSet<>();
+        for (Row row : db.getTable("t_object")) {
+            Object id = row.get("Object_ID");
+            Object name = row.get("Name");
+            Object type = row.get("Object_Type");
+            Object packageId = row.get("Package_ID");
+            boolean isLifecycleObject = "State".equals(type) || "StateNode".equals(type);
+            if (id instanceof Number
+                && packageId instanceof Number
+                && ((Number) packageId).intValue() == PKG_STATE_MODELS
+                && isLifecycleObject
+                && name instanceof String
+                && staleStateNames.contains(name)) {
+                staleObjectIds.add(((Number) id).intValue());
+            }
+        }
+        for (int objectId : staleObjectIds) {
+            deleteObjectAndDependencies(objectId);
+        }
+    }
+
+    private void clearDiagramContents(int diagramId) throws Exception {
+        deleteRowsByNumber("t_diagramobjects", "Diagram_ID", diagramId);
+        deleteRowsByNumber("t_diagramlinks", "DiagramID", diagramId);
+    }
+
+    private int ensureState(String name, String note) throws Exception {
+        return ensureObject("State", PKG_STATE_MODELS, TEMPLATE_STATE, name, note);
+    }
+
+    private int ensureInitialNode(String name, String note) throws Exception {
+        return ensureObject("StateNode", PKG_STATE_MODELS, TEMPLATE_STATE_INITIAL, name, note);
+    }
+
+    private int ensureFinalNode(String name, String note) throws Exception {
+        return ensureObject("StateNode", PKG_STATE_MODELS, TEMPLATE_STATE_FINAL, name, note);
+    }
+
+    private int addStateFlowIfMissing(
+        int startObjectId,
+        int endObjectId,
+        String name,
+        int diagramId,
+        Map<String, Object> template
+    ) throws Exception {
+        if (startObjectId == 0 || endObjectId == 0 || connectorBetweenExists(startObjectId, endObjectId, "StateFlow")) {
+            return 0;
+        }
+        Table table = db.getTable("t_connector");
+        table.setAllowAutoNumberInsert(true);
+        Map<String, Object> row = new LinkedHashMap<>(template);
+        int id = maxLong(table, "Connector_ID") + 1;
+        row.put("Connector_ID", id);
+        row.put("Name", name);
+        row.put("Direction", "Source -> Destination");
+        row.put("Notes", name);
+        row.put("Connector_Type", "StateFlow");
+        row.put("SourceCard", z());
+        row.put("DestCard", z());
+        row.put("SourceRole", z());
+        row.put("DestRole", z());
+        row.put("Start_Object_ID", startObjectId);
+        row.put("End_Object_ID", endObjectId);
+        row.put("Stereotype", z());
+        row.put("PDATA1", z());
+        row.put("PDATA2", z());
+        row.put("PDATA3", z());
+        row.put("PDATA4", z());
+        row.put("PDATA5", "SX=0;SY=0;EX=0;EY=0;");
+        row.put("DiagramID", diagramId);
+        row.put("ea_guid", guid());
+        table.addRowFromMap(row);
+        addDiagramLinkIfMissing(diagramId, id);
+        return id;
+    }
+
+    private void ensureCurrentStateModels() throws Exception {
+        int trainingDiagramId = ensureStateDiagram(TRAINING_STATE_DIAGRAM, "Treeningukorra seisundimudel");
+        int registrationDiagramId = ensureStateDiagram(0, "Registreeringu seisundimudel");
+        Map<String, Object> stateFlowTemplate = connectorTemplate("StateFlow");
+
+        Map<String, Integer> states = new LinkedHashMap<>();
+        states.put("sessionStart", ensureInitialNode("Algus: treeningukord", "Treeningukorra elutsükli algussõlm."));
+        states.put("KAVAND", ensureState("KAVAND", "Treeningukord on planeeritud, kuid registreerimine pole avatud."));
+        states.put("AVATUD", ensureState("AVATUD", "Treeningukord on klientidele registreerimiseks avatud."));
+        states.put("SULETUD", ensureState("SULETUD", "Registreerimine on lõppenud, kuid treeningukord pole veel toimunuks märgitud."));
+        states.put("TOIMUNUD", ensureState("TOIMUNUD", "Treeningukord on pärast lõppu toimunuks märgitud."));
+        states.put("TYHIST", ensureState("TYHIST", "Treeningukord on juhataja otsusega tühistatud."));
+        states.put("sessionDoneEnd", ensureFinalNode("Lõpp: toimunud treeningukord", "Treeningukorra toimunud lõpptulemus."));
+        states.put("sessionCancelledEnd", ensureFinalNode("Lõpp: tühistatud treeningukord", "Treeningukorra tühistatud lõpptulemus."));
+        states.put("registrationStart", ensureInitialNode("Algus: registreering", "Registreeringu elutsükli algussõlm."));
+        states.put("KINNIT", ensureState("KINNIT", "Registreering on kinnitatud osalejakohaga."));
+        states.put("OOTEJRK", ensureState("OOTEJRK", "Registreering on ootejärjekorras ja ootab vaba kohta."));
+        states.put("TYH_KL", ensureState("TYH_KL", "Klient tühistas aktiivse registreeringu tähtaja piires."));
+        states.put("TYH_SYS", ensureState("TYH_SYS", "Registreering tühistati süsteemselt treeningukorra tühistamise tõttu."));
+        states.put("registrationClientCancelledEnd", ensureFinalNode("Lõpp: klient tühistas registreeringu", "Registreeringu kliendipoolse tühistamise lõpptulemus."));
+        states.put("registrationSystemCancelledEnd", ensureFinalNode("Lõpp: süsteemselt tühistatud registreering", "Registreeringu süsteemse tühistamise lõpptulemus."));
+
+        removeStateFlowsForPackage(PKG_STATE_MODELS);
+        clearDiagramContents(trainingDiagramId);
+        clearDiagramContents(registrationDiagramId);
+        removeStaleStateObjects();
+
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("sessionStart"), 20, -170, 105, -225);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("KAVAND"), 150, -150, 310, -215);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("AVATUD"), 360, -150, 520, -215);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("SULETUD"), 570, -150, 730, -215);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("TOIMUNUD"), 780, -80, 950, -145);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("TYHIST"), 780, -240, 950, -305);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("sessionDoneEnd"), 1000, -80, 1205, -145);
+        addDiagramObjectIfMissing(trainingDiagramId, states.get("sessionCancelledEnd"), 1000, -240, 1205, -305);
+
+        addStateFlowIfMissing(states.get("sessionStart"), states.get("KAVAND"), "Juhataja planeerib / OP1 fn_planeeri_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("KAVAND"), states.get("AVATUD"), "Juhataja avab / OP2 fn_ava_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("AVATUD"), states.get("SULETUD"), "Juhataja või treener sulgeb / OP3 fn_sulge_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("SULETUD"), states.get("TOIMUNUD"), "Treener või juhataja lõpetab / OP4 fn_lopeta_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("KAVAND"), states.get("TYHIST"), "Juhataja tühistab / OP9 fn_tyhista_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("AVATUD"), states.get("TYHIST"), "Juhataja tühistab / OP9 fn_tyhista_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("SULETUD"), states.get("TYHIST"), "Juhataja tühistab / OP9 fn_tyhista_treeningukord", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("TOIMUNUD"), states.get("sessionDoneEnd"), "Toimunud treeningukorra lõpp", trainingDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("TYHIST"), states.get("sessionCancelledEnd"), "Tühistatud treeningukorra lõpp", trainingDiagramId, stateFlowTemplate);
+
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("registrationStart"), 20, -170, 105, -225);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("KINNIT"), 160, -100, 320, -165);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("OOTEJRK"), 160, -245, 320, -310);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("TYH_KL"), 500, -100, 660, -165);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("TYH_SYS"), 500, -245, 660, -310);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("registrationClientCancelledEnd"), 735, -100, 1010, -165);
+        addDiagramObjectIfMissing(registrationDiagramId, states.get("registrationSystemCancelledEnd"), 735, -245, 1010, -310);
+
+        addStateFlowIfMissing(states.get("registrationStart"), states.get("KINNIT"), "Klient esitab registreeringu, vaba koht / OP5 fn_registreeri_klient_treeningukorrale", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("registrationStart"), states.get("OOTEJRK"), "Klient esitab registreeringu, kohad täis / OP5 fn_registreeri_klient_treeningukorrale", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("OOTEJRK"), states.get("KINNIT"), "Süsteem edendab pärast koha vabanemist / OP7 fn_edenda_ootejarjekorrast", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("KINNIT"), states.get("TYH_KL"), "Klient tühistab enne tähtaega / OP6 fn_tyhista_registreering", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("OOTEJRK"), states.get("TYH_KL"), "Klient tühistab enne tähtaega / OP6 fn_tyhista_registreering", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("KINNIT"), states.get("TYH_SYS"), "Treeningukord tühistatakse / OP9 fn_tyhista_treeningukord", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("OOTEJRK"), states.get("TYH_SYS"), "Treeningukord tühistatakse / OP9 fn_tyhista_treeningukord", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("TYH_KL"), states.get("registrationClientCancelledEnd"), "Kliendi tühistuse lõpp", registrationDiagramId, stateFlowTemplate);
+        addStateFlowIfMissing(states.get("TYH_SYS"), states.get("registrationSystemCancelledEnd"), "Süsteemse tühistuse lõpp", registrationDiagramId, stateFlowTemplate);
+    }
+
     private int ensureObject(String type, int packageId, int templateId, String name, String note) throws Exception {
         String safeNote = note == null || note.isBlank() ? z() : note;
         int existing = findObjectId(type, name);
@@ -566,13 +811,30 @@ public class EapFixes {
     }
 
     private void ensureActors() throws Exception {
+        removeStaleActors();
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Juhataja", "Sisemine kasutaja, kes planeerib, avab, sulgeb ja tühistab treeningukordi ning vaatab statistikat.");
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Töötajate haldur", "Sisemine kasutaja, kes haldab töötajate andmeid ja töötajatega seotud rolli omamisi.");
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Klassifikaatorite haldur", "Sisemine kasutaja, kes haldab süsteemis kasutatavaid klassifikaatori väärtuseid.");
-        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Treener", "Töötaja spetsialiseerumine ja tegutseja, mille kaudu treener näeb enda treeningukordi, kasutab pädevusi ja märgib osalemist.");
+        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Treener", "Töötaja rolliga seotud tegutseja, kelle kaudu treener näeb enda treeningukordi, kasutab pädevusi ja märgib osalemist.");
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Klient", "Väline kasutaja, kes vaatab vabu treeningukordi, esitab registreeringu, vaatab enda registreeringuid ja tühistab enda registreeringu.");
         ensureObject("Actor", 4, TEMPLATE_ACTOR, "Süsteem", "Automaatne osapool, mis edendab ootejärjekorda ja jõustab andmebaasi ärireegleid.");
-        ensureObject("Actor", 4, TEMPLATE_ACTOR, "Aeg", "Väline käivitaja või tingimus, mis mõjutab registreerimise tähtaegu ja treeningukorra seisundisiirdeid.");
+    }
+
+    private void removeStaleActors() throws Exception {
+        Set<String> staleActorNames = Set.of("Aeg");
+        Table objects = db.getTable("t_object");
+        Set<Integer> staleObjectIds = new HashSet<>();
+        for (Row row : objects) {
+            Object id = row.get("Object_ID");
+            Object name = row.get("Name");
+            Object type = row.get("Object_Type");
+            if (id instanceof Number && "Actor".equals(type) && name instanceof String && staleActorNames.contains(name)) {
+                staleObjectIds.add(((Number) id).intValue());
+            }
+        }
+        for (int objectId : staleObjectIds) {
+            deleteObjectAndDependencies(objectId);
+        }
     }
 
     private void ensureUseCases() throws Exception {
@@ -598,7 +860,6 @@ public class EapFixes {
         addDiagramObjectByName(USE_CASE_DIAGRAM, "Actor", "Treener", 470, -70, 620, -135);
         addDiagramObjectByName(USE_CASE_DIAGRAM, "Actor", "Klient", 820, -70, 970, -135);
         addDiagramObjectByName(USE_CASE_DIAGRAM, "Actor", "Süsteem", 120, -470, 270, -535);
-        addDiagramObjectByName(USE_CASE_DIAGRAM, "Actor", "Aeg", 470, -470, 620, -535);
 
         addDiagramObjectByName(USE_CASE_DIAGRAM, "UseCase", "Planeeri treeningukord", 80, -180, 260, -235);
         addDiagramObjectByName(USE_CASE_DIAGRAM, "UseCase", "Ava registreerimine", 285, -180, 465, -235);
@@ -634,8 +895,6 @@ public class EapFixes {
         addActorUseCaseAssociation("Klient", "Tühista enda registreering");
 
         addActorUseCaseAssociation("Süsteem", "Edenda ootel registreering");
-        addActorUseCaseAssociation("Aeg", "Sulge registreerimine");
-        addActorUseCaseAssociation("Aeg", "Lõpeta treeningukord");
     }
 
     private void addDiagramObjectByName(int diagramId, String type, String name, int left, int top, int right, int bottom) throws Exception {
@@ -770,7 +1029,7 @@ public class EapFixes {
             {"e_meil", "tunnus", "Kasutajakontoga seotud isiku e-posti tunnus."},
             {"aktiivsus", "tunnus", "Kas kontoga saab süsteemi sisse logida."}
         });
-        ensureClassWithColumns("Töötajate register", "Töötaja", "Põhiobjekt ja isiku spetsialiseerumine organisatsioonis. Töötaja kaudu tekivad juhataja ja treeneri tegevusõigused.", new String[][] {
+        ensureClassWithColumns("Töötajate register", "Töötaja", "Põhiobjekt organisatsiooniga seotud isikuna. Töötaja kaudu tekivad juhataja ja treeneri tegevusõigused.", new String[][] {
             {"tootaja_tunnus", "tunnus", "Töötaja tunnus."},
             {"tootaja_seisund", "seisund", "Töötaja kasutatavuse seisund."}
         });
@@ -778,7 +1037,7 @@ public class EapFixes {
             {"rolli_algus", "aeg", "Rolli kehtivuse algus."},
             {"rolli_lopp", "aeg", "Rolli kehtivuse lõpp."}
         });
-        ensureClassWithColumns("Treenerite register", "Treener", "Põhiobjekt ja töötaja spetsialiseerumine rühmatreeningute kontekstis. Treener juhendab treeningukordi ja omab pädevusi.", new String[][] {
+        ensureClassWithColumns("Treenerite register", "Treener", "Põhiobjekt töötaja rolli ja pädevuste kaudu rühmatreeningute kontekstis. Treener juhendab treeningukordi ja omab pädevusi.", new String[][] {
             {"treeneri_tunnus", "tunnus", "Treeneri äriline tunnus."},
             {"rolli_kehtivus", "aeg", "Treeneri rolli kehtivus."},
             {"padevuste_ulatus", "kirjeldus", "Treeneri pädevuste äriline ulatus."}
@@ -834,7 +1093,7 @@ public class EapFixes {
             {"minimaalne_kogus", "arv", "Vajalik minimaalne kogus."},
             {"kohustuslikkus", "tunnus", "Kas nõue on kohustuslik."}
         });
-        ensureClassWithColumns("Klientide register", "Klient", "Põhiobjekt ja isiku spetsialiseerumine teenuse kasutajana.", new String[][] {
+        ensureClassWithColumns("Klientide register", "Klient", "Põhiobjekt teenuse kasutajana.", new String[][] {
             {"kliendi_tunnus", "tunnus", "Kliendi tunnus."},
             {"aktiivsus", "tunnus", "Kas klient saab registreeringuid esitada."},
             {"kliendiks_saamise_aeg", "aeg", "Kliendi rolli algus."}
@@ -862,6 +1121,43 @@ public class EapFixes {
             {"nimetus", "nimetus", "Riigi nimetus."},
             {"aktiivsus", "tunnus", "Kas riiki saab kasutada."}
         });
+    }
+
+    private void removeClassifierGeneralizations() throws Exception {
+        Table connectors = db.getTable("t_connector");
+        if (connectors == null) {
+            return;
+        }
+        Map<Integer, String> namesById = new LinkedHashMap<>();
+        for (Row row : db.getTable("t_object")) {
+            Object id = row.get("Object_ID");
+            Object name = row.get("Name");
+            if (id instanceof Number && name instanceof String) {
+                namesById.put(((Number) id).intValue(), (String) name);
+            }
+        }
+        Set<String> classifierClasses = Set.of("Klassifikaator", "Seisund", "Roll", "Riik");
+        Set<Integer> connectorIds = new HashSet<>();
+        Cursor cursor = CursorBuilder.createCursor(connectors);
+        Row row;
+        while ((row = cursor.getNextRow()) != null) {
+            Object connectorId = row.get("Connector_ID");
+            Object start = row.get("Start_Object_ID");
+            Object end = row.get("End_Object_ID");
+            if (!"Generalization".equals(row.get("Connector_Type"))
+                || !(connectorId instanceof Number)
+                || !(start instanceof Number)
+                || !(end instanceof Number)) {
+                continue;
+            }
+            String startName = namesById.get(((Number) start).intValue());
+            String endName = namesById.get(((Number) end).intValue());
+            if (classifierClasses.contains(startName) || classifierClasses.contains(endName)) {
+                connectorIds.add(((Number) connectorId).intValue());
+                cursor.deleteCurrentRow();
+            }
+        }
+        deleteConnectorDependencies(connectorIds);
     }
 
     private void ensurePhysicalTables() throws Exception {
@@ -968,8 +1264,10 @@ public class EapFixes {
             {"treeningukorra_id", "integer", "FK treeningukord.treeningukorra_id"},
             {"ootejarjekorra_nr", "integer", "NOT NULL"}
         }));
-        ids.put("osalemine", ensurePhysicalTable("osalemine", "Kohalolu tulemus kinnitatud registreeringule. PK/FK: registreeringu_id.", new String[][] {
+        ids.put("osalemine", ensurePhysicalTable("osalemine", "Kohalolu tulemus kinnitatud registreeringule. PK/FK: registreeringu_id; sisaldab osaleja ja treeneri otseseid viiteid.", new String[][] {
             {"registreeringu_id", "integer", "PK, FK registreering.registreeringu_id"},
+            {"klient_e_meil", "e_meil_aadress", "FK klient.e_meil"},
+            {"treener_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
             {"on_osalenud", "boolean", "NOT NULL"},
             {"markija_e_meil", "e_meil_aadress", "FK tootaja.e_meil"},
             {"markimise_aeg", "ajakava_ajahetk", "NOT NULL"},
@@ -1025,6 +1323,8 @@ public class EapFixes {
         addConnectorIfMissing(ids.get("ootejarjekorra_koht"), ids.get("registreering"), "fk_ootejarjekorra_koht_registreering", "registreeringu_id -> registreering.registreeringu_id");
         addConnectorIfMissing(ids.get("ootejarjekorra_koht"), ids.get("treeningukord"), "fk_ootejarjekorra_koht_treeningukord", "treeningukorra_id -> treeningukord.treeningukorra_id");
         addConnectorIfMissing(ids.get("osalemine"), ids.get("registreering"), "fk_osalemine_registreering", "registreeringu_id -> registreering.registreeringu_id");
+        addConnectorIfMissing(ids.get("osalemine"), ids.get("klient"), "fk_osalemine_klient", "klient_e_meil -> klient.e_meil");
+        addConnectorIfMissing(ids.get("osalemine"), physicalObjectId("tootaja", ids), "fk_osalemine_treener", "treener_e_meil -> tootaja.e_meil");
         addConnectorIfMissing(ids.get("osalemine"), physicalObjectId("tootaja", ids), "fk_osalemine_markija", "markija_e_meil -> tootaja.e_meil");
     }
 

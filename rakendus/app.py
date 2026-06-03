@@ -506,11 +506,11 @@ def call_session_function(function_name: str, treeningukorra_id: int, *extra_arg
             (treeningukorra_id, session["user_id"]),
         ),
         "fn_sulge_treeningukord": (
-            "SELECT fn_sulge_treeningukord(p_treeningukorra_id => %s, p_juhataja_e_meil => %s)",
+            "SELECT fn_sulge_treeningukord(p_treeningukorra_id => %s, p_actor_e_meil => %s)",
             (treeningukorra_id, session["user_id"]),
         ),
         "fn_lopeta_treeningukord": (
-            "SELECT fn_lopeta_treeningukord(p_treeningukorra_id => %s, p_juhataja_e_meil => %s)",
+            "SELECT fn_lopeta_treeningukord(p_treeningukorra_id => %s, p_actor_e_meil => %s)",
             (treeningukorra_id, session["user_id"]),
         ),
         "fn_tyhista_treeningukord": (

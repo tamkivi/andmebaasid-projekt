@@ -1,6 +1,6 @@
 # Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem
 
-See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt ei käsitle kogu jõusaali infosüsteemi ega treeningut kui töövihiku laadset kirjelduskaarti. Keskne elutsükli objekt on `registreering`; seda toetavad, kuid ei asenda, `treeningukord`, `treeninguliik`, `isik`, `tootaja`, `klient`, `treener`, ootejärjekord ja osalemine.
+See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt käsitleb kitsalt rühmatreeningute ajakava, registreerimise ja osalemise tööprotsessi, mitte kogu jõusaali infosüsteemi. Keskne elutsükli objekt on `registreering`; seda toetavad, kuid ei asenda, `treeningukord`, `treeninguliik`, `isik`, `tootaja`, `klient`, `treener`, ootejärjekord ja osalemine.
 
 ## Lõppartefaktid
 
@@ -10,6 +10,8 @@ Build toodab neli esitatavat faili kataloogi `submission_files/`:
 - `submission_files/skript.sql`
 - `submission_files/mudelid.eap`
 - `submission_files/rakendus.zip`
+
+DBeaveri füüsilised diagrammid on esitatud kuue PNG-failina kataloogis `manual_exports/dbeaver_physical/`. `./build_all.sh` lisab need DOCX-i füüsilise disaini peatükki ja validaator kontrollib, et kõik kuus diagrammi on olemas. Ekspordi- ja kontrollisammude täpne nimekiri on failis `docs/DBEAVER_PHYSICAL_DIAGRAM_EXPORT_CHECKLIST.md`.
 
 Samad juurartefaktid on:
 
@@ -95,4 +97,4 @@ Demo kasutajad:
 
 ## Kaitsmise põhisõnum
 
-Projekt ei ole vana `treening` kaardi CRUD ega kogu jõusaali haldus. Keskne põhiobjekt on `registreering`: klient esitab registreeringu, saab kinnitatud koha või ootejärjekorra koha, näeb enda registreeringuid, saab tähtaja piires tühistada ning koha vabanemisel edendatakse esimene ootel registreering. `Treener` on `tootaja` spetsialiseerumine ja selles allsüsteemis põhiobjekt, kuid mitte isikust eraldiseisev uus persooniobjekt. `Treeninguliik` on hallatav kataloogimõiste, mitte pelk klassifikaator. Füüsiline PostgreSQL teostus kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist.
+Projekt ei ole vana `treening` kaardi CRUD ega kogu jõusaali haldus. Keskne põhiobjekt on `registreering`: klient esitab registreeringu, saab kinnitatud koha või ootejärjekorra koha, näeb enda registreeringuid, saab tähtaja piires tühistada ning koha vabanemisel edendatakse esimene ootel registreering. `Treenerit` käsitletakse töötaja rolli ja pädevuste kaudu; see on selles allsüsteemis oluline osapool, kuid mitte isikust eraldiseisev uus persooniobjekt ega eksitav UML üldistus. `Treeninguliik` on hallatav kataloogimõiste, mitte pelk klassifikaator. Füüsiline PostgreSQL teostus kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist.

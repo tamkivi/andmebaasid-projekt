@@ -155,7 +155,7 @@ EXPECTED_COLUMNS = {
         "tyhistamise_pohjus",
     ],
     "ootejarjekorra_koht": ["registreeringu_id", "treeningukorra_id", "ootejarjekorra_nr"],
-    "osalemine": ["registreeringu_id", "on_osalenud", "markija_e_meil", "markimise_aeg", "markus"],
+    "osalemine": ["registreeringu_id", "klient_e_meil", "treener_e_meil", "on_osalenud", "markija_e_meil", "markimise_aeg", "markus"],
 }
 
 CRITICAL_COLUMN_TYPES = {
@@ -168,6 +168,8 @@ CRITICAL_COLUMN_TYPES = {
     ("treeningukord", "treeningukorra_seisundi_kood"): ("character varying", "kood_10", "NO"),
     ("registreering", "registreeringu_seisundi_kood"): ("character varying", "kood_10", "NO"),
     ("ootejarjekorra_koht", "ootejarjekorra_nr"): ("integer", None, "NO"),
+    ("osalemine", "klient_e_meil"): ("character varying", "e_meil_aadress", "NO"),
+    ("osalemine", "treener_e_meil"): ("character varying", "e_meil_aadress", "NO"),
     ("osalemine", "on_osalenud"): ("boolean", None, "NO"),
 }
 
@@ -2197,8 +2199,12 @@ class DatabaseValidator:
             self.report.fail("session cancellation", "Unexpected affected registration count.", area="functions")
 
         cur.execute("SELECT fn_marki_osalemine(3003, 'treener@jousaal.ee', TRUE, 'validation update')")
-        cur.execute("SELECT on_osalenud, markus FROM osalemine WHERE registreeringu_id = 3003")
-        if cur.fetchone() == (True, "validation update"):
+        cur.execute("""
+            SELECT klient_e_meil, treener_e_meil, on_osalenud, markija_e_meil, markus
+            FROM osalemine
+            WHERE registreeringu_id = 3003
+        """)
+        if cur.fetchone() == ("klient@jousaal.ee", "treener@jousaal.ee", True, "treener@jousaal.ee", "validation update"):
             self.report.pass_("attendance function upserts attendance for completed session")
         else:
             self.report.fail("attendance function", "Attendance row did not update as expected.", area="functions")
@@ -2484,6 +2490,25 @@ class DatabaseValidator:
                 JOIN registreering r ON r.registreeringu_id = os.registreeringu_id
                 JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
                 WHERE tk.treeningukorra_seisundi_kood NOT IN ('SULETUD', 'TOIMUNUD')
+                """,
+            ),
+            (
+                "attendance client reference matches registration",
+                """
+                SELECT os.registreeringu_id
+                FROM osalemine os
+                JOIN registreering r ON r.registreeringu_id = os.registreeringu_id
+                WHERE os.klient_e_meil <> r.klient_e_meil
+                """,
+            ),
+            (
+                "attendance trainer reference matches session trainer",
+                """
+                SELECT os.registreeringu_id
+                FROM osalemine os
+                JOIN registreering r ON r.registreeringu_id = os.registreeringu_id
+                JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
+                WHERE os.treener_e_meil <> tk.treener_e_meil
                 """,
             ),
             (

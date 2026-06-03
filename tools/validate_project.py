@@ -95,7 +95,7 @@ REQUIRED_EAP_PHYSICAL_ATTRIBUTES = {
     "registreeringu_seisundi_liik": ["registreeringu_seisundi_kood", "nimetus"],
     "registreering": ["registreeringu_id", "treeningukorra_id", "klient_e_meil", "registreeringu_seisundi_kood"],
     "ootejarjekorra_koht": ["registreeringu_id", "treeningukorra_id", "ootejarjekorra_nr"],
-    "osalemine": ["registreeringu_id", "on_osalenud", "markija_e_meil"],
+    "osalemine": ["registreeringu_id", "klient_e_meil", "treener_e_meil", "on_osalenud", "markija_e_meil"],
 }
 
 REQUIRED_EAP_CONNECTORS = [
@@ -113,6 +113,8 @@ REQUIRED_EAP_CONNECTORS = [
     ("ootejarjekorra_koht", "registreering"),
     ("ootejarjekorra_koht", "treeningukord"),
     ("osalemine", "registreering"),
+    ("osalemine", "klient"),
+    ("osalemine", "tootaja"),
     ("treeneri_padevus", "tootaja"),
     ("treeneri_padevus", "treeninguliik"),
 ]
@@ -151,7 +153,6 @@ REQUIRED_EAP_ACTORS = [
     "Treener",
     "Klient",
     "Süsteem",
-    "Aeg",
 ]
 
 REQUIRED_EAP_USE_CASE_DIAGRAM_ACTORS = [
@@ -159,8 +160,11 @@ REQUIRED_EAP_USE_CASE_DIAGRAM_ACTORS = [
     "Treener",
     "Klient",
     "Süsteem",
-    "Aeg",
 ]
+
+FORBIDDEN_EAP_ACTORS = {
+    "Aeg",
+}
 
 REQUIRED_EAP_REGISTER_PACKAGES = [
     "Registreeringute register",
@@ -216,8 +220,66 @@ REQUIRED_EAP_ACTOR_USE_CASES = [
     ("Klient", "Vaata enda registreeringuid"),
     ("Klient", "Tühista enda registreering"),
     ("Süsteem", "Edenda ootel registreering"),
-    ("Aeg", "Sulge registreerimine"),
-    ("Aeg", "Lõpeta treeningukord"),
+]
+
+FORBIDDEN_EAP_STALE_STATE_NAMES = {
+    "Alg",
+    "Ootel",
+    "Aktiivne",
+    "Mitteaktiivne",
+    "Lõpetatud",
+    "Unustatud",
+}
+
+REQUIRED_EAP_STATE_NAMES = [
+    "Algus: treeningukord",
+    "KAVAND",
+    "AVATUD",
+    "SULETUD",
+    "TOIMUNUD",
+    "TYHIST",
+    "Lõpp: toimunud treeningukord",
+    "Lõpp: tühistatud treeningukord",
+    "Algus: registreering",
+    "KINNIT",
+    "OOTEJRK",
+    "TYH_KL",
+    "TYH_SYS",
+    "Lõpp: klient tühistas registreeringu",
+    "Lõpp: süsteemselt tühistatud registreering",
+]
+
+REQUIRED_EAP_STATEFLOWS = [
+    ("Algus: treeningukord", "KAVAND"),
+    ("KAVAND", "AVATUD"),
+    ("AVATUD", "SULETUD"),
+    ("SULETUD", "TOIMUNUD"),
+    ("KAVAND", "TYHIST"),
+    ("AVATUD", "TYHIST"),
+    ("SULETUD", "TYHIST"),
+    ("TOIMUNUD", "Lõpp: toimunud treeningukord"),
+    ("TYHIST", "Lõpp: tühistatud treeningukord"),
+    ("Algus: registreering", "KINNIT"),
+    ("Algus: registreering", "OOTEJRK"),
+    ("OOTEJRK", "KINNIT"),
+    ("KINNIT", "TYH_KL"),
+    ("OOTEJRK", "TYH_KL"),
+    ("KINNIT", "TYH_SYS"),
+    ("OOTEJRK", "TYH_SYS"),
+    ("TYH_KL", "Lõpp: klient tühistas registreeringu"),
+    ("TYH_SYS", "Lõpp: süsteemselt tühistatud registreering"),
+]
+
+FORBIDDEN_EAP_STALE_STATEFLOWS = [
+    ("Alg", "Ootel"),
+    ("Ootel", "Aktiivne"),
+    ("Ootel", "Ootel"),
+    ("Ootel", "Unustatud"),
+    ("Aktiivne", "Mitteaktiivne"),
+    ("Mitteaktiivne", "Aktiivne"),
+    ("Aktiivne", "Lõpetatud"),
+    ("Mitteaktiivne", "Lõpetatud"),
+    ("Mitteaktiivne", "Mitteaktiivne"),
 ]
 
 REQUIRED_DIAGRAMS = [
@@ -377,6 +439,18 @@ FORBIDDEN_DOCX_PHRASES = [
     "mahutavus on skoobist väljas",
 ]
 
+FORBIDDEN_TREENER_SPECIALIZATION_PHRASES = [
+    "treener on `tootaja` spetsialiseerumine",
+    "treener on töötaja spetsialiseerumine",
+    "treener saab töötaja spetsialiseerumisena",
+    "treener on samaaegselt kasutusjuhtude tegutseja ja töötaja spetsialiseerumisena",
+    'tootaja ||--o| treener : "võib spetsialiseeruda"',
+    "töötaja spetsialiseerumine ja tegutseja",
+    "põhiobjekt ja töötaja spetsialiseerumine",
+    "põhiobjekt, töötaja spetsialiseerumine",
+    "töötaja spetsialiseerumine rühmatreeningute kontekstis",
+]
+
 FORBIDDEN_ZIP_COMPONENTS = {"__MACOSX", "__pycache__", "venv", ".venv", "flask_session"}
 FORBIDDEN_ZIP_FILENAMES = {".DS_Store", ".env", "PROJECT_EXPLAINER_NOT_FOR_SUBMISSION.md"}
 FORBIDDEN_ZIP_SUFFIXES = {".pyc", ".pyo", ".class", ".jar"}
@@ -450,6 +524,12 @@ def validate_static_sql(failures: list[str]) -> None:
         else:
             fail(f"SQL missing equipment column {column}", failures)
 
+    for column in ["klient_e_meil", "treener_e_meil", "markija_e_meil"]:
+        if re.search(rf"create\s+table\s+osalemine[\s\S]+{column}", sql):
+            ok(f"SQL osalemine contains direct attendance reference {column}")
+        else:
+            fail(f"SQL osalemine missing direct attendance reference {column}", failures)
+
     checks = {
         "partial unique active registration index": r"create\s+unique\s+index\s+uq_registreering_aktiivne_klient_kord[\s\S]+where\s+(?:registreeringu_seisundi_kood\s+in\s+\('kinnit',\s*'ootejrk'\)|registreeringu_seisundi_kood\s*=\s*'kinnit'\s+or\s+registreeringu_seisundi_kood\s*=\s*'ootejrk')",
         "trainer overlap trigger/function": r"treeneril on samal ajal juba teine|trg_treeningukord_invariandid",
@@ -459,6 +539,9 @@ def validate_static_sql(failures: list[str]) -> None:
         "equipment compatibility trigger/function": r"ruumis puudub treeninguliigi jaoks nõutav varustus|on_ruum_sobiv_treeninguliigile|treeninguliigi_varustuse_noue",
         "equipment ownership FK index": r"create\s+index\s+ix_ruumi_varustuse_omamine_varustus",
         "equipment requirement FK index": r"create\s+index\s+ix_treeninguliigi_varustuse_noue_varustus",
+        "attendance participant FK": r"fk_osalemine_klient",
+        "attendance trainer FK": r"fk_osalemine_treener",
+        "attendance participant/session consistency trigger": r"osalemise klient peab vastama registreeringu kliendile[\s\S]+osalemise treener peab vastama treeningukorra määratud treenerile",
         "session status transition trigger": r"trg_treeningukord_seisundisiire",
         "registration status transition trigger": r"trg_registreering_seisundisiire",
         "waitlist promotion routine": r"fn_edenda_ootejarjekorrast",
@@ -487,6 +570,10 @@ def validate_app(failures: list[str]) -> None:
     source = read_text(app_py)
     for function in [
         "fn_planeeri_treeningukord",
+        "fn_ava_treeningukord",
+        "fn_sulge_treeningukord",
+        "fn_lopeta_treeningukord",
+        "fn_tyhista_treeningukord",
         "fn_registreeri_klient_treeningukorrale",
         "fn_tyhista_registreering",
         "fn_marki_osalemine",
@@ -495,6 +582,20 @@ def validate_app(failures: list[str]) -> None:
             ok(f"app calls {function}")
         else:
             fail(f"app does not call {function}", failures)
+
+    expected_named_args = {
+        "fn_ava_treeningukord": "p_juhataja_e_meil",
+        "fn_sulge_treeningukord": "p_actor_e_meil",
+        "fn_lopeta_treeningukord": "p_actor_e_meil",
+        "fn_tyhista_treeningukord": "p_juhataja_e_meil",
+        "fn_tyhista_registreering": "p_actor_e_meil",
+        "fn_marki_osalemine": "p_markija_e_meil",
+    }
+    for function, parameter in expected_named_args.items():
+        if re.search(rf"{function}\([^)]*{parameter}\s*=>", source):
+            ok(f"app uses correct named parameter for {function}: {parameter}")
+        else:
+            fail(f"app missing expected named parameter for {function}: {parameter}", failures)
 
     for view in ["ruumide_varustus", "treeninguliigi_varustuse_nouded"]:
         if view in source:
@@ -533,6 +634,28 @@ def validate_app(failures: list[str]) -> None:
         fail(f"stale old training-card templates still exist: {stale_existing}", failures)
     else:
         ok("stale old training-card templates are absent")
+
+
+def validate_source_wording(failures: list[str]) -> None:
+    checked_paths = [
+        ROOT / "README.md",
+        ROOT / "tools" / "fill_report_docx.py",
+        ROOT / "tools" / "EapFixes.java",
+        ROOT / "docs" / "FINAL_SUBMISSION_VERIFICATION_AUDIT.md",
+        *sorted((ROOT / "diagrams").glob("*.mmd")),
+    ]
+    offending = []
+    for path in checked_paths:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lower()
+        for phrase in FORBIDDEN_TREENER_SPECIALIZATION_PHRASES:
+            if phrase in text:
+                offending.append(f"{path.relative_to(ROOT)}: {phrase}")
+    if offending:
+        fail(f"source text contains risky Treener specialization wording: {offending}", failures)
+    else:
+        ok("source text contains no risky Treener specialization wording")
 
 
 def validate_diagrams(failures: list[str]) -> None:
@@ -605,6 +728,20 @@ def validate_diagram_semantics(failures: list[str]) -> None:
                 fail(f"use-case diagram still has unsupported include relation: {label}", failures)
             else:
                 ok(f"use-case diagram omits unsupported include relation: {label}")
+        if "&lt;&lt;trigger&gt;&gt;<br/>Aeg" in use_case_text or "<<trigger>><br/>Aeg" in use_case_text:
+            fail("use-case diagram still models Aeg as an actor/trigger node", failures)
+        else:
+            ok("use-case diagram does not model Aeg as an actor node")
+
+    for state_name in ["05_session_state", "06_registration_state"]:
+        source = DIAGRAM_SRC / f"{state_name}.mmd"
+        if not source.exists():
+            continue
+        text = source.read_text(encoding="utf-8")
+        if re.search(r"-->\s*\[\*\]", text):
+            fail(f"state diagram {source.name} still sends multiple terminal states to shared [*]", failures)
+        else:
+            ok(f"state diagram {source.name} uses named separate terminal states")
 
 
 def validate_docx(failures: list[str]) -> None:
@@ -632,6 +769,12 @@ def validate_docx(failures: list[str]) -> None:
             fail(f"DOCX contains obsolete out-of-scope phrase: {phrase}", failures)
         else:
             ok(f"DOCX does not contain obsolete phrase: {phrase}")
+
+    for phrase in FORBIDDEN_TREENER_SPECIALIZATION_PHRASES:
+        if phrase in text:
+            fail(f"DOCX contains risky Treener specialization wording: {phrase}", failures)
+        else:
+            ok(f"DOCX does not contain risky Treener specialization wording: {phrase}")
 
     if len(doc.inline_shapes) >= len(REQUIRED_DIAGRAMS):
         ok(f"DOCX contains {len(doc.inline_shapes)} inline images")
@@ -688,6 +831,13 @@ def validate_eap(failures: list[str]) -> None:
         return
 
     text = eap_export_text()
+    text_lower = text.lower()
+    for phrase in FORBIDDEN_TREENER_SPECIALIZATION_PHRASES:
+        if phrase in text_lower:
+            fail(f"EAP contains risky Treener specialization wording: {phrase}", failures)
+        else:
+            ok(f"EAP does not contain risky Treener specialization wording: {phrase}")
+
     required = [
     "Registreeringukeskne",
         "Treeninguliik",
@@ -770,6 +920,11 @@ def validate_eap(failures: list[str]) -> None:
             ok(f"EAP actor exists: {actor_name}")
         else:
             fail(f"EAP missing actor: {actor_name}", failures)
+    stale_actors = sorted(name for name in FORBIDDEN_EAP_ACTORS if name in eap_actor_names)
+    if stale_actors:
+        fail(f"EAP still contains actor names that should be modeled as conditions, not actors: {stale_actors}", failures)
+    else:
+        ok("EAP contains no stale time-as-actor entries")
 
     eap_package_names = {row.get("Name") for row in package_rows}
     for package_name in REQUIRED_EAP_REGISTER_PACKAGES:
@@ -840,6 +995,75 @@ def validate_eap(failures: list[str]) -> None:
         fail(f"EAP contains stale conceptual classes not defined as olemitüübid: {stale_conceptual_classes}", failures)
     else:
         ok("EAP contains no stale Juhataja conceptual class")
+
+    names_by_object_id = {
+        row.get("Object_ID"): row.get("Name")
+        for row in object_rows
+    }
+    classifier_classes = {"Klassifikaator", "Seisund", "Roll", "Riik"}
+    classifier_generalizations = []
+    for row in connector_rows:
+        if row.get("Connector_Type") != "Generalization":
+            continue
+        start_name = names_by_object_id.get(row.get("Start_Object_ID"))
+        end_name = names_by_object_id.get(row.get("End_Object_ID"))
+        if start_name in classifier_classes or end_name in classifier_classes:
+            classifier_generalizations.append(f"{start_name}->{end_name}")
+    if classifier_generalizations:
+        fail(f"EAP uses UML generalization for classifier associations: {classifier_generalizations}", failures)
+    else:
+        ok("EAP does not use UML generalization for classifier associations")
+
+    state_rows = [
+        row for row in object_rows
+        if row.get("Object_Type") in {"State", "StateNode"}
+    ]
+    eap_state_names = {row.get("Name") for row in state_rows}
+    stale_state_names = sorted(name for name in FORBIDDEN_EAP_STALE_STATE_NAMES if name in eap_state_names)
+    if stale_state_names:
+        fail(f"EAP still contains stale natural-language statechart states: {stale_state_names}", failures)
+    else:
+        ok("EAP contains no stale natural-language statechart state objects")
+
+    for state_name in REQUIRED_EAP_STATE_NAMES:
+        if state_name in eap_state_names:
+            ok(f"EAP current lifecycle state exists: {state_name}")
+        else:
+            fail(f"EAP missing current lifecycle state: {state_name}", failures)
+
+    stateflow_pairs = set()
+    for row in connector_rows:
+        if row.get("Connector_Type") != "StateFlow":
+            continue
+        start_name = names_by_object_id.get(row.get("Start_Object_ID"))
+        end_name = names_by_object_id.get(row.get("End_Object_ID"))
+        stateflow_pairs.add((start_name, end_name))
+
+    stale_stateflows = [
+        f"{start}->{end}"
+        for start, end in FORBIDDEN_EAP_STALE_STATEFLOWS
+        if (start, end) in stateflow_pairs
+    ]
+    stale_stateflow_endpoints = sorted({
+        name
+        for pair in stateflow_pairs
+        for name in pair
+        if name in FORBIDDEN_EAP_STALE_STATE_NAMES
+    })
+    if stale_stateflows or stale_stateflow_endpoints:
+        fail(
+            "EAP still contains stale old lifecycle StateFlow content: "
+            f"patterns={stale_stateflows}, endpoints={stale_stateflow_endpoints}",
+            failures,
+        )
+    else:
+        ok("EAP contains no stale Alg/Ootel/Aktiivne/Mitteaktiivne/Lõpetatud StateFlow pattern")
+
+    for start, end in REQUIRED_EAP_STATEFLOWS:
+        if (start, end) in stateflow_pairs:
+            ok(f"EAP current lifecycle transition exists: {start} -> {end}")
+        else:
+            fail(f"EAP missing current lifecycle transition: {start} -> {end}", failures)
 
     physical_objects = {
         row.get("Name"): row
@@ -1323,6 +1547,7 @@ def main() -> int:
     validate_generated_outputs(failures)
     validate_static_sql(failures)
     validate_app(failures)
+    validate_source_wording(failures)
     validate_diagrams(failures)
     validate_diagram_semantics(failures)
     validate_docx(failures)

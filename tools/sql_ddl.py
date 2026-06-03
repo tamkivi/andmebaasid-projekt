@@ -398,12 +398,16 @@ CREATE TABLE ootejarjekorra_koht (
 
 CREATE TABLE osalemine (
     registreeringu_id INTEGER NOT NULL,
+    klient_e_meil e_meil_aadress NOT NULL,
+    treener_e_meil e_meil_aadress NOT NULL,
     on_osalenud BOOLEAN NOT NULL,
     markija_e_meil e_meil_aadress NOT NULL,
     markimise_aeg ajakava_ajahetk NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     markus VARCHAR(1000),
     CONSTRAINT pk_osalemine PRIMARY KEY (registreeringu_id),
     CONSTRAINT fk_osalemine_registreering FOREIGN KEY (registreeringu_id) REFERENCES registreering (registreeringu_id) ON DELETE CASCADE,
+    CONSTRAINT fk_osalemine_klient FOREIGN KEY (klient_e_meil) REFERENCES klient (e_meil) ON UPDATE CASCADE,
+    CONSTRAINT fk_osalemine_treener FOREIGN KEY (treener_e_meil) REFERENCES tootaja (e_meil) ON UPDATE CASCADE,
     CONSTRAINT fk_osalemine_markija FOREIGN KEY (markija_e_meil) REFERENCES tootaja (e_meil) ON UPDATE CASCADE,
     CONSTRAINT chk_osalemine_markus_mittetyhi CHECK (markus ~ '[^[:space:]]')
 );
@@ -429,6 +433,8 @@ CREATE INDEX ix_treeningukord_looja_tootaja ON treeningukord (looja_e_meil);
 CREATE INDEX ix_treeningukord_viimase_muutja_tootaja ON treeningukord (viimase_muutja_e_meil);
 CREATE INDEX ix_registreering_seisundi_liik ON registreering (registreeringu_seisundi_kood);
 CREATE INDEX ix_registreering_treeningukord_seisund_aeg ON registreering (treeningukorra_id, registreeringu_seisundi_kood, registreerimise_aeg);
+CREATE INDEX ix_osalemine_klient ON osalemine (klient_e_meil);
+CREATE INDEX ix_osalemine_treener ON osalemine (treener_e_meil);
 CREATE INDEX ix_osalemine_markija ON osalemine (markija_e_meil);
 
 CREATE UNIQUE INDEX uq_registreering_aktiivne_klient_kord
@@ -728,16 +734,33 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_treeningukorra_id INTEGER;
+    v_klient_e_meil e_meil_aadress;
     v_treener_e_meil e_meil_aadress;
     v_treeningukorra_seisundi_kood VARCHAR(10);
     v_alguse_aeg TIMESTAMP WITH TIME ZONE;
     v_registreeringu_seisundi_kood VARCHAR(10);
 BEGIN
-    SELECT r.treeningukorra_id, r.registreeringu_seisundi_kood, tk.treener_e_meil, tk.treeningukorra_seisundi_kood, tk.alguse_aeg
-    INTO v_treeningukorra_id, v_registreeringu_seisundi_kood, v_treener_e_meil, v_treeningukorra_seisundi_kood, v_alguse_aeg
+    SELECT r.treeningukorra_id, r.klient_e_meil, r.registreeringu_seisundi_kood, tk.treener_e_meil, tk.treeningukorra_seisundi_kood, tk.alguse_aeg
+    INTO v_treeningukorra_id, v_klient_e_meil, v_registreeringu_seisundi_kood, v_treener_e_meil, v_treeningukorra_seisundi_kood, v_alguse_aeg
     FROM registreering r
     JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
     WHERE r.registreeringu_id = NEW.registreeringu_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Registreeringut ei leitud.';
+    END IF;
+
+    IF NEW.klient_e_meil <> v_klient_e_meil THEN
+        RAISE EXCEPTION 'Osalemise klient peab vastama registreeringu kliendile.';
+    END IF;
+
+    IF NEW.treener_e_meil <> v_treener_e_meil THEN
+        RAISE EXCEPTION 'Osalemise treener peab vastama treeningukorra määratud treenerile.';
+    END IF;
+
+    IF NOT on_treener(NEW.treener_e_meil) THEN
+        RAISE EXCEPTION 'Osalemise treener peab omama TREENER rolli.';
+    END IF;
 
     IF v_registreeringu_seisundi_kood <> 'KINNIT' THEN
         RAISE EXCEPTION 'Osalemist saab märkida ainult kinnitatud registreeringule.';
@@ -1189,21 +1212,40 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
+DECLARE
+    v_klient_e_meil e_meil_aadress;
+    v_treener_e_meil e_meil_aadress;
 BEGIN
+    SELECT r.klient_e_meil, tk.treener_e_meil
+    INTO v_klient_e_meil, v_treener_e_meil
+    FROM registreering r
+    JOIN treeningukord tk ON tk.treeningukorra_id = r.treeningukorra_id
+    WHERE r.registreeringu_id = p_registreeringu_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Registreeringut ei leitud.';
+    END IF;
+
     INSERT INTO osalemine (
         registreeringu_id,
+        klient_e_meil,
+        treener_e_meil,
         on_osalenud,
         markija_e_meil,
         markus
     )
     VALUES (
         p_registreeringu_id,
+        v_klient_e_meil,
+        v_treener_e_meil,
         p_on_osalenud,
         p_markija_e_meil,
         p_markus
     )
     ON CONFLICT (registreeringu_id)
     DO UPDATE SET
+        klient_e_meil = EXCLUDED.klient_e_meil,
+        treener_e_meil = EXCLUDED.treener_e_meil,
         on_osalenud = EXCLUDED.on_osalenud,
         markija_e_meil = EXCLUDED.markija_e_meil,
         markimise_aeg = CURRENT_TIMESTAMP(0),
@@ -1409,6 +1451,8 @@ SELECT
     reg.registreeringu_seisundi_kood,
     ok.ootejarjekorra_nr,
     reg.registreerimise_aeg,
+    os.klient_e_meil AS osalemise_klient_e_meil,
+    os.treener_e_meil AS osalemise_treener_e_meil,
     os.on_osalenud,
     os.markija_e_meil,
     os.markimise_aeg,
@@ -1805,10 +1849,10 @@ UPDATE ootejarjekorra_koht
 SET ootejarjekorra_nr = 1
 WHERE registreeringu_id = 3005;
 
-INSERT INTO osalemine (registreeringu_id, on_osalenud, markija_e_meil, markus)
+INSERT INTO osalemine (registreeringu_id, klient_e_meil, treener_e_meil, on_osalenud, markija_e_meil, markus)
 VALUES
-(3003, TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
-(3004, FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
+(3003, 'klient@jousaal.ee', 'treener@jousaal.ee', TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
+(3004, 'klient2@jousaal.ee', 'treener@jousaal.ee', FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
 ON CONFLICT DO NOTHING;
 
 DO $$

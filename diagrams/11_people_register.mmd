@@ -2,7 +2,7 @@ erDiagram
     ISIK ||--|| KASUTAJAKONTO : "omab sisselogimiseks"
     ISIK ||--o| TOOTAJA : "võib olla"
     ISIK ||--o| KLIENT : "võib olla"
-    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TOOTAJA ||--o| TREENER : "tegutseb treeneri rollis"
     TOOTAJA ||--o{ TOOTAJA_ROLLI_OMAMINE : "omab rolle"
     ROLL ||--o{ TOOTAJA_ROLLI_OMAMINE : "liigitab rolli"
     KLASSIFIKAATOR ||--o{ ROLL : "täpsustab rolli väärtusi"

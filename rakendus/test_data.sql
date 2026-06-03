@@ -200,10 +200,10 @@ UPDATE ootejarjekorra_koht
 SET ootejarjekorra_nr = 1
 WHERE registreeringu_id = 3005;
 
-INSERT INTO osalemine (registreeringu_id, on_osalenud, markija_e_meil, markus)
+INSERT INTO osalemine (registreeringu_id, klient_e_meil, treener_e_meil, on_osalenud, markija_e_meil, markus)
 VALUES
-(3003, TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
-(3004, FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
+(3003, 'klient@jousaal.ee', 'treener@jousaal.ee', TRUE, 'treener@jousaal.ee', 'Osales kogu treeningus.'),
+(3004, 'klient2@jousaal.ee', 'treener@jousaal.ee', FALSE, 'treener@jousaal.ee', 'Puudus ette teatamata.')
 ON CONFLICT DO NOTHING;
 
 SELECT 'Demoandmed on olemas: üks tühistatud treeningukord, üks avatud vabade kohtadega treeningukord, üks täis avatud treeningukord ootejärjekorraga ja üks toimunud treeningukord osalemistega.';

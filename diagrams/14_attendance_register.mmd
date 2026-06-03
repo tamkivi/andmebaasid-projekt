@@ -1,9 +1,10 @@
 erDiagram
     REGISTREERING ||--o| OSALEMINE : "annab tulemuse"
-    TOOTAJA ||--o| TREENER : "võib spetsialiseeruda"
+    TOOTAJA ||--o| TREENER : "tegutseb treeneri rollis"
     TREENER ||--o{ OSALEMINE : "märgib juhendajana"
     TOOTAJA ||--o{ OSALEMINE : "võib märkida juhataja rollis"
     KLIENT ||--o{ REGISTREERING : "on registreeruja"
+    KLIENT ||--o{ OSALEMINE : "on osaleja"
     TREENINGUKORD ||--o{ REGISTREERING : "on osalemise alus"
 
     OSALEMINE {

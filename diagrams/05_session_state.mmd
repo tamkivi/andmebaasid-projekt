@@ -6,14 +6,17 @@ stateDiagram-v2
     KAVAND --> TYHIST: Juhataja tühistab / OP9 fn_tyhista_treeningukord
     AVATUD --> TYHIST: Juhataja tühistab / OP9 fn_tyhista_treeningukord
     SULETUD --> TYHIST: Juhataja tühistab / OP9 fn_tyhista_treeningukord
-    TOIMUNUD --> [*]
-    TYHIST --> [*]
+    TOIMUNUD --> LOPP_TOIMUNUD: eraldi lõppseisund
+    TYHIST --> LOPP_TYHIST: eraldi lõppseisund
+
+    state "Lõpp: toimunud treeningukord" as LOPP_TOIMUNUD
+    state "Lõpp: tühistatud treeningukord" as LOPP_TYHIST
 
     note right of AVATUD
         Klient saab registreeruda.
         Täitumisel tekib ootejärjekord.
-        Aeg mõjutab nähtavust:
-        pärast registreerimise tähtaega
+        Registreerimise tähtaeg mõjutab nähtavust:
+        pärast tähtaega
         ei saa klient enam registreeruda.
     end note
     note right of SULETUD

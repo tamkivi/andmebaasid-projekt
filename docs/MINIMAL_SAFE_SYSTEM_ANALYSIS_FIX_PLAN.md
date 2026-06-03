@@ -1,5 +1,9 @@
 # Minimal Safe System-Analysis Fix Plan
 
+> Historical note: this plan records the safe repair sequence used before the
+> final submission audit. The current readiness result is maintained in
+> `docs/FINAL_SUBMISSION_VERIFICATION_AUDIT.md`.
+
 ## 1. Executive summary
 
 The highest-priority safe repairs are structural: the document must add `Klassifikaator` as a põhiobjekt, align `Klassifikaatorite haldur`, split combined subsystem/register names, and make the põhiobjekt -> funktsionaalne allsüsteem -> register mapping one-to-one. These fixes are low-to-medium risk because `docs/RULE_SOURCE_TRACE_AUDIT.md` classifies the supporting rules as `Explicit` and cites `instruction_guides/Yldvaade.txt` and the official pattern guide.
@@ -297,12 +301,8 @@ These are source-supported, but diagram extraction should be visually checked be
 
 #### 6.1 Use-case diagram names and actors
 
-- Current problem: `diagrams/02_use_cases.mmd` contains use-case names that do not match `Tabel 11`, including:
-  - `Vaata tunniplaani`
-  - `Sulge enda treeningukorra registreerimine`
-  - `Rakenda registreerimise tähtaja tingimus`
-  - `Edenda ootejärjekorrast`
-- Proposed change: after use-case names are finalized, update the diagram to use the exact same names as the textual use-case list, or add the missing textual descriptions if those diagram use cases are intentionally kept.
+- Historical problem: `diagrams/02_use_cases.mmd` contained legacy diagram-only use-case names that did not match `Tabel 11`.
+- Current result: resolved in the generated Mermaid, EAP, and DOCX artifacts; the diagram now uses the finalized use-case names from the textual use-case list.
 - Source-trace classification: source support exists, but blocker severity should be clarified.
 - Source evidence: `docs/RULE_SOURCE_TRACE_AUDIT.md`, `Diagram-to-text exact matching` and special check `4.7`.
 - Risk level: medium.

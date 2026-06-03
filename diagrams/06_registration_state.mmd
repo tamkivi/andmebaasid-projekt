@@ -6,8 +6,11 @@ stateDiagram-v2
     OOTEJRK --> TYH_KL: Klient tühistab enne tähtaega / OP6 tühista enda registreering
     KINNIT --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / OP9 süsteemne tühistamine
     OOTEJRK --> TYH_SYS: Juhataja tühistab treeningukorra või registreeringu / OP9 süsteemne tühistamine
-    TYH_KL --> [*]
-    TYH_SYS --> [*]
+    TYH_KL --> LOPP_KLIENT: eraldi lõppseisund
+    TYH_SYS --> LOPP_SYSTEM: eraldi lõppseisund
+
+    state "Lõpp: klient tühistas registreeringu" as LOPP_KLIENT
+    state "Lõpp: süsteemselt tühistatud registreering" as LOPP_SYSTEM
 
     note right of KINNIT
         Kehtib osalejana.

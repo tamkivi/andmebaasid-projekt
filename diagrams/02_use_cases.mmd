@@ -1,63 +1,68 @@
-%%{init: {"themeVariables": {"fontSize": "22px"}, "flowchart": {"nodeSpacing": 35, "rankSpacing": 40}}}%%
-flowchart TB
-    subgraph SYSBOUND["Registreeringukeskne rühmatreeningute allsüsteem"]
+%%{init: {"themeVariables": {"fontSize": "21px"}, "flowchart": {"nodeSpacing": 36, "rankSpacing": 52, "curve": "basis"}}}%%
+flowchart LR
+    subgraph ACT["Välised tegutsejad"]
         direction TB
+        JUH["&lt;&lt;actor&gt;&gt;<br/>Juhataja"]:::actor
+        TRE["&lt;&lt;actor&gt;&gt;<br/>Treener<br/>(töötaja roll)"]:::actor
+        KLI["&lt;&lt;actor&gt;&gt;<br/>Klient"]:::actor
+        SYS["&lt;&lt;external system actor&gt;&gt;<br/>Süsteemne protsess"]:::actor
+        TIME["Tähtaja ja lõpuaja tingimused<br/>(ei ole tegutseja)"]:::note
+    end
 
-        subgraph MGR["Töötaja/juhataja kasutusmallid"]
-            direction LR
-            JUH["&lt;&lt;actor&gt;&gt;<br/>Juhataja"]
+    subgraph SYSBOUND["Rühmatreeningute allsüsteem"]
+        direction LR
+        subgraph UC1["Juhataja haldus"]
+            direction TB
             P(["Planeeri treeningukord"])
             A(["Ava registreerimine"])
+            C(["Tühista treeningukord"])
+            S(["Vaata treeningukordade täituvuse statistikat"])
+        end
+
+        subgraph UC2["Juhataja ja treener"]
+            direction TB
             SL(["Sulge registreerimine"])
             L(["Lõpeta treeningukord"])
-            C(["Tühista treeningukord"])
             R(["Vaata treeningukorra registreeringuid"])
             O(["Märgi osalemine"])
-            S(["Vaata treeningukordade täituvuse statistikat"])
-            JUH --> P
-            JUH --> A
-            JUH --> SL
-            JUH --> L
-            JUH --> C
-            JUH --> R
-            JUH --> O
-            JUH --> S
         end
 
-        subgraph TRN["Treeneri kasutusmallid"]
-            direction LR
-            TRE["&lt;&lt;actor&gt;&gt;<br/>Treener<br/>(töötaja roll)"]
-            TRE --> R
-            TRE --> O
-            TRE --> SL
-            TRE --> L
-        end
-
-        subgraph CLI["Kliendi kasutusmallid"]
-            direction LR
-            KLI["&lt;&lt;actor&gt;&gt;<br/>Klient"]
+        subgraph UC3["Klient"]
+            direction TB
             AJ(["Vaata vabu treeningukordi"])
             REG(["Esita registreering"])
-            TYH(["Tühista enda registreering"])
             MINU(["Vaata enda registreeringuid"])
-            KLI --> AJ
-            KLI --> REG
-            KLI --> TYH
-            KLI --> MINU
+            TYH(["Tühista enda registreering"])
         end
 
-        subgraph AUTO["Automaatne või ajast sõltuv kasutusmall"]
-            direction LR
-            SYS["&lt;&lt;actor&gt;&gt;<br/>Süsteem"]
-            AEG["&lt;&lt;trigger&gt;&gt;<br/>Aeg"]
+        subgraph UC4["Süsteemne protsess"]
+            direction TB
             ED(["Edenda ootel registreering"])
-            SYS --> ED
-            AEG --> SL
-            AEG --> L
         end
     end
 
-    REG -. "&lt;&lt;include&gt;&gt;" .-> AJ
-    TYH -. "&lt;&lt;include&gt;&gt;" .-> MINU
-    TYH -. "&lt;&lt;include&gt;&gt;" .-> ED
-    O -. "&lt;&lt;include&gt;&gt;" .-> R
+    JUH --- P
+    JUH --- A
+    JUH --- SL
+    JUH --- L
+    JUH --- C
+    JUH --- R
+    JUH --- O
+    JUH --- S
+
+    TRE --- SL
+    TRE --- L
+    TRE --- R
+    TRE --- O
+
+    KLI --- AJ
+    KLI --- REG
+    KLI --- MINU
+    KLI --- TYH
+
+    SYS --- ED
+    TIME -. "piirab" .-> SL
+    TIME -. "piirab" .-> L
+
+    classDef actor fill:#ffffff,stroke:#1f2937,stroke-width:2px,color:#111827;
+    classDef note fill:#fff7ed,stroke:#c2410c,stroke-width:1px,color:#7c2d12;

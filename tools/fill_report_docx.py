@@ -19,6 +19,7 @@ from sql_ddl import SQL_DDL
 ROOT = Path(__file__).resolve().parents[1]
 DST = ROOT / "Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx"
 DIAGRAM_DIR = ROOT / "work" / "generated_diagrams"
+DBEAVER_EXPORT_DIR = ROOT / "manual_exports" / "dbeaver_physical"
 
 AUTHORS = "Tristan Aik Sild, Gustav Tamkivi"
 STUDY_GROUP = "IAIB23"
@@ -51,15 +52,23 @@ DIAGRAMS = [
     ("15_classifiers_register.png", "Klassifikaatorite registri kontseptuaalne skeem koos seisundi, rolli ja riigi klassifikaatoritega."),
 ]
 
+DBEAVER_PHYSICAL_EXPORTS = [
+    ("registreeringute_register.png", "DBeaver/PostgreSQL füüsiline diagramm: registreeringute register."),
+    ("treeningukordade_register.png", "DBeaver/PostgreSQL füüsiline diagramm: treeningukordade register."),
+    ("osalemiste_register.png", "DBeaver/PostgreSQL füüsiline diagramm: osalemiste register."),
+    ("isikute_rollide_register.png", "DBeaver/PostgreSQL füüsiline diagramm: isikute ja rollide register."),
+    ("treenerite_padevuste_register.png", "DBeaver/PostgreSQL füüsiline diagramm: treenerite ja pädevuste register."),
+    ("klassifikaatorite_register.png", "DBeaver/PostgreSQL füüsiline diagramm: klassifikaatorite register."),
+]
+
 
 ACTORS = [
     ("Juhataja", "Sisemine kasutaja", "Planeerib treeningukordi, avab registreerimise, tühistab treeningukordi ja vaatab täituvuse statistikat."),
     ("Töötajate haldur", "Sisemine kasutaja", "Haldab töötajate andmeid ja töötajatega seotud rolli omamisi."),
     ("Klassifikaatorite haldur", "Sisemine kasutaja", "Haldab süsteemis kasutatavaid klassifikaatori väärtuseid."),
-    ("Treener", "Töötaja spetsialiseerumine ja tegutseja", "Treener on töötaja rollipõhine põhiobjekt selles allsüsteemis: ta juhendab treeningukordi, tal on pädevused ja ta märgib osalemist."),
+    ("Treener", "Töötaja rolliga seotud tegutseja", "Treenerit käsitletakse töötaja rolli ja pädevuste kaudu: ta juhendab treeningukordi, tal on pädevused ja ta märgib osalemist."),
     ("Klient", "Väline kasutaja", "Vaatab avatud ajakava, registreerub treeningukorrale, satub vajadusel ootejärjekorda ja tühistab enda registreeringu."),
     ("Süsteem", "Automaatne osapool", "Rakendab ootejärjekorra edendamist, seisundipiiranguid ja andmebaasi ärireegleid."),
-    ("Aeg", "Väline käivitaja/tingimus", "Registreerimise ja tühistamise tähtajad ning treeningukorra algus/lõpp mõjutavad, millised toimingud on lubatud."),
 ]
 
 
@@ -68,9 +77,9 @@ CORE_OBJECTS = [
     ("Treeningukord", "Põhiobjekt, millele registreeringud tekivad. Sellel on oma seisundid KAVAND, AVATUD, SULETUD, TOIMUNUD ja TYHIST."),
     ("Treeninguliik", "Põhiandmete põhiobjekt ehk hallatav rühmatreeningu kataloogimõiste. Sellel on kirjeldus, tavapärane kestus, kasutatavuse seisund, varustuse nõuded ja seosed treeneri pädevustega."),
     ("Isik", "Põhiobjekt, mis seob kliendi ja töötaja rollid ühe tegeliku inimesega."),
-    ("Töötaja", "Põhiobjekt ja isiku spetsialiseerumine organisatsioonis. Töötaja elutsükkel kirjeldab, kas isik saab süsteemis töötaja rollis tegutseda."),
-    ("Klient", "Põhiobjekt ja isiku spetsialiseerumine teenuse kasutajana. Klient saab esitada, vaadata ja tühistada enda registreeringuid."),
-    ("Treener", "Põhiobjekt ja töötaja spetsialiseerumine valitud allsüsteemis. Treeneri äriline tähendus tekib juhendatavatest treeningukordadest, pädevustest, ajakavast ja osalemise märkimisest."),
+    ("Töötaja", "Põhiobjekt organisatsiooniga seotud isikuna. Töötaja elutsükkel kirjeldab, kas isik saab süsteemis töötaja rollis tegutseda."),
+    ("Klient", "Põhiobjekt teenuse kasutajana. Klient saab esitada, vaadata ja tühistada enda registreeringuid."),
+    ("Treener", "Põhiobjekt valitud allsüsteemis töötaja rolli ja pädevuste kaudu. Treeneri äriline tähendus tekib juhendatavatest treeningukordadest, pädevustest, ajakavast ja osalemise märkimisest."),
     ("Klassifikaator", "Põhiobjekt, mis koondab süsteemis kasutatavad kontrollitud väärtused, näiteks seisundid, rollid ja riigid."),
 ]
 
@@ -101,8 +110,8 @@ USE_CASES = [
     ("Edenda ootel registreering", "Süsteem", "Kui kinnitatud koht vabaneb, muutub esimene ootel registreering kinnitatuks."),
     ("Vaata treeningukorra registreeringuid", "Treener, juhataja", "Treener või juhataja näeb konkreetse treeningukorra kinnitatud ja ootel registreeringuid."),
     ("Märgi osalemine", "Treener, juhataja", "Treener või juhataja märgib kinnitatud registreeringule osalemise tulemuse."),
-    ("Sulge registreerimine", "Juhataja, treener, Aeg", "Registreerimine lõpetatakse käsitsi või tähtaja tingimuse põhjal; treener saab sulgeda alles pärast registreerimise lõppu."),
-    ("Lõpeta treeningukord", "Treener, juhataja, Aeg", "Pärast treeningukorra lõppu märgitakse kord toimunuks ning osalemise märkimine jääb lubatuks."),
+    ("Sulge registreerimine", "Juhataja, treener", "Registreerimine lõpetatakse käsitsi; tähtaja tingimus piirab seda, millal treener saab sulgeda."),
+    ("Lõpeta treeningukord", "Treener, juhataja", "Pärast treeningukorra lõppu märgitakse kord toimunuks ning osalemise märkimine jääb lubatuks."),
     ("Tühista treeningukord", "Juhataja", "Juhataja tühistab kavandatud, avatud või suletud treeningukorra ning aktiivsed registreeringud muutuvad süsteemselt tühistatuks."),
     ("Planeeri treeningukord", "Juhataja", "Juhataja loob konkreetse treeningukorra koos ruumi, aja, mahupiirangu ja treeneri rollis töötajaga."),
     ("Ava registreerimine", "Juhataja", "Kavandatud tulevane treeningukord muudetakse seisundisse AVATUD, et kliendid saaksid registreeruda."),
@@ -110,23 +119,23 @@ USE_CASES = [
 ]
 
 
-CRUD_HEADERS = [
-    "Olemitüüp",
-    "Vaata vabu treeningukordi",
-    "Esita registreering",
-    "Vaata enda registreeringuid",
-    "Tühista enda registreering",
-    "Edenda ootel registreering",
-    "Vaata treeningukorra registreeringuid",
-    "Märgi osalemine",
-    "Sulge registreerimine",
-    "Lõpeta treeningukord",
-    "Tühista treeningukord",
-    "Planeeri treeningukord",
-    "Ava registreerimine",
-    "Vaata treeningukordade täituvuse statistikat",
-    "Kokku",
+CRUD_USE_CASE_LEGEND = [
+    ("KJ1", "Vaata vabu treeningukordi"),
+    ("KJ2", "Esita registreering"),
+    ("KJ3", "Vaata enda registreeringuid"),
+    ("KJ4", "Tühista enda registreering"),
+    ("KJ5", "Edenda ootel registreering"),
+    ("KJ6", "Vaata treeningukorra registreeringuid"),
+    ("KJ7", "Märgi osalemine"),
+    ("KJ8", "Sulge registreerimine"),
+    ("KJ9", "Lõpeta treeningukord"),
+    ("KJ10", "Tühista treeningukord"),
+    ("KJ11", "Planeeri treeningukord"),
+    ("KJ12", "Ava registreerimine"),
+    ("KJ13", "Vaata treeningukordade täituvuse statistikat"),
 ]
+
+CRUD_HEADERS = ["Olemitüüp", *[code for code, _ in CRUD_USE_CASE_LEGEND], "Kokku"]
 
 CRUD_MAIN_MATRIX = [
     ("Isik", "", "", "R", "R", "", "R", "R", "", "", "", "", "", "", "R"),
@@ -529,7 +538,7 @@ BUSINESS_RULES = [
     ("Treener peab olema pädev", "Treeningukorda juhendab töötaja, kellel on treeneri roll ja kehtiv pädevus valitud treeninguliigile."),
     ("Treeneril ei tohi olla kattuvaid tunde", "Sama treeneri rollis töötaja ei juhenda samal ajal kahte tühistamata treeningukorda."),
     ("Ruumil ei tohi olla kattuvaid tunde", "Sama ruum ei ole samal ajal kahe tühistamata treeningukorra toimumiskohaks."),
-    ("Klient ei saa sama treeningukorda mitu korda aktiivselt broneerida", "Ühel kliendil on sama treeningukorra kohta korraga kuni üks KINNIT või OOTEJRK registreering."),
+    ("Klient ei saa samale treeningukorrale mitu aktiivset registreeringut esitada", "Ühel kliendil on sama treeningukorra kohta korraga kuni üks KINNIT või OOTEJRK registreering."),
     ("Registreerimine peab olema avatud ja tähtaja sees", "Registreeringut saab esitada ainult avatud treeningukorrale enne registreerimise tähtaega."),
     ("Kliendi tühistamine peab olema tähtaja sees", "Klient saab tühistada ainult enda aktiivse registreeringu enne tühistamise tähtaega."),
     ("Ootejärjekord peab edendama esimest ootajat", "Kinnitatud koha vabanemisel liigub esimene ootel registreering kinnitatud seisundisse."),
@@ -552,7 +561,7 @@ TABLES = [
     ("registreeringu_seisundi_liik", "Registreeringu elutsükkel.", "KINNIT, OOTEJRK, TYH_KL, TYH_SYS."),
     ("registreering", "Kliendi kinnitatud või ootejärjekorra kirje.", "PK registreeringu_id, partial UNIQUE aktiivsele kliendile ja treeningukorrale."),
     ("ootejarjekorra_koht", "Ootejärjekorras oleva registreeringu järjekorrakoht.", "PK/FK registreeringu_id, UNIQUE treeningukorra_id ja ootejarjekorra_nr."),
-    ("osalemine", "Kohalolu tulemus.", "PK/FK registreeringu_id, FK markija_e_meil."),
+    ("osalemine", "Kohalolu tulemus.", "PK/FK registreeringu_id, FK klient_e_meil, FK treener_e_meil, FK markija_e_meil."),
 ]
 
 
@@ -632,14 +641,14 @@ NFRS = [
 ENTITY_DEFINITIONS = [
     ("Isik", "Isikute register", "Põhiobjekt", "e-meil, isikukood, eesnimi, perenimi, elukoht, seisund", "Tegelik inimene, kellel võib olla kliendi ja/või töötaja roll. Isiku elutsükkel on sõltumatu ühest registreeringust või treeningukorrast."),
     ("Kasutajakonto", "Isikute register", "Toetav objekt", "e-meil, aktiivsus", "Sisselogimist võimaldav konto, mis kuulub isikule."),
-    ("Töötaja", "Töötajate register", "Põhiobjekt, Isiku spetsialiseerumine", "töötaja tunnus, töötaja seisund", "Organisatsiooniga seotud isik, kellel on töötaja rolli elutsükkel ja kelle kaudu tekivad juhataja või treeneri tegevusõigused."),
-    ("Klient", "Klientide register", "Põhiobjekt, Isiku spetsialiseerumine", "kliendi tunnus, aktiivsus, kliendiks saamise aeg", "Teenuse kasutaja, kelle kliendisuhte elutsükkel võimaldab registreeringuid esitada, vaadata ja tühistada."),
-    ("Treener", "Treenerite register", "Põhiobjekt, Töötaja spetsialiseerumine", "treeneri tunnus, rolli kehtivus, pädevuste ulatus", "Töötaja spetsialiseerumine rühmatreeningute kontekstis. Treener juhendab treeningukordi, peab omama pädevust ja märgib osalemist."),
+    ("Töötaja", "Töötajate register", "Põhiobjekt, isikuga seotud roll", "töötaja tunnus, töötaja seisund", "Organisatsiooniga seotud isik, kellel on töötaja rolli elutsükkel ja kelle kaudu tekivad juhataja või treeneri tegevusõigused."),
+    ("Klient", "Klientide register", "Põhiobjekt, isikuga seotud roll", "kliendi tunnus, aktiivsus, kliendiks saamise aeg", "Teenuse kasutaja, kelle kliendisuhte elutsükkel võimaldab registreeringuid esitada, vaadata ja tühistada."),
+    ("Treener", "Treenerite register", "Põhiobjekt, töötaja rolliga seotud osapool", "treeneri tunnus, rolli kehtivus, pädevuste ulatus", "Töötaja rolli ja pädevuste kaudu käsitletav treener rühmatreeningute kontekstis. Treener juhendab treeningukordi, peab omama pädevust ja märgib osalemist."),
     ("Töötaja rolli omamine", "Töötajate register", "Suhteobjekt", "rolli algus, rolli lõpp", "Seob töötaja rolliga ning võimaldab kirjeldada treeneri või juhataja rolli kehtivust."),
     ("Treeningukord", "Treeningukordade register", "Põhiobjekt", "aeg, kohtade piir, registreerimise tähtaeg, tühistamise tähtaeg, seisund", "Kalendris toimuv konkreetne rühmatreening, millele registreeringud tekivad."),
     ("Registreering", "Registreeringute register", "Keskne põhiobjekt", "esitamise aeg, seisund, tühistamise aeg, edendamise aeg", "Kliendi osalemissoov konkreetsel treeningukorral. Selle elutsükkel on töö keskne elutsükkel."),
     ("Ootejärjekorra koht", "Registreeringute register", "Sõltuv suhteobjekt", "järjekorranumber", "Ainult ootel registreeringuga seotud järjekorrakoht."),
-    ("Osalemine", "Osalemiste register", "Sõltuv elutsükliga tulemusobjekt", "tulemus, märkimise aeg, märkus", "Kinnitatud registreeringu põhjal tekkiv kohalolu tulemus. See sõltub registreeringust, kuid märkimine ja muutmine on eraldi ärisündmused."),
+    ("Osalemine", "Osalemiste register", "Sõltuv elutsükliga tulemusobjekt", "tulemus, osaleja, treener, märkimise aeg, märkus", "Kinnitatud registreeringu põhjal tekkiv kohalolu tulemus. See talletab otsese viite osalevale kliendile ja treeningukorra treenerile ning eraldi märkinud töötajale."),
     ("Treeninguliik", "Treeninguliikide register", "Põhiandmete põhiobjekt", "nimetus, sisu, tüüpiline kestus, kasutatavus", "Korduv ja hallatav rühmatreeningu kataloogimõiste, mille alusel planeeritakse treeningukordi ning millele kehtivad pädevuse ja varustuse reeglid."),
     ("Ruum", "Treeningukordade register", "Toetav ressursiobjekt", "ruumi tunnus, nimetus, asukoht, mahutavus", "Treeningukorra toimumiskoht, mille mahutavus ja sobivus piiravad planeerimist. Täielik ruumihaldus ei kuulu skoopi."),
     ("Varustus", "Treeningukordade register", "Toetav ressursi- ja põhiandmete objekt", "varustuse tunnus, nimetus, aktiivsus", "Ruumi sobivuse kontrolliks vajalik vahend. Inventari hooldust ja varude elutsüklit ei modelleerita."),
@@ -685,6 +694,8 @@ CONCEPTUAL_ATTRIBUTE_DEFINITIONS = [
     ("Registreering", "tühistamise põhjus", "Registreeringu tühistamise põhjendus kliendile, treenerile ja juhatajale. {Kui väärtus registreeritakse, siis @Pole_tühi. Võib olla kuni 500 märki pikk.} Näiteväärtus: Klient tühistas registreeringu enne tähtaega."),
     ("Ootejärjekorra koht", "järjekorranumber", "Registreeringu koht treeningukorra ootejärjekorras. {@Kohustuslik. Täisarv. Väärtus peab olema suurem kui 0.} Näiteväärtus: 3"),
     ("Osalemine", "tulemus", "Treeningukorrale registreeritud kliendi osalemise tulemus. {@Kohustuslik. Lubatud väärtused on \"osales\" ja \"ei osalenud\".} Näiteväärtus: osales"),
+    ("Osalemine", "osaleja", "Klient, kelle registreeringu kohta osalemine märgitakse. {@Kohustuslik. Peab vastama registreeringu kliendile.} Näiteväärtus: klient@jousaal.ee"),
+    ("Osalemine", "treener", "Treeningukorra määratud treener, kelle juhendatava korra osalemist märgitakse. {@Kohustuslik. Peab vastama treeningukorra treenerile.} Näiteväärtus: treener@jousaal.ee"),
     ("Osalemine", "märkimise aeg", "Kuupäev ja kellaaeg, millal treener või juhataja märkis osalemise tulemuse. {@Kohustuslik. Väärtus peab olema vahemikus 2000-01-01 00:00 kuni 2100-12-31 23:59.} Näiteväärtus: 2026-05-12 19:05"),
     ("Osalemine", "märkus", "Treeneri või juhataja sisemine märkus osalemise kohta. {Kui väärtus registreeritakse, siis @Pole_tühi. Võib olla kuni 500 märki pikk.} Näiteväärtus: Klient saabus 10 minutit hiljem."),
     ("Treeninguliik", "nimetus", "Treeninguliigi nimetus, mida kasutatakse treeningukorra kirjeldamisel. {@Kohustuslik. @Pole_tühi. Võib olla kuni 100 märki pikk.} Näiteväärtus: Jõutreening algajatele"),
@@ -838,8 +849,10 @@ ATTRIBUTE_DEFINITIONS = [
     ('ootejarjekorra_koht', 'treeningukorra_id', 'Treeningukord, mille ootejärjekorras koht asub. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: FK treeningukord; UNIQUE koos ootejarjekorra_nr.', '5001'),
     ('ootejarjekorra_koht', 'ootejarjekorra_nr', 'Kliendi järjekorranumber sama treeningukorra ootejärjekorras. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: CHECK > 0, treeningukorra piires unikaalne.', '1'),
     ('osalemine', 'registreeringu_id', 'Registreering, mille kohta osalemist märgitakse. Andmetüüp: INTEGER. Nullitavus: kohustuslik. Piirangud: PK, FK registreering ON DELETE CASCADE; trigger nõuab KINNIT registreeringut.', '9001'),
+    ('osalemine', 'klient_e_meil', 'Osalenud kliendi e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK klient; trigger nõuab vastavust registreeringu kliendile.', 'klient@jousaal.ee'),
+    ('osalemine', 'treener_e_meil', 'Treeningukorra määratud treeneri e-posti aadress. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja; trigger nõuab vastavust treeningukorra treenerile ja TREENER rolli.', 'treener@jousaal.ee'),
     ('osalemine', 'on_osalenud', 'Tunnus, kas klient osales treeningukorral. Andmetüüp: BOOLEAN. Nullitavus: kohustuslik. Piirangud: väärtus TRUE või FALSE.', 'TRUE/FALSE'),
-    ('osalemine', 'markija_e_meil', 'Osalemise märkinud treener või juhataja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja; funktsioon kontrollib rolli.', 'treener@jousaal.ee'),
+    ('osalemine', 'markija_e_meil', 'Osalemise märkinud treener või juhataja. Andmetüüp: e_meil_aadress. Nullitavus: kohustuslik. Piirangud: FK tootaja; trigger kontrollib rolli.', 'treener@jousaal.ee'),
     ('osalemine', 'markimise_aeg', 'Osalemise märkimise aeg. Andmetüüp: TIMESTAMP(0) WITH TIME ZONE. Nullitavus: kohustuslik. Piirangud: vaikeväärtus CURRENT_TIMESTAMP; ei tohi olla enne treeningukorra algust.', '2026-06-01 19:05'),
     ('osalemine', 'markus', 'Osalemise kohta käiv märkus. Andmetüüp: TEXT. Nullitavus: valikuline. Piirangud: antud väärtus ei tohi olla tühi.', 'Osales kogu treeningus.'),
 ]
@@ -857,11 +870,21 @@ POSTGRESQL_REQUIREMENTS = [
 ]
 
 
+DBEAVER_PHYSICAL_DIAGRAM_CHECKLIST = [
+    ("Registreeringute register", "registreering, ootejarjekorra_koht, registreeringu_seisundi_liik, klient, treeningukord", "Peab näitama registreeringu seose kliendi ja treeningukorraga ning ootejärjekorra füüsilised võtmed."),
+    ("Treeningukordade register", "treeningukord, treeninguliik, tootaja, ruum, ruumi_varustuse_omamine, treeninguliigi_varustuse_noue, varustus", "Peab näitama treeneri, ruumi, treeninguliigi ja varustuse kontrolliks vajalikud FK-seosed."),
+    ("Osalemiste register", "osalemine, registreering, tootaja, klient, treeningukord", "Peab näitama osalemine.klient_e_meil otsest viidet osalejale, osalemine.treener_e_meil otsest viidet treenerile ja markija_e_meil viidet märkinud töötajale."),
+    ("Isikute ja rollide register", "isik, kasutajakonto, klient, tootaja, tootaja_rolli_omamine, tootaja_roll, riik", "Peab näitama isiku, kliendi, töötaja ja rolli füüsilised seosed ilma eraldi Juhataja tabelita."),
+    ("Treenerite ja pädevuste register", "tootaja, tootaja_rolli_omamine, treeneri_padevus, treeninguliik", "Peab näitama, et treener on töötaja roll ning pädevus seob töötaja treeninguliigiga."),
+    ("Klassifikaatorite register", "isiku_seisundi_liik, tootaja_seisundi_liik, tootaja_roll, treeninguliigi_seisundi_liik, treeningukorra_seisundi_liik, registreeringu_seisundi_liik, riik", "Peab näitama füüsilised klassifikaatoritabelid eraldi hallatavate väärtustena."),
+]
+
+
 STATE_TRANSITIONS_SESSION = [
     ("CREATE", "KAVAND", "Juhataja", "Planeeri treeningukord (OP1)", "On sobiv treeninguliik, ruum ja treeneri rollis pädev töötaja.", "Tekib kavandatud treeningukord.", "Treeningukord, Töötaja, Treeninguliik, Ruum"),
     ("KAVAND", "AVATUD", "Juhataja", "Ava registreerimine (OP2)", "Treeningukord on tulevikus ja kavandatud.", "Klient saab esitada registreeringu.", "Treeningukord"),
-    ("AVATUD", "SULETUD", "Juhataja, treener või aeg", "Sulge registreerimine (OP3)", "Registreerimine on avatud; treeneri korral on tähtaeg möödas.", "Uusi registreeringuid enam ei lisata.", "Treeningukord"),
-    ("SULETUD", "TOIMUNUD", "Treener, juhataja või aeg", "Lõpeta treeningukord (OP4)", "Treeningukorra lõppaeg on möödas.", "Treeningukord märgitakse toimunuks.", "Treeningukord, Osalemine"),
+    ("AVATUD", "SULETUD", "Juhataja või treener; tähtaeg on tingimus", "Sulge registreerimine (OP3)", "Registreerimine on avatud; treeneri korral on tähtaeg möödas.", "Uusi registreeringuid enam ei lisata.", "Treeningukord"),
+    ("SULETUD", "TOIMUNUD", "Treener või juhataja; lõppaeg on tingimus", "Lõpeta treeningukord (OP4)", "Treeningukorra lõppaeg on möödas.", "Treeningukord märgitakse toimunuks.", "Treeningukord, Osalemine"),
     ("KAVAND/AVATUD/SULETUD", "TYHIST", "Juhataja", "Tühista treeningukord (OP9)", "Treeningukord ei ole juba toimunud.", "Treeningukord ja aktiivsed registreeringud on tühistatud.", "Treeningukord, Registreering"),
 ]
 
@@ -1011,6 +1034,38 @@ def add_table(doc: Document, caption_state: dict[str, int], caption: str, header
     doc.add_paragraph()
 
 
+def set_slim_cell_text(cell, text: str, bold: bool = False, center: bool = False) -> None:
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER if center else WD_ALIGN_PARAGRAPH.LEFT
+    paragraph.paragraph_format.space_after = Pt(0)
+    run = paragraph.add_run(text)
+    run.bold = bold
+    run.font.size = Pt(7.4)
+    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+
+
+def add_crud_table(doc: Document, caption_state: dict[str, int], caption: str, rows: list[tuple[str, ...]]) -> None:
+    caption_state["table"] += 1
+    p = doc.add_paragraph()
+    r = p.add_run(f"Tabel {caption_state['table']}. {caption}")
+    r.bold = True
+    table = doc.add_table(rows=1, cols=len(CRUD_HEADERS))
+    table.style = "Table Grid"
+    table.autofit = False
+    widths = [1.15, *([0.36] * (len(CRUD_HEADERS) - 2)), 0.46]
+    for idx, (cell, header) in enumerate(zip(table.rows[0].cells, CRUD_HEADERS)):
+        set_cell_shading(cell, "D9EAF7")
+        set_slim_cell_text(cell, header, True, center=idx > 0)
+        cell.width = Inches(widths[idx])
+    for row_values in rows:
+        row = table.add_row().cells
+        for idx, (cell, value) in enumerate(zip(row, row_values)):
+            set_slim_cell_text(cell, value, center=idx > 0)
+            cell.width = Inches(widths[idx])
+    doc.add_paragraph()
+
+
 def add_figure(doc: Document, caption_state: dict[str, int], filename: str, caption: str) -> None:
     path = DIAGRAM_DIR / filename
     if not path.exists():
@@ -1031,6 +1086,47 @@ def add_figure(doc: Document, caption_state: dict[str, int], filename: str, capt
     r = p.add_run(f"Joonis {caption_state['figure']}. {caption}")
     r.italic = True
     doc.add_paragraph()
+
+
+def add_external_figure(doc: Document, caption_state: dict[str, int], path: Path, caption: str) -> None:
+    if not path.exists():
+        raise FileNotFoundError(f"Puudub pildifail: {path}")
+    caption_state["figure"] += 1
+    max_width_in = 6.6
+    max_height_in = 8.2
+    with Image.open(path) as image:
+        aspect = image.width / image.height
+    width_in = min(max_width_in, max_height_in * aspect)
+    doc.add_picture(str(path), width=Inches(width_in))
+    last = doc.paragraphs[-1]
+    last.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run(f"Joonis {caption_state['figure']}. {caption}")
+    r.italic = True
+    doc.add_paragraph()
+
+
+def add_dbeaver_exports_if_present(doc: Document, caption_state: dict[str, int]) -> None:
+    missing = [
+        filename
+        for filename, _ in DBEAVER_PHYSICAL_EXPORTS
+        if not (DBEAVER_EXPORT_DIR / filename).exists()
+    ]
+    if missing:
+        add_paragraphs(doc, [
+            "Tegelikke DBeaverist eksporditud füüsilise disaini diagramme selles DOCX-is praegu ei ole. "
+            f"Puuduvad failid kataloogist {DBEAVER_EXPORT_DIR}: {', '.join(missing)}. "
+            "Need tuleb käsitsi eksportida DBeaverist pärast PostgreSQL andmebaasi taastamist ning seejärel build uuesti käivitada.",
+        ])
+        return
+
+    add_paragraphs(doc, [
+        "Allpool on DBeaverist käsitsi eksporditud PostgreSQL füüsilise disaini diagrammid. "
+        "Need peavad vastama samast `submission_files/skript.sql` skriptist taastatud andmebaasile.",
+    ])
+    for filename, caption in DBEAVER_PHYSICAL_EXPORTS:
+        add_external_figure(doc, caption_state, DBEAVER_EXPORT_DIR / filename, caption)
 
 
 def add_bullets(doc: Document, items: list[str]) -> None:
@@ -1149,7 +1245,7 @@ def add_report_content(doc: Document) -> None:
     doc.add_heading("1.1.1 Organisatsiooni eesmärgid", level=3)
     add_bullets(doc, [
         "Pakkuda klientidele korrastatud ja usaldusväärset rühmatreeningute ajakava.",
-        "Kasutada treenerite pädevust, ruume ja ruumide varustust viisil, mis väldib kattuvaid broneeringuid, ületäituvust ja sobimatuid ruumivalikuid.",
+        "Kasutada treenerite pädevust, ruume ja ruumide varustust viisil, mis väldib kattuvaid treeningukordi, ületäituvust ja sobimatuid ruumivalikuid.",
         "Anda juhatajale ülevaade treeningukordade täituvusest ja osalemisest.",
     ])
     doc.add_heading("1.1.2 Infosüsteemi eesmärgid", level=3)
@@ -1187,13 +1283,16 @@ def add_report_content(doc: Document) -> None:
         "Joonisel on fookuses töövoogude ja talletatavate mõistete piir. Tehnilised realisatsioonivahendid, nagu konkreetsed tabelid, indeksid, funktsioonid ja triggerid, on kirjeldatud hilisemas füüsilise teostuse peatükis.",
     ])
 
-    doc.add_heading("1.2 Rühmatreeningute ajakava, registreerimise ja osalemise funktsionaalse allsüsteemi eskiismudelid", level=2)
+    doc.add_heading("1.2 Registreeringukeskse rühmatreeningute funktsionaalse allsüsteemi eskiismudelid", level=2)
+    add_paragraphs(doc, [
+        "Selles peatükis käsitletav allsüsteem ei ole kogu jõusaali haldus ega eraldi pädevusala. Skoop on üks kitsas tööprotsess: klient esitab registreeringu konkreetsele treeningukorrale, registreering liigub kinnitatud, ootel või tühistatud seisundisse ning kinnitatud registreeringu põhjal saab hiljem märkida osalemise tulemuse.",
+    ])
     doc.add_heading("1.2.1 Eesmärgid", level=3)
     add_bullets(doc, [
-        "Juhataja saab planeerida konkreetseid treeningukordi koos treeneri rollis töötaja, ruumi ja mahupiiranguga.",
+        "Juhataja saab planeerida ainult neid treeningukordi, millele saab tekkida registreeringuid.",
         "Klient saab vaadata vabu treeningukordi, esitada registreeringu ja näha, kas registreering on kinnitatud või ootejärjekorras.",
         "Klient saab vaadata enda registreeringuid ning tühistada enda aktiivse registreeringu tähtaja piires.",
-        "Treener saab töötaja spetsialiseerumisena näha enda tunde, vaadata treeningukorra registreeringuid ja märkida osalemist.",
+        "Treeneri rollis töötaja saab vaadata enda treeningukorra registreeringuid ja märkida nende põhjal osalemist.",
     ])
     doc.add_heading("1.2.2 Seosed pädevusalade ja registritega", level=3)
     add_table(doc, state, "Allsüsteemi seosed pädevusalade ja registritega", ["Pädevusala", "Register/vaade", "Seos"], [
@@ -1257,7 +1356,7 @@ def add_report_content(doc: Document) -> None:
     add_paragraphs(doc, [
         "Registreering on keskne põhiobjekt, sest sellel on iseseisev elutsükkel ja selle seisundisiirded on töö olulisemate kasutusjuhtude alus. "
         "Treeningukord ja treeninguliik ei ole registreeringu atribuudid: treeningukord elab ajakava elutsüklis ning treeninguliik on hallatav kataloogimõiste. "
-        "Treener on samaaegselt kasutusjuhtude tegutseja ja töötaja spetsialiseerumisena käsitletav põhiobjekt. "
+        "Treener on samaaegselt kasutusjuhtude tegutseja ja töötaja rolli ning pädevuste kaudu käsitletav põhiobjekt. "
         "Osalemine sõltub registreeringust, kuid see on elutsükliga tulemusobjekt, mitte juhuslik abiveerg. Ootejärjekorra koht jääb sõltuvaks suhteobjektiks.",
     ])
 
@@ -1294,7 +1393,6 @@ def add_report_content(doc: Document) -> None:
     ])
     for idx in [10, 11, 12, 13, 14]:
         add_figure(doc, state, *DIAGRAMS[idx])
-    doc.add_page_break()
     doc.add_heading("2.2.1.2 Olemitüüpide definitsioonid", level=4)
     add_table(doc, state, "Olemitüüpide definitsioonid", ["Olemitüüp", "Register", "Liigitus", "Diagrammil näidatud atribuudid", "Definitsioon"], ENTITY_DEFINITIONS)
     doc.add_heading("2.2.1.3 Atribuutide definitsioonid", level=4)
@@ -1317,20 +1415,12 @@ def add_report_content(doc: Document) -> None:
 
     doc.add_page_break()
     doc.add_heading("2.3 CRUD maatriks", level=2)
-    add_table(
-        doc,
-        state,
-        "CRUD-maatriks põhiobjektide ja kesksete olemitüüpide lõikes",
-        CRUD_HEADERS,
-        CRUD_MAIN_MATRIX,
-    )
-    add_table(
-        doc,
-        state,
-        "CRUD-maatriks suhteobjektide, ressursiobjektide ja klassifikaatorite lõikes",
-        CRUD_HEADERS,
-        CRUD_SUPPORT_MATRIX,
-    )
+    add_paragraphs(doc, [
+        "Maatriksi loetavuse huvides on veergudes kasutatud kasutusjuhtude koode. Legend on vahetult enne maatrikseid; nii jäävad tabeli lahtrid lühikeseks ning kõik kontseptuaalsed olemitüübid mahuvad samasse kontrollitavasse vaatesse.",
+    ])
+    add_table(doc, state, "CRUD-maatriksi kasutusjuhtude legend", ["Kood", "Kasutusjuht"], CRUD_USE_CASE_LEGEND)
+    add_crud_table(doc, state, "CRUD-maatriks põhiobjektide ja kesksete olemitüüpide lõikes", CRUD_MAIN_MATRIX)
+    add_crud_table(doc, state, "CRUD-maatriks suhteobjektide, ressursiobjektide ja klassifikaatorite lõikes", CRUD_SUPPORT_MATRIX)
     add_paragraphs(doc, [
         "Maatriksis on kõik kontseptuaalsetel skeemidel näidatud olemid. Treeninguliik, treener, treeningukord, registreering ja osalemine on nähtavad seal, kus kasutusjuht neid päriselt loeb või muudab. Tühistamine on käsitletud seisundimuutusena, mitte füüsilise kustutamisena; ootejärjekorra koht võib tühistamisel või edendamisel kaduda, sest see sõltub registreeringu seisundist.",
     ])
@@ -1340,7 +1430,10 @@ def add_report_content(doc: Document) -> None:
     add_figure(doc, state, *DIAGRAMS[7])
     add_paragraphs(doc, [
         "Paketi süsteem on esitatud EAP mudelis paketidiagrammina „Rühmatreeningute pädevusalad ja registrid”. DOCX-is toetavad sama jaotust süsteemi kontekst, õiguste ja andmebaasirutiinide diagramm ning rakenduse ja andmebaasi arhitektuuri diagramm.",
+        "DBeaveri PostgreSQL füüsilise disaini diagramme ei saa selles build-skriptis usaldusväärselt eksportida, sest DBeaveri diagrammipaigutus sõltub lokaalsest tööruumist ja käsitsi ühendatud andmebaasist. Kui kursuse nõue eeldab DBeaveri diagrammipilte, siis allolev kontrolltabel üksi seda nõuet ei täida.",
     ])
+    add_table(doc, state, "DBeaver/PostgreSQL füüsiliste diagrammide ekspordikontroll", ["Register", "Diagrammil kuvatavad tabelid", "Kontrollitav sisu"], DBEAVER_PHYSICAL_DIAGRAM_CHECKLIST)
+    add_dbeaver_exports_if_present(doc, state)
     add_table(doc, state, "Olulisemad tabelid ja piirangud", ["Tabel", "Eesmärk", "Võtmed ja piirangud"], TABLES)
     add_table(doc, state, "Rakenduse ja aruandluse vaated", ["Vaade", "Kasutus"], VIEWS)
     add_figure(doc, state, *DIAGRAMS[8])
@@ -1429,7 +1522,7 @@ def add_report_content(doc: Document) -> None:
 
     doc.add_heading("4.22 Kaitsmise selgitus", level=2)
     add_paragraphs(doc, [
-        "Projekt ei käsitle enam treeningut kui töövihiku laadset kirjelduskaarti ega kogu jõusaali infosüsteemi. Keskne elutsükli objekt on registreering: "
+        "Projekt käsitleb kitsalt rühmatreeningute ajakava, registreerimise ja osalemise tööprotsessi, mitte kogu jõusaali infosüsteemi. Keskne elutsükli objekt on registreering: "
         "registreering luuakse, kinnitatakse või paigutatakse ootejärjekorda, tühistatakse kliendi või süsteemi poolt ning edendatakse koha vabanemisel. "
         "Treeningukord, treeninguliik, isik, töötaja, klient ja treener on vajalikud põhiobjektid, kuid treener ei ole isikust ja töötajast eraldiseisev uus persooniobjekt. Andmebaas kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, "
         "kohustuslikku varustust, registreerimise tähtaegu, seisundimuutusi ja ootejärjekorra edendamist.",
