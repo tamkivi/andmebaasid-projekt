@@ -1,25 +1,30 @@
 # ITI0207 e-poe — progress
 
-**Updated:** 2026-09-20 · **Tool choice:** DBeaver path (no Windows EA on Mac)
+**Updated:** 2026-09-20 (Europe/Tallinn) · **Tool choice:** DBeaver path (no Windows EA on Mac)
 
-## Current decision
-- Modeling / diagram tool: **DBeaver Community** (`/Applications/DBeaver.app`)
-- Course route: Ü2 option **3** — design base tables carefully (SQL / notes from Dokument.docx), later visualize per-register diagrams in DBeaver (Erki explicitly allows this without CASE). Do **not** depend on opening `Diagrammid.eap`.
-- Stack still: PostgreSQL on school server + pgApex app later.
-- EA / Rational Rose: not required for our Mac workflow unless we later choose to use an ICT lab PC.
+## Current status — Week 5 / Ü2 **in progress**
 
-## Repo layout (live)
-- `iti0206-jousaal/` — last year (archive)
-- `iti0207-epood/docs/lahteprojekt/` — Dokument.docx, Diagrammid.eap (reference only), Prototüüp.mdb
-- `iti0207-epood/docs/ulesanded/` — Ü2, tegevuskava, näidis
-- `iti0207-epood/models/`, `sql/`, `app/` — for upcoming slices
+| Item | State |
+|---|---|
+| Route | **Ü2 path 3** — DBeaver / no-EA (design base tables in SQL + notes; diagrams later in DBeaver) |
+| Design notes | `docs/u2-physical-design.md` — **done (draft)** |
+| SQL draft | `sql/01_tables_draft.sql` — **done (draft)**; **not** applied to `apex2` |
+| Tables | **24** base tables (kaubad + klassifikaatorid + isikud + töötajad + klient auth) |
+| Excluded (Ü2) | CHECK, indexes → **Ü3**; school-server DDL → **Ü4**; pgApex / triggers / views / routines — later |
+| Domain firewall | No jõusaal (`iti0206-jousaal/`) content mixed into e-pood |
 
-## Next slice when we start building
-Week 5 / Ü2 (DBeaver variant):
-1. From Dokument.docx, draft PostgreSQL base-table design notes (names, PK/FK/UK, types) — **no CHECK/indexes yet**.
-2. Optional: local SQL draft under `sql/` (not executed on school server until Ü4 unless we choose a throwaway local DB for DBeaver diagrams).
-3. Produce readable portrait-A4-style register diagrams in DBeaver for the document.
-4. Stop before Ü3 (CHECK/indexes) and before school-server DDL unless explicitly asked.
+### Done this slice
+- Chose DBeaver / no-EA path explicitly.
+- Adapted lähteprojekt entities for the **goods subsystem** into PostgreSQL physical design (snake_case, surrogate + natural UK, PK/FK, defaults, Erki column order).
+- Wrote human-readable design + matching CREATE TABLE draft (no CHECK, no INDEX).
+
+### Next
+1. **DBeaver diagrams:** load draft SQL into a **local** Postgres (not apex2); produce per-register ER diagrams (portrait A4) for document ch. 3.
+2. Then **Ü3:** CHECK constraints + indexes.
+3. **Ü4:** generate/apply DDL on school server.
+
+### Exact next step for diagrams
+Open DBeaver → connect to local DB → run `iti0207-epood/sql/01_tables_draft.sql` → ER Diagram per register (kaubad, klassifikaatorid, isikud, töötajad, kliendid) → export images into `docs/` or manual_exports when ready.
 
 ---
 
