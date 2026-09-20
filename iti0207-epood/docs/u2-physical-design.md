@@ -90,7 +90,7 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 | `ekraani_resolutsioon` | lisaks `horisontaalne`, `vertikaalne` (NOT NULL); **UK(horisontaalne, vertikaalne)** |
 | `kauba_seisundi_liik` | `kood smallint` — oodatavad väärtused 1…4 |
 | `kauba_kategooria` | FK → `kauba_kategooria_tyyp`; **UK(tyyp_id, nimetus)** (mitte globaalne nimetus); UK(kood) |
-| `tootaja_roll` | valikuline `kirjeldus text` |
+| `tootaja_roll` | `on_aktiivne` kohustuslik; valikuline `kirjeldus text` (järjestatud viimaseks) |
 
 ### `isik`
 
@@ -102,8 +102,8 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 | `riik_id` | smallint | NOT NULL | FK → `riik` |
 | `isiku_seisundi_liik_id` | smallint | NOT NULL | FK |
 | `synni_kp` | date | NOT NULL | |
-| `reg_aeg` | timestamptz | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
-| `viimase_muutm_aeg` | timestamptz | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
+| `reg_aeg` | timestamptz(0) | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
+| `viimase_muutm_aeg` | timestamptz(0) | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
 | `eesnimi` | varchar(50) | NULL | Erki: vähemalt üks nimi → CHECK Ü3 |
 | `perenimi` | varchar(50) | NULL | |
 | `elukoht` | varchar(500) | NULL | |
@@ -121,7 +121,7 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 ### `tootaja` / `tootaja_rolli_omamine`
 
 - `tootaja`: `tootaja_id` PK, **UK(`isik_id`)**, FK seisundiliigile.  
-- `tootaja_rolli_omamine`: surrogaat PK; FK-d `tootaja`, `tootaja_roll`; `alguse_aeg` NOT NULL; `lopu_aeg` NULL (lõpp teadmata); **UK(tootaja_id, tootaja_roll_id, alguse_aeg)**.
+- `tootaja_rolli_omamine`: surrogaat PK; FK-d `tootaja`, `tootaja_roll`; `alguse_aeg timestamptz(0) NOT NULL`; `lopu_aeg timestamptz(0) NOT NULL` — use `'infinity'` for open-ended periods; **UK(tootaja_id, tootaja_roll_id, alguse_aeg)**.
 
 ### `klient`
 
@@ -140,8 +140,8 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 | `viimase_muutja_id` | integer | NOT NULL | FK → `tootaja` |
 | `hind` | numeric(12,2) | NOT NULL | |
 | `kirjeldus` | text | NOT NULL | Access Memo → TEXT |
-| `reg_aeg` | timestamptz | NOT NULL | DEFAULT now |
-| `viimase_muutm_aeg` | timestamptz | NOT NULL | DEFAULT now |
+| `reg_aeg` | timestamptz(0) | NOT NULL | DEFAULT now |
+| `viimase_muutm_aeg` | timestamptz(0) | NOT NULL | DEFAULT now |
 | `pildi_aadress` | varchar(500) | NULL | tee/URL; pildi baitide asemel |
 
 ### `nutitelefon` (1:1 alamtüüp)
@@ -183,7 +183,7 @@ Seisund on FK-veerg `kaup.kauba_seisundi_liik_id` — **mitte** CHECK ega enum �
 | Memo | `text` | kirjeldused |
 | Yes/No | `boolean` | `on_*` lipud |
 | Currency / Number(decimal) | `numeric(p,s)` | hind; diagonaal/kaamera koodid |
-| Date/Time | `timestamptz` / `date` | Erki: `*_aeg` vs `*_kp`; ajavöönd |
+| Date/Time | `timestamptz(0)` / `date` | Erki: `*_aeg` vs `*_kp`; ajavöönd; whole seconds (0 fractional) |
 | OLE / Attachment (pilt) | `varchar` aadress **või** hiljem `bytea` | lähteprojekt: `pildi_aadress`; baitide hoidmine valikuline |
 | Short code | `char(3)` / `varchar` / `smallint` | riik / tekstkood / seisundi kood |
 
@@ -205,7 +205,7 @@ Parool: PostgreSQL tee **`varchar(60)` räsi, ilma eraldi `sool` veeruta** (Erki
 
 1. **`kauba.nimetus` unikaalsus** — allikas: unikaalne ootel+aktiivne+mitteaktiivne ühendis (lõpetatud võib korduda). Ü2-s ainult tavaline veerg; osaline UK/indeks Ü3.  
 2. **`ekraani_resolutsioon.kood` vs horisontaalne×vertikaalne** — mõlemad allikas; hoiame mõlemat (kood OP jaoks, mõõtmed UK jaoks).  
-3. **`lopu_aeg` NULL vs `'infinity'`** — Dokument lubab mõlemat; valitud NULL (lihtsam Access-st üleminek).  
+3. **Initial goods state assignment** — New goods must be inserted with `kauba_seisundi_liik_id` referencing the Ootel classifier (expected seed code 1). Application/routine queries the classifier by `kood=1`; no DEFAULT on the FK column (avoids brittle assumption that generated ID 1 always equals state code 1). Assignment implemented in Ü3+ application routines.  
 4. **Klientide register** — kaasas UC1 jaoks; kui registreeritud töökoht on rangelt ainult haldur, võib `klient` hiljem dokumendis “konteksttabeliks” märkida, ilma et seda eemaldaksime auth-teelt.  
 5. **Pärimine** — `nutitelefon`/`tootaja`/`klient`/`kasutajakonto` on **FK 1:1**, mitte PostgreSQL `INHERITS` (selgem DBeaveri diagrammidel; näidisprojekti INHERITS on valikuline muster).
 

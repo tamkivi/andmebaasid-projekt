@@ -2,24 +2,32 @@
 
 **Updated:** 2026-09-20 (Europe/Tallinn) · **Tool choice:** DBeaver path (no Windows EA on Mac)
 
-## Current status — Week 5 / Ü2 **in progress**
+## Current status — Week 5 / Ü2 **draft tightened — ready for diagrams**
 
 | Item | State |
 |---|---|
 | Route | **Ü2 path 3** — DBeaver / no-EA (design base tables in SQL + notes; diagrams later in DBeaver) |
-| Design notes | `docs/u2-physical-design.md` — **done (draft)** |
-| SQL draft | `sql/01_tables_draft.sql` — **done (draft)**; **not** applied to `apex2` |
+| Design notes | `docs/u2-physical-design.md` — **done (tightened)** |
+| SQL draft | `sql/01_tables_draft.sql` — **done (tightened)**; **not** applied to `apex2` |
 | Tables | **24** base tables (kaubad + klassifikaatorid + isikud + töötajad + klient auth) |
 | Excluded (Ü2) | CHECK, indexes → **Ü3**; school-server DDL → **Ü4**; pgApex / triggers / views / routines — later |
 | Domain firewall | No jõusaal (`iti0206-jousaal/`) content mixed into e-pood |
 
-### Done this slice
+### Done this slice (2026-09-20 tighten)
+- **Fixed UNIQUE constraint name collision:** `uk_kauba_kategooria_tyyp_nimetus` → `uk_kauba_kategooria_tyyp_id_nimetus` in `kauba_kategooria` table
+- **Fixed timestamp precision:** All 6 timestamp columns now use `timestamptz(0)` (whole seconds, no fractional)
+- **Fixed `tootaja_rolli_omamine.lopu_aeg`:** Changed from nullable to `NOT NULL`; use `'infinity'` for open-ended role assignments
+- **Fixed column order in `tootaja_roll`:** Moved optional `kirjeldus` after mandatory `on_aktiivne` (follows Erki §3.7 ordering convention)
+- **Documented initial goods state strategy:** Application/routine must query `kauba_seisundi_liik` by `kood=1` for Ootel state; no fake DEFAULT on FK (avoids brittle ID assumptions)
+- **Reconciled SQL ↔ design notes:** All fixes applied consistently to both `01_tables_draft.sql` and `u2-physical-design.md`
+
+### Previous slice (2026-09-20 initial draft)
 - Chose DBeaver / no-EA path explicitly.
 - Adapted lähteprojekt entities for the **goods subsystem** into PostgreSQL physical design (snake_case, surrogate + natural UK, PK/FK, defaults, Erki column order).
 - Wrote human-readable design + matching CREATE TABLE draft (no CHECK, no INDEX).
 
 ### Next
-1. **DBeaver diagrams:** load draft SQL into a **local** Postgres (not apex2); produce per-register ER diagrams (portrait A4) for document ch. 3.
+1. **DBeaver diagrams:** load tightened SQL into a **local** Postgres (not apex2); produce per-register ER diagrams (portrait A4) for document ch. 3.
 2. Then **Ü3:** CHECK constraints + indexes.
 3. **Ü4:** generate/apply DDL on school server.
 
