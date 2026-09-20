@@ -1,40 +1,46 @@
 # ITI0207 e-poe — progress
 
-**Updated:** 2026-09-20 (Europe/Tallinn) · **Tool choice:** DBeaver path (no Windows EA on Mac)
+**Updated:** 2026-09-21 (Europe/Tallinn) · **Tool choice:** DBeaver path (no Windows EA on Mac)
 
-## Current status — Week 5 / Ü2 **draft tightened — ready for diagrams**
+## Current status — Week 5 / Ü2 **diagrams ready (local)**
 
 | Item | State |
 |---|---|
-| Route | **Ü2 path 3** — DBeaver / no-EA (design base tables in SQL + notes; diagrams later in DBeaver) |
-| Design notes | `docs/u2-physical-design.md` — **done (tightened)** |
-| SQL draft | `sql/01_tables_draft.sql` — **done (tightened)**; **not** applied to `apex2` |
-| Tables | **24** base tables (kaubad + klassifikaatorid + isikud + töötajad + klient auth) |
-| Excluded (Ü2) | CHECK, indexes → **Ü3**; school-server DDL → **Ü4**; pgApex / triggers / views / routines — later |
-| Domain firewall | No jõusaal (`iti0206-jousaal/`) content mixed into e-pood |
+| Route | **Ü2 path 3** — SQL draft + local Postgres reverse-engineer / Graphviz register diagrams (DBeaver-compatible DB) |
+| Design notes | `docs/u2-physical-design.md` — tightened (PR #3) |
+| SQL draft | `sql/01_tables_draft.sql` — **loads cleanly** into local DB; **not** applied to `apex2` |
+| Local DB | `iti0207_epood_u2` on Homebrew PostgreSQL 17 (`localhost:5432`, peer/local trust as `gustav`) |
+| Diagrams | `docs/diagrams/u2-0{1-5}-*.png` + `.pdf` + `.dot` — one detailed diagram per register |
+| Excluded (Ü2) | CHECK, indexes → **Ü3**; school-server DDL → **Ü4** |
+| Domain firewall | No jõusaal content in e-pood |
 
-### Done this slice (2026-09-20 tighten)
-- **Fixed UNIQUE constraint name collision:** `uk_kauba_kategooria_tyyp_nimetus` → `uk_kauba_kategooria_tyyp_id_nimetus` in `kauba_kategooria` table
-- **Fixed timestamp precision:** All 6 timestamp columns now use `timestamptz(0)` (whole seconds, no fractional)
-- **Fixed `tootaja_rolli_omamine.lopu_aeg`:** Changed from nullable to `NOT NULL`; use `'infinity'` for open-ended role assignments
-- **Fixed column order in `tootaja_roll`:** Moved optional `kirjeldus` after mandatory `on_aktiivne` (follows Erki §3.7 ordering convention)
-- **Documented initial goods state strategy:** Application/routine must query `kauba_seisundi_liik` by `kood=1` for Ootel state; no fake DEFAULT on FK (avoids brittle ID assumptions)
-- **Reconciled SQL ↔ design notes:** All fixes applied consistently to both `01_tables_draft.sql` and `u2-physical-design.md`
+### Done this slice (21 Sep)
+- Started `postgresql@17` via Homebrew; created DB `iti0207_epood_u2`.
+- Loaded `sql/01_tables_draft.sql` successfully (**24** tables).
+- Rendered five register ER diagrams (PNG+PDF) via `scripts/render_u2_er_diagrams.py` (Graphviz). Each base table is detailed on exactly one diagram; FK targets appear as context stubs where needed.
 
-### Previous slice (2026-09-20 initial draft)
-- Chose DBeaver / no-EA path explicitly.
-- Adapted lähteprojekt entities for the **goods subsystem** into PostgreSQL physical design (snake_case, surrogate + natural UK, PK/FK, defaults, Erki column order).
-- Wrote human-readable design + matching CREATE TABLE draft (no CHECK, no INDEX).
+### DBeaver (optional polish)
+1. New connection → PostgreSQL → host `localhost`, port `5432`, database `iti0207_epood_u2`, user `gustav`.
+2. Open schema → select tables for one register → View Diagram / ER Diagram.
+3. Re-layout for portrait A4 if Erki wants a DBeaver-native look; exports already exist under `docs/diagrams/`.
 
 ### Next
-1. **DBeaver diagrams:** load tightened SQL into a **local** Postgres (not apex2); produce per-register ER diagrams (portrait A4) for document ch. 3.
+1. Spot-check diagram readability for document ch. 3 (replace/re-export if layout is cramped).
 2. Then **Ü3:** CHECK constraints + indexes.
-3. **Ü4:** generate/apply DDL on school server.
+3. **Ü4:** generate/apply DDL on school server (`apex2`).
 
-### Exact next step for diagrams
-Open DBeaver → connect to local DB → run `iti0207-epood/sql/01_tables_draft.sql` → ER Diagram per register (kaubad, klassifikaatorid, isikud, töötajad, kliendid) → export images into `docs/` or manual_exports when ready.
+### Regenerate diagrams
+```bash
+# ensure postgres is up
+brew services start postgresql@17
+# recreate + reload if needed
+dropdb --if-exists iti0207_epood_u2 && createdb iti0207_epood_u2
+psql -v ON_ERROR_STOP=1 -d iti0207_epood_u2 -f iti0207-epood/sql/01_tables_draft.sql
+python3 iti0207-epood/scripts/render_u2_er_diagrams.py
+```
 
 ---
+
 
 ## Historical prep log (Codex, earlier same day)
 

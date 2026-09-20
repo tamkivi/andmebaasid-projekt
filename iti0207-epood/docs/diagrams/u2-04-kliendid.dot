@@ -1,0 +1,12 @@
+digraph G {
+  graph [rankdir=TB, bgcolor=white, pad=0.3, nodesep=0.35, ranksep=0.55, fontname=Helvetica];
+  node [shape=plaintext, fontname=Helvetica, fontsize=9];
+  edge [color="#444444", arrowsize=0.7, fontsize=8, fontname=Helvetica];
+  labelloc="t";
+  label="ITI0207 Ü2 — Klientide register\n(local iti0207_epood_u2)";
+  "klient" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="4" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>klient</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT">PK</TD></TR><TR><TD ALIGN="LEFT"><B>kliendi_seisundi_liik_id</B></TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>on_nous_tylitamisega</B></TD><TD ALIGN="LEFT">boolean</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR></TABLE>>];
+  "isik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>isik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "kliendi_seisundi_liik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>kliendi_seisundi_liik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>kliendi_seisundi_liik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "klient" -> "isik" [label="isik_id"];
+  "klient" -> "kliendi_seisundi_liik" [label="kliendi_seisundi_liik_id"];
+}

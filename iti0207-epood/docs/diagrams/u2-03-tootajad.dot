@@ -1,0 +1,19 @@
+digraph G {
+  graph [rankdir=TB, bgcolor=white, pad=0.3, nodesep=0.35, ranksep=0.55, fontname=Helvetica];
+  node [shape=plaintext, fontname=Helvetica, fontsize=9];
+  edge [color="#444444", arrowsize=0.7, fontsize=8, fontname=Helvetica];
+  labelloc="t";
+  label="ITI0207 Ü2 — Töötajate register\n(local iti0207_epood_u2)";
+  "tootaja" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="4" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>tootaja</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_id</B></TD><TD ALIGN="LEFT">integer IDENTITY</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT">PK</TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_seisundi_liik_id</B></TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR></TABLE>>];
+  "tootaja_rolli_omamine" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="4" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>tootaja_rolli_omamine</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_rolli_omamine_id</B></TD><TD ALIGN="LEFT">integer IDENTITY</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT">PK</TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_id</B></TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_roll_id</B></TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>alguse_aeg</B></TD><TD ALIGN="LEFT">timestamptz</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>lopu_aeg</B></TD><TD ALIGN="LEFT">timestamptz</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR></TABLE>>];
+  "isik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>isik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "kaup" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>kaup</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>kaup_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "tootaja_roll" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>tootaja_roll</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_roll_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "tootaja_seisundi_liik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>tootaja_seisundi_liik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>tootaja_seisundi_liik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
+  "kaup" -> "tootaja" [label="registreerija_id"];
+  "kaup" -> "tootaja" [label="viimase_muutja_id"];
+  "tootaja" -> "isik" [label="isik_id"];
+  "tootaja" -> "tootaja_seisundi_liik" [label="tootaja_seisundi_liik_id"];
+  "tootaja_rolli_omamine" -> "tootaja" [label="tootaja_id"];
+  "tootaja_rolli_omamine" -> "tootaja_roll" [label="tootaja_roll_id"];
+}
