@@ -1,100 +1,46 @@
-# Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem
+# Andmebaasid I ja II projektide repositoorium
 
-See hoidla sisaldab ITI0206 andmebaaside projekti lähtefaile ja taastoodetavaid lõppartefakte. Projekt käsitleb kitsalt rühmatreeningute ajakava, registreerimise ja osalemise tööprotsessi, mitte kogu jõusaali infosüsteemi. Keskne elutsükli objekt on `registreering`; seda toetavad, kuid ei asenda, `treeningukord`, `treeninguliik`, `isik`, `tootaja`, `klient`, `treener`, ootejärjekord ja osalemine.
+See repositoorium sisaldab kahe erineva andmebaasikursuse projekte. **Tähelepanu:** Need on eraldi projektid eri domeenides ja neid ei tohi segi ajada ega ühte esitusse kaasata.
 
-## Lõppartefaktid
+## Kataloogide struktuur
 
-Build toodab neli esitatavat faili kataloogi `submission_files/`:
+### `iti0206-jousaal/`
+**Kursus:** ITI0206 Andmebaasid I  
+**Teema:** Jõusaali rühmatreeningute ajakava, registreerimise ja osalemise allsüsteem  
+**Staatus:** ✅ Lõpetatud ja esitatud
 
-- `submission_files/dokument.docx`
-- `submission_files/skript.sql`
-- `submission_files/mudelid.eap`
-- `submission_files/rakendus.zip`
+See kaust sisaldab täielikult lõpetatud ITI0206 projekti kõigi artefaktidega. Projekt on arhiveeritud ja säilitatud viitena.
 
-DBeaveri füüsilised diagrammid on esitatud kuue PNG-failina kataloogis `manual_exports/dbeaver_physical/`. `./build_all.sh` lisab need DOCX-i füüsilise disaini peatükki ja validaator kontrollib, et kõik kuus diagrammi on olemas. Ekspordi- ja kontrollisammude täpne nimekiri on failis `docs/DBEAVER_PHYSICAL_DIAGRAM_EXPORT_CHECKLIST.md`.
+Vaata täpsemat dokumentatsiooni: [`iti0206-jousaal/README.md`](iti0206-jousaal/README.md)
 
-Samad juurartefaktid on:
+### `iti0207-epood/`
+**Kursus:** ITI0207 Andmebaasid II  
+**Teema:** Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem  
+**Staatus:** 🚧 Aktiivne töö
 
-- `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.docx`
-- `Jousaali_infosusteemi_treeningute_funktsionaalne_allsusteem.eap`
-- `jousaali_skript.sql`
+See kaust sisaldab uut ITI0207 projekti. See ei ole ITI0206 jõusaali projekti jätk - see on täiesti erinev domeen (e-poe kataloogisüsteem).
 
-## Taastootmine
+Vaata täpsemat dokumentatsiooni: [`iti0207-epood/README.md`](iti0207-epood/README.md)
 
-Eeldused:
+## Oluline hoiatus
 
-- Java JDK koos käsuga `javac`
-- Python 3 koos mooduliga `venv`
-- Mermaid CLI käsuna `mmdc` või kättesaadav `npx`
-- internetiühendus esimesel käivitusel Java, Python ja vajadusel Mermaid sõltuvuste allalaadimiseks
+⚠️ **Ära sega neid kahte projekti!**
 
-macOS/Linux:
+- ITI0206 ja ITI0207 on eraldi kursused
+- Need käsitlevad täiesti erinevaid domeene (jõusaal vs. e-pood)
+- Iga kursuse esitus peab sisaldama ainult selle kursuse materjale
+- ITI0206 materjale ei tohi kaasata ITI0207 esitusse (ega vastupidi)
 
-```bash
-./build_all.sh
-```
+## Kasutamine
 
-Windows:
-
-```bat
-build_all.bat
-```
-
-Buildi järjekord:
-
-1. valmistab Python sõltuvused ette;
-2. renderdab `diagrams/*.mmd` Mermaid diagrammid PNG-failideks;
-3. uuendab EAP mudeli Jackcessi tööriistadega;
-4. genereerib DOCX aruande;
-5. genereerib PostgreSQL skripti lähtefailist `tools/sql_ddl.py`;
-6. värskendab `submission_files/` kataloogi ja pakib Flaski rakenduse.
-
-## Kontroll
-
-Pärast buildi:
+Töötamisel navigeeri vastavasse kausta:
 
 ```bash
-.venv/bin/python tools/validate_project.py
+# ITI0206 jõusaali projekt (arhiveeritud)
+cd iti0206-jousaal/
+
+# ITI0207 e-poe projekt (aktiivne)
+cd iti0207-epood/
 ```
 
-Valikuline live SQL kontroll disposable PostgreSQL andmebaasis:
-
-```bash
-createdb jousaali_live_check
-RUN_LIVE_SQL_TESTS=1 LIVE_SQL_DSN="dbname=jousaali_live_check" .venv/bin/python tools/validate_project.py
-dropdb jousaali_live_check
-```
-
-Validaator kontrollib uue mudeli tabeleid, funktsioone, triggereid, vaateid, Mermaid diagramme, DOCX sisu, EAP sisu, rakenduse funktsioonikutseid ja esituspaketi hügieeni.
-
-## Rakenduse demo
-
-Rakendus on kataloogis `rakendus/`. Pärast PostgreSQL andmebaasi loomist impordi:
-
-```bash
-psql -v ON_ERROR_STOP=1 -d jousaali -f submission_files/skript.sql
-```
-
-Seejärel seadista `rakendus/.env` ning käivita:
-
-```bash
-cd rakendus
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python app.py
-```
-
-Vaikimisi töötab prototüüp aadressil `http://127.0.0.1:5001`.
-
-Demo kasutajad:
-
-- juhataja: `juhataja@jousaal.ee` / `juhataja123`
-- treener: `treener@jousaal.ee` / `treener123`
-- teine treener: `treener2@jousaal.ee` / `treener123`
-- klient: `klient@jousaal.ee` / `klient123`
-- lisakliendid: `klient2@jousaal.ee`, `klient3@jousaal.ee`, `klient4@jousaal.ee` / `klient123`
-
-## Kaitsmise põhisõnum
-
-Projekt ei ole vana `treening` kaardi CRUD ega kogu jõusaali haldus. Keskne põhiobjekt on `registreering`: klient esitab registreeringu, saab kinnitatud koha või ootejärjekorra koha, näeb enda registreeringuid, saab tähtaja piires tühistada ning koha vabanemisel edendatakse esimene ootel registreering. `Treenerit` käsitletakse töötaja rolli ja pädevuste kaudu; see on selles allsüsteemis oluline osapool, kuid mitte isikust eraldiseisev uus persooniobjekt ega eksitav UML üldistus. `Treeninguliik` on hallatav kataloogimõiste, mitte pelk klassifikaator. Füüsiline PostgreSQL teostus kontrollib mahutavust, kattuvaid aegu, treeneri pädevust, tähtaegu, seisundimuutusi, topeltaktiivset registreeringut, osalemise märkimist ja ootejärjekorra edendamist.
+Iga projekti juurkaustas on oma `README.md` failiga täpsemad juhised.
