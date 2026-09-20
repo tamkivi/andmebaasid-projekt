@@ -1,0 +1,493 @@
+
+
+Tegevuskava - [391]
+
+Otse sisuni
+
+[391] - Andmebaasid II (ITI0207) (sügis 2026)
+
+Avaleht
+Vaata tegevuskava
+
+Üldinfo    Üldinfo
+Aine tutvustus
+Vastuvõtuajad
+Õpijuhis
+Operatiivinfo
+Kalender
+
+Tegevuskava nädalate kaupa
+
+Filtreeri tegevuskava
+
+1. nädal
+(Käimasolev nädal)
+Käimasolev
+
+Tere tulemast kursusele! Alustame tehnilisest ettevalmistusest ja sisseelamisest.
+
+ 
+
+Tehniline häälestus (Kriitiline!)
+
+Seadistage oma arvutis FortiClient VPN. Ilma selleta ei pääse Te ligi UML ja SQL ülesannete lahendamise keskkondadele.
+
+Küsige juurdepääs serveritele, kus on iseseisva töö tegemiseks vajalik serveri tarkvara (vt juhend).
+
+Kui plaanite tundides kasutada sülearvutit, siis hoolitsege, et arvutis oleks vajalik tarkvara (vt juhend).
+
+Sisseelamine
+
+Tutvuge kursuse korraldusega ning vaadake näiteprojektist peatükke 3, 4 - mis on need osad, mis käesolevas kursuses tuleb lähteprojekti lisada.
+
+Vastake anonüümsele küsitlusele oma tausta ja ootuste kohta.
+
+Katsetage UML Lahendaja keskkonda (nõuab VPN-i).
+
+Katsetage SQL Lahendaja keskkonda (nõuab VPN-i).
+
+Harjutamine
+
+Harjutage SIIN esimeseks vahetestiks. Tehke läbi vähemalt üks proovitest, et tutvuda küsimuste stiiliga.
+
+Tööaja arvestus
+
+Tutvuge SIIN oodatava töömahuga.
+
+Punktide saamiseks logige iganädalaselt ainele pühendatud aega. Pidage meeles: kui jätate mõne tegevuse (nt loengu) vahele, tuleb see aeg tasa teha iseseisvalt.
+
+2. nädal
+
+Nõuanded ja tehniline valmisolek:
+
+Selleks ajaks peaks olema:
+
+saadud juurdepääs iseseisva töö tegemiseks mõeldud serverile (vt juhend)
+
+enda tööarvutis installeeritud serveri andmebaasisüsteemide kasutamiseks vajalik tarkvara (vt juhend).
+
+Nädala tähtajad (Reede kell 23:59):
+
+Iseseisev töö: Otsustage ja registreerige oma valik siin.
+
+Nädala teooria:
+
+Loeng: Teema 1 (Süsteemiarendus ja andmebaasi disaini koht selles).
+
+Praktikum: Tutvuge Oracle andmebaasisüsteemi võimalustega. 
+
+Nädala iseseisev töö:
+
+Kuna iseseisva töö tegemine pole veel aktiivselt käima läinud, siis nüüd on hea aeg proovida lahendada lõpphinde arvutamisel punkte andvaid UML ülesandeid ja SQL ülesandeid.
+
+Lahendage UML ülesanded 1-2.
+
+Lahendage SQL ülesanded 1-6.
+
+Meelespea:
+
+Test: Harjutage SIIN esimeseks vahetestiks (teemad 1-2).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+3. nädal
+
+Nädala teooria:
+
+Loeng: Teema 1 (Süsteemiarendus ja andmebaasi disaini koht selles).
+
+Praktikum: Tutvuge Oracle andmebaasisüsteemi võimalustega. 
+
+Lugege mustrit "Põhiolemite hetkeseisundi registreerimine SQL-andmebaasis" ("Andmebaasid I" kodulehelt).
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 3-4.
+
+Lahendage SQL ülesanded 7-12.
+
+Meelespea:
+
+Test: Harjutage SIIN esimeseks vahetestiks (teemad 1-2).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+4. nädal
+
+Nädala teooria:
+
+Loeng: Teema 1 (Süsteemiarendus ja andmebaasi disaini koht selles).
+
+Praktikum: Tutvuge PostgreSQL andmebaasisüsteemi võimalustega. 
+
+Lugege mustrit "Põhiolemite seisundimuudatuste võimaldamine graafilises kasutajaliideses" ("Andmebaasid I" kodulehelt).
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 5-6.
+
+Lahendage SQL ülesanded 13-18.
+
+Meelespea:
+
+Test: Harjutage SIIN esimeseks vahetestiks (teemad 1-2).
+
+Töömaht: Punktide saamiseks logige oma töömahtu ja esitage nädala lõpus SIIN logi vahetulemus. Oodatav maht on toodud SIIN.
+
+5. nädal
+
+Tehniline häälestus (Kriitiline!)
+
+Selleks ajaks peab enda tööarvutisse olema installeeritud ning litsentsiga varustatud tööks kasutatav CASE vahend Enterprise Architect (vt juhend "Andmebaasid I" kodulehelt).
+
+Nädala teooria:
+
+Loeng: Teema 2 (Andmebaasi füüsilise disain - andmebaasisüsteemide võimaluste võrdlus).
+
+Praktikum:
+
+Lahendage ülesannet 2:
+
+Alustage iseseisva töö projekti tegemist andmebaasi disaini mudeli ümbertöötamisega uue andmebaasisüsteemi jaoks.
+
+Arvestada tuleb puhta koodi põhimõtetega.
+
+Realiseerida tuleb ka kõik kitsendused, mis lähteprojektis jäid kasutatud andmebaasisüsteemi piiratuse tõttu jõustamata.
+
+Käesoleval nädalal keskenduge baastabelitele, kuid esialgu jätke vaatluse alt välja CHECK kitsendused ja indeksid. 
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 7-8.
+
+Lahendage SQL ülesanded 19-24.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Kõik selle semestri praktikumi ülesanded puudutavad mingit iseseisva töö aspekti ning kokku moodustavad need iseseisva töö tegemise tööjuhendi.
+
+Test: Harjutage SIIN esimeseks vahetestiks (teemad 1-2).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+6. nädal
+
+Nädala teooria:
+
+Loeng: Teema 2 (Andmebaasi füüsilise disain - andmebaasisüsteemide võimaluste võrdlus).
+
+Lugege mustrit "Põhiolemite teatavate seisundimuudatuste keelamine SQL-andmebaasis" ("Andmebaasid I" kodulehelt).
+
+Praktikum:
+
+Lahendage ülesannet 3:
+
+Täienda andmebaasi disaini mudelit CHECK kitsenduste ja indeksitega.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 9-10.
+
+Lahendage SQL ülesanded 25-30.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN esimeseks vahetestiks (teemad 1-2).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+7. nädal
+
+Nädala teooria:
+
+Loeng: Teema 3 (Andmebaasisüsteemid).
+
+Praktikum:
+
+Lõpetage ülesanded 2 ja 3:
+
+Lõpetage baastabelite disaini kirjeldava mudeli loomine.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 11-12.
+
+Lahendage SQL ülesanded 31-36.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Praktikumi alguses esimene vahetest (teemad 1-2) (osalemiseks eelregistreeruge SIIN).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+8. nädal
+
+Nädala teooria:
+
+Loeng: Teema 3 (Andmebaasisüsteemid).
+
+Praktikum:
+
+Lahendage ülesannet 4:
+
+Genereerige baastabelite disaini kirjeldavast mudelist CREATE TABLE laused, vajadusel paranda/täiendage neid ja käivita need kasutatavas andmebaasisüsteemis.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 13-14.
+
+Lahendage SQL ülesanded 37-42.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN teiseks vahetestiks (teemad 3-4).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+9. nädal
+
+Nädala teooria:
+
+Loeng: Teema 4 (Andmebaasi füüsiline disain, ehitamine, andmesiire, varundamine).
+
+Praktikum:
+
+Lahendage ülesannet 5:
+
+Lisage tabelitesse testandmeid.
+
+Pidage silmas, et tabelitesse Riik, Isik ja Kasutajakonto tuleb andmed laadida välisest allikast.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 15-16.
+
+Lahendage SQL ülesanded 43-48.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN teiseks vahetestiks (teemad 3-4).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+10. nädal
+
+Nädala teooria:
+
+Loeng: Teema 4 (Andmebaasi füüsiline disain, ehitamine, andmesiire, varundamine).
+
+Praktikum:
+
+Lahendage ülesannet 6:
+
+PostgreSQL andmebaasi kasutamise korral refaktoreerige andmebaasi ja võtke seal kasutusele vähemalt üks domeen.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 17-18.
+
+Lahendage SQL ülesanded 49-54.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN teiseks vahetestiks (teemad 3-4).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+11. nädal
+
+Nädala teooria:
+
+Loeng: Teema 5 (Andmebaaside turvalisuse tagamine).
+
+Praktikum:
+
+Lahendage ülesannet 7:
+
+Alustage andmebaasi avaliku liidese loomist vaadete loomisest.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 19-20.
+
+Lahendage SQL ülesanded 55-60.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN teiseks vahetestiks (teemad 3-4).
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+12. nädal
+
+Nädala teooria:
+
+Loeng: Teema 6 (Transaktsioonide haldus).
+
+Praktikum:
+
+Lahendage ülesannet 8:
+
+Jätkake andmebaasi avaliku liidese loomist andmebaasiserveris talletatud rutiinide loomisega.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 21-22.
+
+Lahendage SQL ülesanded 61-66.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Praktikumi alguses teine vahetest (teemad 3-4) (osalemiseks eelregistreeruge SIIN).
+
+Töömaht: Punktide saamiseks logige oma töömahtu ja esitage nädala lõpus SIIN logi vahetulemus. Oodatav maht on toodud SIIN.
+
+13. nädal
+
+Nädala teooria:
+
+Loeng: Teema 7 (SQL andmekäitluskeele lausete töötlemine ja optimeerimine).
+
+Praktikum:
+
+Lahendage ülesannet 9:
+
+Looge andmebaasi aktiivseks muutmiseks selles trigereid või PostgreSQL korral ka andmekäitluskeele lausete ümberkirjutamise reegleid.
+
+Nädala iseseisev töö:
+
+Lahendage UML ülesanded 23-...
+
+Lahendage SQL ülesanded 67-72.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN kolmandaks vahetestiks (teemad 5-7) ja eksamiks.
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+14. nädal
+
+Nädala teooria:
+
+Loeng:
+
+Teema 9 (Objektorienteeritud (OO), XML, NoSQL ja NewSQL andmebaasisüsteemid).
+
+Teema 10 - Objekt-relatsioonilised andmebaasisüsteemid.
+
+Praktikum:
+
+Lahenda ülesannet 10:
+
+Alustage andmebaasirakenduse realiseerimist kasutaja tuvastamise realiseerimisega.
+
+Nädala iseseisev töö:
+
+Lahendage SQL ülesanded 73-78.
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN kolmandaks vahetestiks (teemad 5-7) ja eksamiks.
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+15. nädal
+
+Nädala teooria:
+
+Loeng: Teema 12 (Hajus andmebaas).
+
+Praktikum:
+
+Lahendage ülesannet 11:
+
+Tutvuge mõnede andmebaasirakenduste loomise vahenditega.
+
+Tutvuge andmekäitluskeele võimalustega PostgreSQLis ja Oracles.
+
+Nädala iseseisev töö:
+
+Lahendage SQL ülesanded 79-...
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Praktikumi alguses kolmas vahetest (teemad 5-7) (osalemiseks eelregistreeruge SIIN).
+
+Test: Harjutage SIIN eksamiks.
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+16. nädal
+
+Nädala teooria:
+
+Loeng: Teema 14 (Andmeaidad ja andmevakad).
+
+Praktikum:
+
+Lahendage ülesannet 12:
+
+Tegelege teemadega nagu andmebaasi statistika, päringu täitmisplaan, dokumendi viimistlemine, viitamine, rakendus (sh MS Accessis tehtud rakendus), õigused.
+
+Saage projekt valmis, et see tähtajaks ära esitada.
+
+Nädala iseseisev töö:
+
+Tegelege projektiga.
+
+Meelespea:
+
+Test: Harjutage SIIN eksamiks.
+
+Töömaht: Punktide saamiseks logige oma töömahtu. Oodatav maht on toodud SIIN.
+
+Tegevuskava TI-sõbralikus markdown formaadis:
+
+https://maurus.ttu.ee/markdown_tegevuskava.php?aine=391
+Kopeeri
+
+Tallinna Tehnikaülikool
+
+Tarkvarateaduse instituut
+
+Tingimused ja andmekaitse
+
+© 2026 Tallinna Tehnikaülikooli Tarkvarateaduse instituut
+
+Tingimused ja andmekaitse info
+
+Konto kasutusala: Loodavat kasutajakontot kasutatakse lisaks Mauruse õppekeskkonnale ka selleks, et pääseda ligi testide tegemise keskkonnale ning SQL ja UML ülesannete lahendamise keskkondadele.
+
+Seos ÕISiga (õppeinfosüsteemiga): Sellele lehele registreerumine ei asenda õppeaine deklareerimist ÕISis ega ole ÕISi deklaratsiooniga automaatselt seotud. Aine ametlikuks läbimiseks ja ainepunktide saamiseks peate aine nõuetekohaselt deklareerima ka ÕISis.
+
+Konto säilivus: Teie kasutajakonto säilib ka pärast semestri lõppu. Järgmistel semestritel teistele ainetele registreerumiseks ei pea looma uut kontot, vaid saate olemasoleva kontoga sisse logida ja ained lisada lehelt Minu konto. Viie aasta möödumisel ainele registreerimisest võidakse juurdepääs ainele kustutada. Kui selgub, et kontol ei ole seejärel ühtegi teist registreeritud ainet, kustutatakse ka kasutajakonto.
+
+Andmete kogumine ja läbipaistvus: Süsteem salvestab õppetöö korraldamiseks info sisselogimiste ja materjalide vaatamise kohta. Enda andmeid saate igal ajal vaadata ning soovi korral oma ainele registreeringu või kogu konto kustutada lehelt Minu konto.
+
+Õppetöö teated: Sisestatud meiliaadressile saadetakse õppejõu poolt õppetööga seotud teateid. Palun jälgige regulaarselt seda postkasti (eelistatult kasutage ülikooli meiliaadressi).
+
+Sulge
+

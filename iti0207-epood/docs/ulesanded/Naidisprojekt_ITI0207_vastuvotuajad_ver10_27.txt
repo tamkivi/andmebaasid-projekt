@@ -1,0 +1,3899 @@
+Andmebaasi näidisprojekt (2025)                               © Erki Eessaar
+
+                          TALLINNA TEHNIKAÜLIKOOL
+                          Infotehnoloogia teaduskond
+                            Tarkvarateaduse instituut
+
+
+
+
+Ülikooli infosüsteemi vastuvõtuaegade funktsionaalne
+                      allsüsteem
+
+                           Andmebaasid II, ITI0207
+
+
+
+
+                                                 Üliõpilane:
+                                                 Õpperühm:
+                                                 Matriklinumber:
+                                                 e-posti aadress:
+
+                                                 Juhendaja:
+
+
+
+
+                                  Tallinn 2025
+
+                                      1
+Andmebaasi näidisprojekt (2025)                                                                                                           © Erki Eessaar
+
+Sisukord
+SISSEJUHATUS (ANDMEBAASID II)............................................................................................................. 5
+
+1. STRATEEGILINE ANALÜÜS...................................................................................................................... 9
+    1.1 TERVIKSÜSTEEMI ÜLDVAADE...............................................................................................................................9
+       1.1.1 Organisatsiooni eesmärgid...............................................................................................................9
+       1.1.2 Infosüsteemi eesmärgid....................................................................................................................9
+       1.1.3 Lausendid........................................................................................................................................10
+       1.1.4 Põhiobjektid....................................................................................................................................12
+       1.1.5 Mõned põhiprotsessid ja neid käivitavad sündmused...................................................................13
+       1.1.6 Tegutsejad......................................................................................................................................15
+       1.1.7 Asukohad........................................................................................................................................16
+       1.1.8 Terviksüsteemi tükeldus allsüsteemideks.......................................................................................16
+    1.2 VASTUVÕTUAEGADE FUNKTSIONAALSE ALLSÜSTEEMI ESKIISMUDELID...........................................................................18
+       1.2.1 Eesmärgid.......................................................................................................................................18
+       1.2.2 Seosed pädevusalade ja registritega..............................................................................................19
+       1.2.3 Allsüsteemi funktsionaalsed nõuded..............................................................................................19
+       1.2.4 Allsüsteem mittefunktsionaalsed nõuded......................................................................................22
+       1.2.5 Allsüsteemi kahe elementaarse äriprotsessi tegevusdiagrammid.................................................26
+    1.3 VASTUVÕTUAEGADE REGISTRI ESKIISMUDELID.......................................................................................................28
+       1.3.1 Eesmärgid.......................................................................................................................................28
+       1.3.2 Registrit kasutavad pädevusalad...................................................................................................28
+       1.3.3 Registrit teenindavad funktsionaalsed allsüsteemid......................................................................28
+       1.3.4 Infovajadused, mida register aitab rahuldada...............................................................................28
+       1.3.5 Seosed teiste registritega...............................................................................................................28
+       1.3.6 Ärireeglid ........................................................................................................................................29
+       1.3.7 Registri kontseptuaalne eskiismudel..............................................................................................30
+2. DETAILANALÜÜS................................................................................................................................. 31
+    2.1 VASTUVÕTUAEGADE FUNKTSIONAALNE ALLSÜSTEEM...............................................................................................31
+       2.1.1 Allsüsteemi täpsustunud funktsionaalsed nõuded.........................................................................31
+            2.1.1.1 Kasutusjuht: Tuvasta kasutaja..........................................................................................................31
+            2.1.1.2 Kasutusjuht: Otsi enda aktiivseid vastuvõtte....................................................................................32
+            2.1.1.3 Kasutusjuht: Paku välja vastuvõtt.....................................................................................................33
+            2.1.1.4 Kasutusjuht: Lisa vastuvõtuaeg........................................................................................................33
+            2.1.1.5 Kasutusjuht: Tühista vastuvõtuaeg...................................................................................................34
+            2.1.1.6 Kasutusjuht: Paranda vastuvõttu......................................................................................................36
+            2.1.1.7 Kasutusjuht: Õppejõud, vaata oma vastuvõtte.................................................................................36
+            2.1.1.8 Kasutusjuht: Otsi enda aktiivseid vastuvõtule tulekuid.....................................................................37
+            2.1.1.9 Kasutusjuht: Registreeri vastuvõtule tulek.......................................................................................38
+            2.1.1.10 Kasutusjuht: Üliõpilane, vaata oma vastuvõtuaegu........................................................................39
+            2.1.1.11 Kasutusjuht: Tühista vastuvõtule tulek...........................................................................................40
+    2.2 VASTUVÕTUAEGADE FUNKTSIONAALSE ALLSÜSTEEMI VAJATAVATE REGISTRITE DETAILANALÜÜS..........................................41
+       2.2.1 Kontseptuaalne andmemudel........................................................................................................41
+            2.2.1.1 Olemi-suhte diagrammid..................................................................................................................41
+            2.2.1.2 Olemitüüpide definitsioonid.............................................................................................................44
+            2.2.1.3 Atribuutide definitsioonid................................................................................................................45
+        2.2.2 Andmebaasioperatsioonide lepingud.............................................................................................52
+            2.2.2.1 OP2.3...............................................................................................................................................52
+            2.2.2.2 OP3.4...............................................................................................................................................53
+            2.2.2.3 OP4.1...............................................................................................................................................53
+            2.2.2.4 OP4.2...............................................................................................................................................54
+
+
+                                                                               2
+Andmebaasi näidisprojekt (2025)                                                                                                            © Erki Eessaar
+
+             2.2.2.5 OP5.1...............................................................................................................................................54
+             2.2.2.6 OP7.5...............................................................................................................................................55
+             2.2.2.7 OP8.2...............................................................................................................................................55
+       2.2.3 Registri põhiobjekti seisundidiagramm.........................................................................................56
+    2.3 CRUD MAATRIKS..........................................................................................................................................57
+3. FÜÜSILINE DISAIN............................................................................................................................... 59
+    3.1 VASTUVÕTUAEGADE FUNKTSIONAALSE ALLSÜSTEEMI VAJATAVATE REGISTRITE FÜÜSILINE DISAIN.........................................59
+4. REALISATSIOON POSTGRESQLIS........................................................................................................... 65
+    4.1 ANDMEBAASI LOOMINE..................................................................................................................................65
+    4.2 SKEEMID.....................................................................................................................................................65
+    4.3 DOMEENID..................................................................................................................................................65
+    4.4 TABELID JA ARVUJADA GENERAATORID................................................................................................................67
+    4.5 VAATED......................................................................................................................................................69
+    4.6 PROTSEDUURSED KEELED.................................................................................................................................71
+    4.7 TRIGERI FUNKTSIOONID JA TRIGERID...................................................................................................................71
+       4.7.1 Trigerite testimise laused................................................................................................................73
+    4.8 REEGLID......................................................................................................................................................74
+       4.8.1 Reeglite testimise laused.................................................................................................................74
+    4.9 RUTIINID.....................................................................................................................................................75
+       4.9.1 Rutiinide testimise laused................................................................................................................76
+    4.10 INDEKSID...................................................................................................................................................77
+       4.10.1 Välisvõtmetele lisatavad indeksid................................................................................................77
+       4.10.2 Täiendavad sekundaarsed indeksid..............................................................................................77
+       4.10.3 Funktsioonil põhinevad indeksid..................................................................................................78
+    4.11 KLASSIFIKAATORITE VÄÄRTUSTAMISE SQL LAUSED...............................................................................................78
+    4.12 JSON FORMAADIS LÄHEANDMETE LAADIMINE....................................................................................................80
+    4.13 TÄIENDAVATE TESTANDMETE LISAMINE.............................................................................................................81
+    4.14 ANDMEBAASI STATISTIKA KOGUMINE................................................................................................................83
+    4.15 PÄRINGU TÄITMISPLAANI NÄIDE......................................................................................................................83
+    4.16 ROLLID JA KASUTAJAD..................................................................................................................................86
+    4.17 ÜLELIIGSETE ÕIGUSTE ÄRAVÕTMINE.................................................................................................................86
+    4.18 ÕIGUSTE JAGAMINE.....................................................................................................................................87
+    4.19 ANDMEBAASIOBJEKTIDE KUSTUTAMINE.............................................................................................................88
+       4.19.1 Õiguste äravõtmine......................................................................................................................88
+       4.19.2 Domeenide kustutamine..............................................................................................................89
+       4.19.3 Tabelite ja arvujada generaatorite kustutamine.........................................................................89
+       4.19.4 Väliste tabelite ja seotud andmebaasiobjektide kustutamine.....................................................90
+       4.19.5 Vaadete kustutamine...................................................................................................................90
+       4.19.6 Indeksite kustutamine..................................................................................................................90
+       4.19.7 Rutiinide kustutamine...................................................................................................................91
+       4.19.8 Trigerite kustutamine...................................................................................................................91
+       4.19.9 Trigerifunktsioonide kustutamine.................................................................................................91
+       4.19.10 Reeglite kustutamine..................................................................................................................91
+       4.19.11 Kasutajate ja rollide kustutamine...............................................................................................92
+       4.19.12 Laienduste kustutamine.............................................................................................................92
+       4.19.13 Skeemide kustutamine...............................................................................................................92
+       4.19.14 Andmebaasi kustutamine...........................................................................................................92
+5. TEHISINTELLEKTI KASUTUS................................................................................................................... 93
+
+6. KASUTATUD MATERJALID.................................................................................................................... 94
+
+
+                                                                                3
+Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+
+AUTORIDEKLARATSIOON
+
+
+Kinnitan, et olen koostanud antud töö iseseisvalt ning seda ei ole kellegi teise poolt varem
+hindamiseks/arvestuse saamiseks esitatud. Kõik töö koostamisel kasutatud teiste autorite
+tööd, olulised seisukohad, kirjandusallikatest ja mujalt pärinevad andmed on töös
+viidatud.
+
+
+[Autorite nimed]
+
+
+
+
+                                           4
+   Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+
+
+                         Sissejuhatus (Andmebaasid II)
+   Tabel 1 esitab ülevaate andmebaasi ja rakenduse realisatsioonist.
+   Tabel 1 Sissejuhatus õppeaine "Andmebaasid II" töö tulemuse kohta.
+Kasutatav andmebaasisüsteem       PostgreSQL 17
+ja versioon
+Rakenduse loomise vahendid        MS Access 2019
+(arenduskeskkonnad, keeled ja
+nende versioonid)
+Andmebaasi server                 apex2.taltech.ee
+(andmebaas PEAB olema
+õppeserveris)
+PostgreSQL andmebaasi nimi        vastuvotuajad
+(kui kasutate PostgreSQLi)
+Oracle skeemi nimi (kui           -
+kasutate Oraclet)
+Millise töökoha rakendus          õppejõud
+realiseerib?
+Rakenduse aadress (kui on         -
+veebirakendus) (rakenduse
+panek õppeserverisse pole
+kohustuslik; aadress tuleb
+esitada ka pgApex või Oracle
+APEX rakenduse puhul)
+Rakenduse nimi (kui rakendus      -
+on tehtud pgApex või Oracle
+APEX keskkonnas)
+Kui tegemist on kahekihilise      Rakenduse toimimiseks peab kasutaja arvutis olema
+klient-server süsteemiga ja       installeeritud PostgreSQL ODBC draiverid ja loodud
+rakendus on kasutaja arvutis,     andmeühenduse spetsifikatsioon (data source) nimega
+siis mida peab kasutaja arvutis   PostgreSQL_yhendus. Andmeühenduse spetsifikatsioonis
+tegema, et seda rakendust         peavad server, andmebaas, kasutajanimi ja parool olema
+kasutada                          määramata.
+Kasutajanimi ja parool            kasutajanimi: kasutaja1
+rakendusse sisselogimiseks        parool: testparool2
+
+                                  kasutajanimi: kasutaja4
+                                  parool: testparool4
+Kui rakenduse failil on eraldi    -
+parool (nt MS Accessi korral –
+
+
+                                             5
+   Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+ei ole kohustuslik), siis mis see
+on?
+Millistes vormides (MS Accessi      Ekraanivormil Sisssereg pöördutakse nupule Jätka vajutamise
+korral), lehekülgedel (pgApex       järel kasutaja-defineeritud funktsiooni f_on_oppejoud poole.
+või Oracle APEX korral), failides   Funktsioon on mõeldud õppejõu identifitseerimiseks.
+(mingis
+programmeerimiskeeles loodud        Ekraanivormil Loo_vastuvott pöördutakse nupule Salvesta
+rakenduse puhul) toimub             vajutamise järel kasutaja-defineeritud funktsiooni
+pöördumine                          f_loo_vastuvott poole. Funktsioon on mõeldud uue vastuvõtu
+andmebaasiserveris talletatud       registreerimiseks.
+rutiinide poole? Faili puhul
+palun näidata ka kataloog.          Ekraanivormil Vastuvotu_haldamine pöördutakse nupule
+                                    Tühista vajutamise järel kasutaja-defineeritud funktsiooni
+                                    f_tyhista_vastuvott poole. Funktsioon on mõeldud vastuvõtu
+                                    tühistamiseks.
+
+                                    Ekraanivormil Vastuvotu_haldamine_alamvorm pöördutakse
+                                    nupule Tühista vajutamise järel kasutaja-defineeritud
+                                    funktsiooni f_tyhista_vastuvotuaeg poole. Funktsioon on
+                                    mõeldud vastuvõtuaja tühistamiseks.
+Millistes vormides (MS Accessi      Ekraanivormil Oppejou_aktiivsed_vastuvotud esitatavad
+korral), lehekülgedel (pgApex       andmed leitakse vaatest Aktiivsed_vastuvotud
+või Oracle APEX korral), failides
+(mingis                             Ekraanivormil Oppejou_mitteaktiivsed_vastuvotud esitatavad
+programmeerimiskeeles loodud        andmed leitakse vaatest Mitteaktiivsed_vastuvotud
+rakenduse puhul) toimub
+pöördumine andmebaasis              Ekraanivormil Vastuvott_vaatamiseks esitatavad andmed
+loodud vaadete poole? Faili         leitakse vaadetest Koik_vastuvotud ja
+puhul palun näidata ka              Vastuvotuajad_koos_tulijatega
+kataloog.
+                                    Ekraanivormil Loo_vastuvott olevasse ruumi valiku liitboksi
+                                    leitakse andmed vaatest Ruumid.
+Kuhu (millisesse moodulisse,        Andmebaasisüsteemiga ühenduse loomiseks kasutatav
+faili) on rakenduses kirjutatud     kasutajanimi (oppejoud_vastuvotud) on kirjutatud mooduli
+andmebaasisüsteemiga                Refreshing algusesse (konstandi username väärtuseks).
+ühenduse loomiseks mõeldud
+andmebaasi kasutaja nimi (see
+peab olema minimaalsete
+vajalike õigustega kasutaja)?
+Faili puhul palun näidata ka
+kataloog.
+Kas rakendus suhtleb                Rakendus suhtleb andmebaasiga kui üks kasutaja
+andmebaasisüsteemiga kui üks
+
+                                                6
+   Andmebaasi näidisprojekt (2025)                                              © Erki Eessaar
+
+kasutaja või vastab igale
+lõppkasutajale eraldi
+andmebaasi kasutaja?
+Kas lõppkasutajate                  Jah (tabeli Isik veerud kasutajanimi ja parool)
+kasutajanimed ja paroolid on
+andmebaasis (kui jah, siis mis
+tabeli mis veergudes)?
+Kuidas on andmebaasis               Andmebaasis hoitakse parooli räsiväärtust. See väärtus
+salvestatud parool kaitstud? Kui    leitakse andmebaasisüsteemi poolt kasutades sisendina
+kasutate räsiväärtuse leidmist,     avatekstina parooli ning süsteemi-genereeritud soola.
+siis tuleb selgelt nimetada räsi
+arvutamise algoritm. Kui            Parooli räsiväärtuse leidmiseks kasutatakse PostgreSQL
+kasutate soola, siis tuleb see      funktsiooni crypt koos soola genereerimiseks mõeldud
+selgelt välja öelda ning            funktsiooniga gen_salt. Räsiväärtuse leidmiseks kasutatakse
+kirjeldada selle genereerimist ja   Blowfish plokkšifril (krüptograafilisel algoritmil) põhinevat
+omadusi.                            algoritmi (Bcrypt), mille puhul võib parooli pikkus olla kuni 72
+                                    märki. Cybernetica (2023) aruanne tõstab esile mitmeid
+                                    Bcrypti probleeme (piirang parooli pikkusele; suhteline nõrkus
+                                    spetsiifilise riistvaraga tehtavate jõurünnete suhtes; riiklike
+                                    agentuuride poolt mittesoovitamine), kuid märgib positiivse
+                                    poole pealt suurt realisatsioonide hulka. Kasutame seda
+                                    valikut, sest funktsiooni crypt puhul oleks alternatiiviks
+                                    kasutada algoritmi MD5, mille kasutamisest juba Cybernetica
+                                    (2013) aruanne soovitas üldse loobuda. Veel oleks
+                                    alternatiivideks kasutada algoritme des ja xdes, kuid nende
+                                    puhul saab parool olla maksimaalselt vaid kuni kaheksa märki
+                                    pikk.
+
+                                    Veerus parool lubatud maksimaalne väärtuse suurus peab
+                                    valitud algoritmi korral olema 60 märki (veerg on tüüpi
+                                    VARCHAR(60)).
+
+                                    gen_salt funktsioon võimaldab lisaks algoritmile määrata ka
+                                    algoritmi kasutatavat korduste arvu (kui algoritm seda
+                                    võimaldab). Mida suurem korduste arv, seda rohkem võtab
+                                    aega räsiväärtuse arvutamine, aga ka selle murdmine.
+                                    Blowfish algoritmi korral on vaikimisi korduste arv 6, kuid
+                                    võimalik korduste arvu vahemik on 4 kuni 31. Määran
+                                    korduste arvuks 12, mille puhul räsiväärtuse leidmiseks kulub
+                                    olemasoleval riistvaral umbes 250 ms (see on soovituslik
+                                    alampiir).
+
+                                    Funktsiooni crypt kasutamiseks on PostgreSQL andmebaasis
+
+                                                7
+   Andmebaasi näidisprojekt (2025)                                          © Erki Eessaar
+
+                                  CREATE EXTENSION lauset kasutades installeeritud lisamoodul
+                                  pgcrypto. Installeerimise tulemusel loodavad skeemiobjektid
+                                  paigutatakse skeemi laiendused.
+
+                                  CREATE SCHEMA IF NOT EXISTS laiendused;
+                                  CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA
+                                  laiendused;
+Kuidas toimub kasutaja            Kontrollimaks kasutaja identiteeti võrreldakse kasutaja
+autentimine?                      etteantud parooli põhjal genereeritud räsiväärtust
+                                  andmebaasis salvestatud parooli räsiväärtusega. Lisaks
+                                  kontrollitakse, et kasutaja töötaks ametikohal, mille
+                                  esindajana ta soovib sisse logida ning oleks seisundis, mis
+                                  lubab süsteemi kasutada. Kui need väärtused on võrdsed ja
+                                  nimetatud lisatingimused on täidetud, siis on kasutaja
+                                  tuvastatud ja ta võib hakata süsteemi kasutama. See kontroll
+                                  toimub serveris, et andmebaasis salvestatud räsiväärtus ei
+                                  liiguks üle võrgu kliendi juurde.
+
+                                  Antud juhul viib kontrolli läbi andmebaasisüsteem.
+                                  Kontrollimaks, kas kasutaja on sobivas seisundis õppejõud,
+                                  luuakse andmebaasis funktsioon f_on_oppejoud(text, text).
+                                  Funktsiooni väljakutsel on esimene argument kasutajanimi ja
+                                  teine argument parool.
+Kas olete oma töö iseseisva töö   Jah
+hindamismudeli alusel enne
+esitamist ise üle kontrollinud?
+Kui vastasite eelmises punktis    61
+„Jah“, siis milline oli
+punktisumma?
+
+
+
+
+                                             8
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+
+                             1. Strateegiline analüüs
+Selles peatükis vaadeldakse tervet infosüsteemi, leitakse selle allsüsteemid ning
+esitatakse ühele põhiobjektile vastava funktsionaalse allsüsteemi/registri paari
+eskiismudelid.
+
+                          1.1 Terviksüsteemi üldvaade
+
+Järgnevalt esitatakse ülevaade ülikooli infosüsteemist.
+
+
+                          1.1.1 Organisatsiooni eesmärgid
+
+   "Ülikooli missioon on edendada teadusi ja kultuuri ning elukestvat õpet, osutada
+    ühiskonnale vajalikke õppe-, teadus- ja loometegevusel põhinevaid teenuseid ning
+    toetada üliõpilastest vastutustundlike ja algatusvõimeliste kodanike kujunemist.
+    Ülikoolid teevad koostööd teiste õppeasutuste ja kogu ühiskonnaga, toetades teadus-,
+    arendus- ja loometegevusega ühiskonna arengut ning rahvusvahelistumist ja
+    rahvuskultuuri püsimist." (Kõrgharidusseadus)
+
+
+                            1.1.2 Infosüsteemi eesmärgid
+
+   Tagada ülevaade ülikooliga seotud isikutest (üliõpilased ja töötajad).
+   Tagada ülevaade üliõpilast koondamisest õpperühmadesse.
+   Tagada ülevaade ülikoolis õpetatavatest õppeainetest.
+   Tagada ülevaade ülikoolis õppetöö aluseks olevatest õppekavadest.
+   Tagada ülevaade õppekavadele vastuvõtu plaanidest, mis määravad vastuvõtu lävendi
+    või maksimaalse vastuvõetavate õppurite arvu.
+   Tagada ülevaade üliõpilaste õppekavadel õppimistest.
+   Võimaldada tunniplaani esildiste elektroonilist esitamist ja tagada sellega õigeaegne
+    ning piisav sisend tunniplaani koostamisele.
+   Tagada ülevaade ülikooli semestri õppetöö läbiviimise aluseks olevatest
+    tunniplaanidest.
+   Võimaldada õppejõudude vastuvõttudele elektrooniliselt registreerida.
+   Võimaldada õpingukavu elektrooniliselt koostada.
+   Tagada ülevaade üliõpilaste õpingukavadest.
+   Tagada ülevaade üliõpilaste õppetulemustest.
+   Võimaldada õppejõududel õppetulemusi elektrooniliselt registreerida.
+   Tagada ülevaade ülikoolis kaitstud lõputöödest.
+   Tagada ülevaade töötajate töökoormusest ja töö tulemustest.
+                                           9
+Andmebaasi näidisprojekt (2025)                                          © Erki Eessaar
+
+   Tagada ülevaade ülikooli struktuurist.
+   Tagada ülevaade ülikooli poolt väljastatud arvetest ning ülikoolile saadetud arvetest.
+   Tagada ülevaade ülikooli käsutuses olevatest varadest.
+   Tagada ülevaade ülikooli struktuuriüksuste väljastatud ostutellimustest.
+   Tagada ülevaade ülikooli käsutuses olevatest ruumidest.
+   Võimaldada elektroonilist dokumendihaldust.
+   Võimaldada klassifikaatorite abil andmete liigitamist ja seostamist seostamiseks
+    väljaspool organisatsiooni vastutusala oleva informatsiooniga.
+   Võimaldada koguda infot probleemide ning nende ennetamiseks või lahendamiseks
+    mõeldud hooldustööde kohta.
+   Võimaldada lähetuste elektroonilist menetlemist, et tagada ülevaade ülikooli
+    töötajate lähetuses käimise kohta.
+   Tagada ülevaade ülikooli poolt sõlmitud lepingutest.
+   Võimaldada elektroonilist üliõpilaste küsitlemist õppeainete õpetamise küsimuses
+    ning võimaldada küsitlustulemuste analüüsimist.
+
+
+                                    1.1.3 Lausendid
+
+   Üliõpilane on isik.
+   Üliõpilane õpib ülikoolis.
+   Üliõpilane õpib õppekaval.
+   Üliõpilane kuulub õpperühma.
+   Vastuvõtu spetsialist koostab vastuvõtu plaani.
+   Ülikoolis õpetatakse õppeaineid.
+   Õppeaine kuulub õppekavasse.
+   Õppekava juht kinnitab õppekava.
+   Õppekava koosneb moodulitest.
+   Õppekavale toimuval vastuvõtul on piirarv.
+   Õppeaineid õpetatakse tunniplaani alusel.
+   Õppeainet õpetatakse mingil semestril.
+   Õppejõud õpetavad õppeaineid.
+   Kevadsemester on semester.
+   Sügissemester on semester.
+   Igas semestris on uus tunniplaan.
+   Tunniplaani koostaja koostab tunniplaani.
+   Tunniplaan koostatakse tunniplaani esildise alusel.
+   Tunniplaan kirjeldab (õppe) tunde.
+   Loeng on (õppe) tund.
+   Harjutus on (õppe) tund.
+   Praktikum on (õppe) tund.
+   Õppejõud viib läbi (õppe) tunde.
+
+                                           10
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+
+   (Õppe)tund toimub ruumis.
+   Õppejõul on vastuvõtuaeg.
+   Vastuvõtuaeg toimub ruumis.
+   Üliõpilane registreerub vastuvõtuajale.
+   Üliõpilane koostab õpingukava.
+   Tüüpõpingukava on aluseks õpingukava koostamisele.
+   Õpingukava sisaldab õppeaineid.
+   Tüüpõpingukava sisaldab õppeaineid.
+   Õppejõud kinnitab üliõpilase poolse õppeaine deklareerimise.
+   Õppejõud tühistab üliõpilase poolse õppeaine deklareerimise.
+   Õppejõud põhjendab õpetamisest keeldumist.
+   Dekanaat kontrollib õpingukava vastavust reeglitele.
+   Õppeaine õppimise käigus toimuvad teadmiste kontrollid.
+   Üliõpilane osaleb teadmiste kontrollil.
+   Teadmiste kontrollil osalemisel on tulemus.
+   Teadmiste kontrolli tulemus on õppetulemus.
+   Õppejõud fikseerib õppetulemuse.
+   Üliõpilane koostab lõputöö.
+   Õppejõud juhendab lõputööd.
+   Bakalaureusetöö on lõputöö.
+   Magistritöö on lõputöö.
+   Doktoritöö on lõputöö.
+   Õppejõud on ülikooli töötaja.
+   Dekanaadi sekretär on ülikooli töötaja.
+   Dekanaadi juhataja on ülikooli töötaja.
+   Ülikooli töötaja on isik.
+   Ülikool töötaja töötab struktuuriüksuses.
+   Õppeosakond on struktuuriüksus.
+   Struktuuriüksusele esitatakse arve.
+   Raamatupidaja registreerib arve.
+   Struktuuriüksus tasub arve.
+   Struktuuriüksus väljastab arve.
+   Ülikool omab põhivara.
+   Struktuuriüksus väljastab ostutellimuse.
+   Ülikooli valduses on hooned.
+   Hooned sisaldavad ruume.
+   Dokumentide haldur registreerib uue dokumendi.
+   Õppeaine kirjeldus on dokument.
+   Õppekava kirjeldus on dokument.
+   Klassifikaatorite haldur registreerib uue klassifikaatori väärtuse.
+   Töötaja registreerib probleemi.
+
+
+                                             11
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+   IT-administraator lahendab probleemi.
+   Hooldustöötaja lahendab probleemi.
+   Hooldustöötaja registreerib hooldustöö.
+   Õppekorralduse spetsialist registreerib õppeaine.
+   Juhtkonna esindaja vaatab aruannet üliõpilaste eksmatrikuleerimise kohta.
+   Instituudi direktor kinnitab lähetuse.
+   Personalihaldur koostab töölepingu.
+   Tööleping on leping.
+   Uudistaja vaatab õppeaineid.
+   Uudistaja vaatab õppekavu.
+   Õppekorralduse spetsialist analüüsib küsitluse tulemusi.
+
+
+                                  1.1.4 Põhiobjektid
+
+   Isik
+   Üliõpilane
+   Vastuvõtu plaan
+   Õppekaval õppimine
+   Õpperühm
+   Õppeaine
+   Õppekava
+   Tunniplaani esildis
+   Tunniplaan
+   Vastuvõtuaeg
+   Õpingukava
+   Õppetulemus
+   Lõputöö
+   Töötaja
+   Struktuuriüksus
+   Arve
+   Põhivara
+   Ostutellimus
+   Ruum
+   Dokument
+   Klassifikaator
+   Probleem
+   Hooldustöö
+   Lähetus
+   Leping
+   Küsitlus
+
+
+                                          12
+  Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+
+
+             1.1.5 Mõned põhiprotsessid ja neid käivitavad sündmused
+
+  Tabel 1 toob välja süsteemi mõned põhiprotsessid ning iga sellise protsessi kohta üks või
+  rohkem sündmust, mis tingivad selle protsessi käivitumise.
+  Tabel 2: Protsesside ja sündmuste vastavustabel.
+      Põhiprotsess                     Sündmused, mis selle põhiprotsessi käivitavad
+Ülikooliga seotud isiku   Ülikool saab teada isikust, kes hakkab seal õppima või töötama
+registreerimine
+Üliõpilase                Üliõpilane on täitnud vastuvõtutingimused ja on ülikooli mingile
+immatrikuleerimine        õppekavale õppima vastu võetud
+Üliõpilase                Üliõpilane soovib isiklikel põhjustel õppetöö ajutiselt katkestada
+akadeemilisele
+puhkusele minemine
+Üliõpilase                 Üliõpilane täidab õppekava täies ulatuses ja saab diplomi ning
+eksmatrikuleerimine          õppeprorektor, doktorantide puhul teadusprorektor, annab
+                             korralduse üliõpilane eksmatrikuleerida.
+                           Üliõpilane esitab isikliku avalduse eksmatrikuleerimiseks ning
+                             õppeprorektor, doktorantide puhul teadusprorektor, annab
+                             korralduse üliõpilane eksmatrikuleerida.
+                           Üliõpilane ei jõua õppetöös edasi ning õppeprorektor,
+                             doktorantide puhul teadusprorektor, annab korralduse üliõpilane
+                             eksmatrikuleerida.
+                           Üliõpilane ei võta õppetööst osa ning õppeprorektor,
+                             doktorantide puhul teadusprorektor, annab korralduse üliõpilane
+                             eksmatrikuleerida.
+                           Üliõpilase õppekoht kaob ning õppeprorektor, doktorantide puhul
+                             teadusprorektor, annab korralduse üliõpilane eksmatrikuleerida.
+                           Üliõpilane käitub ebaväärikalt ning õppeprorektor, doktorantide
+                             puhul teadusprorektor, annab korralduse üliõpilane
+                             eksmatrikuleerida.
+                           Üliõpilane sureb ning õppeprorektor, doktorantide puhul
+                             teadusprorektor, annab korralduse üliõpilane eksmatrikuleerida.
+Vastuvõtu plaani          Juhtkond nõustub järgmise aasta vastuvõtu plaaniga
+kinnitamine
+Õpperühma                 On möödunud tähtaeg, milleks ülikooli vastuvõetud üliõpilased
+moodustamine              peavad ülikooli teavitama oma soovist õppimist alustada
+Õppeaine loomine          Õppeainet õpetama hakkava instituudi ettepanekul ja
+                          õppekavakomisjoni heakskiidul on õppeosakond otsustanud lisada
+                          õppekavasse uue õppeaine
+Õppekava koostamine       Õppekava potentsiaalselt õpetama hakkavalt instituudilt saabub
+
+                                             13
+  Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+
+      Põhiprotsess                     Sündmused, mis selle põhiprotsessi käivitavad
+                          teaduskonnale ettepanek uue õppekava loomiseks
+Õppekava muutmine         Õppekava juhilt saabub teaduskonnale ettepanek teha õppekavasse
+                          muudatused
+Õppekava kinnitamine      Õppekava juht esitab koostatud õppekava kinnitamiseks teaduskonna
+                          nõukogule
+Õppekava sulgemine        Kuna õppekava alusel õppimiseks ei leidu piisavalt huvilisi või pole
+                          õppekava õpetamiseks enam piisavalt vahendeid, siis otsustatakse
+                          õppekava juhi ettepanekul õppekava sulgeda
+Tunniplaani esildise      Lõpeb uue semestri tunniplaani jaoks sisendi küsimise periood
+kinnitamine
+Tunniplaani koostamine    Instituudid esitavad õppeosakonnale tunniplaani esildised järgneva
+                          semestri õppetöö korraldamiseks
+Vastuvõtuaegade           Algab semestri õppetöö
+väljakuulutamine
+Õpingukava koostamine Algab semestri õppetöö
+Õpingukava kinnitamine Saabub punane joon, millal lõpeb üliõpilaste õppetöö alane liikumine
+                        ning mille ajaks peavad olema õpingukavad esitatud
+Teadmiste kontrolli     Kuulutatakse välja üliõpilaste teadmiste kontroll mingis õppeaines
+väljakuulutamine
+Õppetulemuse            Lõppes üliõpilaste teadmiste kontrolli tulemuste hindamine
+registreerimine
+Lõputöö teema           Saabub lõputöö teemade deklareerimise tähtaeg ja üliõpilane leidis
+deklareerimine          endale juhendaja
+Lõputöö kaitsmine       Üliõpilane täitis õppekavas esitatud nõuded ja esitas lõputöö
+                        kaitsmiseks
+Töötaja töölevõtmine    Kuulutatakse välja konkurss vabadele ametikohtadele
+Struktuuriüksuse        Ülikooli nõukogule esitatakse taotlus uue struktuuriüksuse loomiseks
+moodustamine
+Struktuuriüksuse töö    Ülikooli nõukogule esitatakse taotlus struktuuriüksuse töö lõpetada
+lõpetamine
+Arve väljastamine       Struktuuriüksus on osutanud kellelegi teenust
+Saabunud arve           Struktuuriüksus on ostnud õppe- või teadustöö tarvis kaupu või
+tasumine                teenuseid
+Põhivara arvele võtmine Ülikooli käsutusse saabub uus vara
+Põhivara maha           Ülikooli käsutuses olevat vara enam ei eksisteeri, s.t vara on hävitatud
+kandmine                või hävinud, kadunud jms
+Ostutellimuse           Struktuuriüksus vajab oma tööks mingit vara
+väljastamine
+struktuuriüksuse poolt
+Uue ruumi               Lõppes õppehoone renoveerimine või valmis uus õppehoone ja selle
+kasutuselevõtt          tulemusena valmis uus õpperuum
+
+
+                                             14
+  Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+      Põhiprotsess                     Sündmused, mis selle põhiprotsessi käivitavad
+Dokumendi                 Ülikoolile saadetakse või ülikooli siseselt tekib uus dokument
+registreerimine
+Klassifikaatori           Võetakse kasutusele uus klassifikaatori väärtus
+registreerimine
+Probleemi                 Tekib mõni ülikooli taristut puudutav probleem, millest ülikoolile
+registreerimine           teada antakse
+Hooldustöö                Planeeritakse viia läbi ülikooli taristu korraline või erakorraline
+registreerimine           hooldamine
+Lähetuse                  Ülikooli töötaja soovib osaleda teaduskonverentsil või külastada
+registreerimine           mõnda teist ülikooli
+Lepingu registreerimine   Ülikool sõlmib uue koostöölepingu mõne teise ülikooliga,
+                          teadusasutusega või ettevõttega
+Küsitlustulemuste         Küsitlusperiood lõpeb
+töötlemine enne
+avaldamist
+
+
+                                     1.1.6 Tegutsejad
+
+     Uudistaja (tuvastamata veebikülaline)
+     Üliõpilane
+     Õppejõud
+     Dekanaadi sekretär
+     Vastuvõtuspetsialist
+     Õppekava juht
+     Õppekorralduse spetsialist
+     Tunniplaani koostaja
+     Dekanaadi juhataja
+     Juhtkonna esindaja
+     Instituudi direktor
+     Klassifikaatorite haldur
+     Dokumentide haldur
+     Raamatupidaja
+     Personalihaldur
+     IT-administraator
+     Hooldustöötaja
+
+
+
+
+                                              15
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+
+                                    1.1.7 Asukohad
+
+   Uudistajad võivad kasutada ülikooli kodulehte mistahes internetiühendusega maailma
+    punktist kasutades statsionaarset arvutit või nutiseadet.
+   Üliõpilased kasutavad ülikooli õpperuume, sealhulgas arvutiklasse. Samuti kasutavad
+    nad isiklikku ja tööarvutit ning nutiseadmeid.
+   Ülikooli töötajad töötavad ülikoolis neile spetsiaalselt ettenähtud ruumides. Igale
+    töötajale on ettenähtud oma arvuti. Nad võivad oma tööarvutiga ühenduda ka
+    isiklikust arvutist kaugtöölaua ühenduse kaudu.
+
+
+
+                 1.1.8 Terviksüsteemi tükeldus allsüsteemideks
+
+Järgnevalt esitatakse infosüsteemi jaotus kolme erinevat liiki allsüsteemideks.
+
+Organisatsiooni sisesed pädevusalad.
+ Õppejõu pädevusala
+ Dekanaadi sekretäri pädevusala
+ Dekanaadi juhataja pädevusala
+ Vastuvõtuspetsialisti pädevusala
+ Õppekava juhi pädevusala
+ Õppekorralduse spetsialisti pädevusala
+ Tunniplaani koostaja pädevusala
+ Juhtkonna esindaja pädevusala
+ Instituudi direktori pädevusala
+ Klassifikaatorite halduri pädevusala
+ Dokumentide halduri pädevusala
+ Raamatupidaja pädevusala
+ Personalihalduri pädevusala
+ IT-administraatori pädevusala
+ Hooldustöötaja pädevusala
+
+Organisatsiooni välised pädevusalad.
+ Uudistaja pädevusala
+ Üliõpilase pädevusala (üliõpilane kui klient)
+
+Tabel 3 esitab sisulised funktsionaalsed allsüsteemid ja nende teenindatavad registrid
+(seotud organisatsiooni põhitegevusega).
+
+
+
+
+                                           16
+Andmebaasi näidisprojekt (2025)                                             © Erki Eessaar
+
+Tabel 3 Sisulised allsüsteemid.
+             Funktsionaalne allsüsteem                  Register, mida see funktsionaalne
+                                                              allsüsteem teenindab
+ Üliõpilaste funktsionaalne allsüsteem               Üliõpilaste register
+ Vastuvõtu plaanide funktsionaalne allsüsteem        Vastuvõtu plaanide register
+ Õppekaval õppimiste funktsionaalne allsüsteem       Õppekaval õppimiste register
+ Õpperühmade funktsionaalne allsüsteem               Õpperühmade register
+ Õppeainete funktsionaalne allsüsteem                Õppeainete register
+ Õppekavade funktsionaalne allsüsteem                Õppekavade register
+ Tunniplaani esildiste funktsionaalne allsüsteem     Tunniplaani esildiste register
+ Tunniplaanide funktsionaalne allsüsteem             Tunniplaanide register
+ Vastuvõtuaegade funktsionaalne allsüsteem           Vastuvõtuaegade register
+ Õpingukavade funktsionaalne allsüsteem              Õpingukavade register
+ Õppetulemuste funktsionaalne allsüsteem             Õppetulemuste register
+ Lõputööde funktsionaalne allsüsteem                 Lõputööde register
+ Küsitluste funktsionaalne allsüsteem                Küsitluste register
+
+Tabel 4 esitab administratiivsed funktsionaalsed allsüsteemid ja nende teenindatavad
+registrid (võivad olla kasutusel paljudes erinevate eesmärkide ja tegevusaladega
+organisatsioonides).
+
+Tabel 4 Administratiivsed allsüsteemid.
+            Funktsionaalne allsüsteem                  Register, mida see funktsionaalne
+                                                             allsüsteem teenindab
+Isikute funktsionaalne allsüsteem                  Isikute register
+Töötajate funktsionaalne allsüsteem                Töötajate register
+Struktuuriüksuste funktsionaalne allsüsteem        Struktuuriüksuste register
+Arvete funktsionaalne allsüsteem                   Arvete register
+Põhivarade funktsionaalne allsüsteem               Põhivarade register
+Ostutellimuste funktsionaalne allsüsteem           Ostutellimuste register
+Ruumide funktsionaalne allsüsteem                  Ruumide register
+Dokumentide funktsionaalne allsüsteem              Dokumentide register
+Klassifikaatorite funktsionaalne allsüsteem        Klassifikaatorite register
+Probleemide funktsionaalne allsüsteem              Probleemide register
+Hooldustööde funktsionaalne allsüsteem             Hooldustööde register
+Lähetuste funktsionaalne allsüsteem                Lähetuste register
+Lepingute funktsionaalne allsüsteem                Lepingute register
+
+Järgnevas töös vaatlen täpsemalt vastuvõtuaegade funktsionaalset allsüsteemi ja selle
+poolt kasutatavaid registreid.
+
+
+
+                                          17
+Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+
+
+
+    1.2 Vastuvõtuaegade funktsionaalse allsüsteemi eskiismudelid
+
+Järgnevalt esitatakse eskiismudelid, mida detailanalüüsi käigus täpsustatakse ja
+täiendatakse.
+
+                                   1.2.1 Eesmärgid
+
+   Võimaldada õppejõududel elektrooniliselt registreerida vastuvõtuaegu.
+   Võimaldada õppejõududel saada ülevaade enda vastuvõtuaegadest ning nendele
+    registreerinud üliõpilastest.
+   Võimaldada õppejõul tühistada vastuvõtuaegu.
+   Võimaldada        üliõpilastel elektrooniliselt     registreeruda     konkreetsetele
+    vastuvõtuaegadele.
+   Võimaldada üliõpilastel saada ülevaade vastuvõtuaegadest, kuhu ta on ennast
+    registreerinud.
+   Vähendada 50% aega, mille jooksul peavad üliõpilased vastuvõtuajal vastuvõtu ruumi
+    ukse taga ootama.
+
+
+
+
+                                          18
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+
+                    1.2.2 Seosed pädevusalade ja registritega
+
+Joonis 1 esitab paketidiagrammina vastuvõtuaegade funktsionaalse allsüsteemi kasutuse
+pädevusalade poolt ja selle allsüsteemi poolt kasutatavad registrid.
+
+
+
+
+Joonis 1 Vastuvõtuaegade funktsionaalse allsüsteemi seosed pädevusalade ja registritega.
+
+
+
+                   1.2.3 Allsüsteemi funktsionaalsed nõuded
+
+Allsüsteemi funktsionaalsete nõuete esitamiseks kasutatakse käesolevas töös
+kasutusjuhtude mudelit. Käesolevas peatükis esitatakse kasutusjuhtude mudel eskiisi
+täpsusega, mis tähendab, et kasutusjuhtude tekstikirjeldused on kõrgtaseme formaadis.
+
+Joonis 2 esitatud kasutusjuhtude diagrammil on värvidel järgmine tähendus.
+ Kollasega on tähistatud põhikasutusjuhud.
+ Oranžiga on tähistatud abistavad kasutusjuhud (sisuliselt kasutusjuhu fragmendid),
+   mis on kirja pandud selleks, et mitte kirjeldada mitmekordselt erinevates
+   kasutusjuhtudes esinevat ühesugust funktsionaalsust.
+
+
+
+
+                                          19
+Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+
+
+
+Joonis 2 Vastuvõtuaegade funktsionaalse allsüsteemi kasutusjuhtude diagramm.
+Järgnevalt esitatakse kasutusjuhtude tekstikirjeldused kõrgtaseme formaadis.
+
+
+Kasutusjuht: Tuvasta kasutaja
+Tegutsejad: Üliõpilane, õppejõud
+Kirjeldus: Subjekt identifitseerib ennast. Selleks määrab subjekt oma rolli süsteemis ja
+sisestab kasutajanime ning parooli. Süsteem autendib subjekti, st kontrollib subjekti
+väidetavat identiteeti ja kontrollib kas subjekti seisund lubab süsteemi kasutada. Kui
+subjekt on autenditud (isik on tuvastatud ja identiteet kontrollitud), siis lubatakse subjekt
+süsteemi siseneda, vastasel juhul mitte. Lisaks autoriseeritakse subjekt, andes talle
+juurdepääsu infosüsteemi objektidele.
+
+                                            20
+Andmebaasi näidisprojekt (2025)                                             © Erki Eessaar
+
+
+Märkus: Kasutusjuhtu "Tuvasta kasutaja" kasutatakse kõikides funktsionaalsetes
+allsüsteemides.
+
+Kasutusjuht: Otsi enda aktiivseid vastuvõtte
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud otsib endaga seotud aktiivseid vastuvõtte. Need on vastuvõtud, mis
+toimuvad vastuvõtu lisamise ajaga samal kuupäeval või tulevikus.
+
+Kasutusjuht: Paku välja vastuvõtt
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud pakub välja kuupäeva, millal ta saab üliõpilasi vastu võtta ning anda
+neile konsultatsiooni õppetööga seotud küsimustes. Iga vastuvõtuga koos võib ta
+registreerida ka vabas vormis kommentaari, milles selgitab konkreetse vastuvõtu
+eesmärke.
+
+Kasutusjuht: Lisa vastuvõtuaeg
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud pakub välja vastuvõtu kuupäeva konkreetsed kellaajad, millal ta saab
+üliõpilasi vastu võtta. Igale kellaajale saab konsultatsiooniks registreeruda maksimaalselt
+üks üliõpilane. See üliõpilane võib aga esitada üliõpilaste rühma, kes tulevad üheskoos
+konsultatsioonile.
+
+Kasutusjuht: Tühista vastuvõtuaeg
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud kustutab vastuvõtuaja, sest ta ei saa mingil tööalasel või isiklikul
+põhjusel ajal sellel üliõpilastele konsultatsiooni anda. Kui üliõpilane on juba ennast sellele
+ajale registreerinud, siis saadab süsteem üliõpilasele sellekohase teate.
+
+Kasutusjuht: Paranda vastuvõttu
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud parandab vastuvõtuga seotud kommentaari või ruumi, kus vastuvõtt
+toimub.
+
+Kasutusjuht: Õppejõud, vaata oma vastuvõtte
+Tegutsejad: Õppejõud
+Kirjeldus: Õppejõud vaatab kõiki temaga seotud vastuvõtte. Süsteem esitab erinevalt
+vastuvõtud, mis on veel toimumata ja vastuvõtud, mis on juba toimunud. Õppejõud valib
+konkreetse vastuvõtu ning vaatab sellega seotud vastuvõtuaegu, nendele registreerunud
+üliõpilasi ning üliõpilaste poolt registreerimisel sisestatud kommentaare.
+
+
+
+
+                                            21
+Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+
+
+Kasutusjuht: Otsi enda aktiivseid vastuvõtule tulekuid
+Tegutsejad: Üliõpilane
+Kirjeldus: Üliõpilane otsib endaga seotud seotu aktiivseid vastuvõtule tulekuid. Need
+tulekud on seotud vastuvõtuaegadega, mille algus on tulevikus või mis algavad vaatamise
+hetkel.
+
+Kasutusjuht: Registreeri vastuvõtule tulek
+Tegutsejad: Üliõpilane
+Kirjeldus: Üliõpilane valib õppejõu, kelle vastuvõtule ta soovib tulla. Kui õppejõul on mõni
+tulevikus toimuv vastuvõtt, siis saab üliõpilane valida selle vastuvõtu ning näha selle
+vastuvõtuga seotud vabu vastuvõtuaegu. Üliõpilane saab ennast registreerida vabale
+vastuvõtuajale ning sisestada soovi korral kommentaari, kus selgitab vastuvõtule tuleku
+põhjuseid.
+
+Kasutusjuht: Üliõpilane, vaata oma vastuvõtuaegu
+Tegutsejad: Üliõpilane
+Kirjeldus: Üliõpilane vaatab kõiki vastuvõtuaegu, millele ta on ennast registreerinud.
+Süsteem esitab erinevalt vastuvõtuajad, mis algavad tulevikus ja vastuvõtuajad, mis on
+juba möödunud.
+
+Kasutusjuht: Tühista vastuvõtule tulek
+Tegutsejad: Üliõpilane
+Kirjeldus: Üliõpilane saab kustutada          oma    registreerimise   tulevikus   algavale
+vastuvõtuajale.
+
+
+                   1.2.4 Allsüsteem mittefunktsionaalsed nõuded
+
+Tabel 5 esitab vaadeldava allsüsteemi mittefunktsionaalsed nõuded.
+Tabel 5 Allsüsteemi mittefunktsionaalsed nõuded.
+        Tüüp                                     Nõude kirjeldus
+modelleerimis-keel UML.
+serveri tarkvara      Süsteem       peab        andmete        hoidmiseks        kasutama
+                      SQL-andmebaasisüsteemi abil loodud andmebaasi. Loodava tarkvara
+                      näol on tegemist on äritarkvaraga, mis kasutab tööks struktureeritud
+                      andmeid ning neid andmeid ei hakka olema väga palju (räägime
+                      maksimaalselt kümnest tuhandest uuest reast aastas). Seega puudub
+                      vajadus mõne NoSQL süsteemi kasutamise järele. Serverite
+                      operatsioonisüsteemiks peaks olema Linux, et vähendada süsteemi
+                      maksumust. Andmebaasisüsteemina on soovitav kasutada
+
+
+                                           22
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+       Tüüp                                    Nõude kirjeldus
+                   PostgreSQLi, kuna see on avatud lähtekoodiga, seda pakutakse
+                   tasuta, see jälgib küllaltki hästi SQL standardit, see pakub häid
+                   võimalusi andmebaasi programmeerijale ning sellele on suur
+                   kasutajate kogukond (st abi ja tuge pole keeruline leida).
+arendusvahendid    Modelleerimisvahendina tuleks kasutada organisatsioonile hangitud
+                   CASE tarkvara Enterprise Architect või Rational Rose. Prototüübi
+                   koostamiseks kasutatakse töölaua andmebaasisüsteemi MS Access
+                   või LibreOffice Base, kuhu on integreeritud kasutajaliidese ehitamise
+                   vahendid.
+
+                   Töötavas süsteemis peab üliõpilastele mõeldud kasutajaliides olema
+                   igal juhul veebipõhine. Töötajatele mõeldud rakendus võib olla
+                   kahekihiline, kus kasutaja arvutis on rakendus ning see suhtleb üle
+                   arvutivõrgu serveril paikneva andmebaasisüsteemiga. Soovi korral on
+                   võimalik selle jaoks MS Accessis või LibreOffice Base abil tehtud
+                   prototüüpi evolutsioneerida nii, et kasutatakse nendes loodud
+                   kasutajaliidest, kuid andmebaas on serveril.
+keel               Süsteemi kasutajaliides ja dokumentatsioon peavad olema eesti
+                   keeles. Süsteem tuleks üles ehitada nii, et ei oleks väga raske lisada
+                   kasutajaliidesesse uusi keeli (inglise keel).
+kasutajaliides     Kasutajaliidese värvivalikus tuleb kasutada Tallinna Tehnikaülikooli
+                   tunnusgraafika värve Pantone 221 CV (kirsipunane) ja Pantone Cool
+                   Gray 8 (terashall).
+
+                   Nõuded kasutajaliidese ülesehitusele.
+                    Ülesehituse põhimõtteid tuleb järjekindlalt järgida.
+                    Rakenduses peab olema peavorm või pealehekülg, kust saab
+                      töökohaga seotud tegevuste juurde edasi liikuda.
+                    Välisvõtme väärtuste registreerimiseks tuleb kasutada liitbokse
+                      või hüpikaknaid.
+                    Klassifikaatorite väärtuste valimisel tuleb kasutajale koodi asemel
+                      näidata nimetust.
+                    Kasutajaliideses ei näidata kasutajatele surrogaatvõtme
+                      väärtuseid.
+                    Kohustuslikud sisestusväljad tuleb tähistada (nt lisades lipikule *).
+                    Andmete lugemiseks ning andmete muutmiseks mõeldud väljad
+                      peavad erinevalt välja nägema (nt olema erineva taustavärviga).
+                    Väljad peavad olema joondatud.
+                    Kuupäeva ja ajatempli valimiseks tuleb esitada kalendrivalik.
+                    Kalendrivalikus peab nädala esimene päev olema esmaspäev.
+
+
+                                         23
+Andmebaasi näidisprojekt (2025)                                               © Erki Eessaar
+
+       Tüüp                                       Nõude kirjeldus
+                      Kui kalendrivalikus on tunnid ja minutid, siis ei ole seal sekundeid.
+                      Kuupäevad tuleb esitada formaadis DD.MM.YYYY
+                      Kellaajad tuleb esitada formaadis HH24:MI:SS
+                      Ajatemplid tuleb esitada formaadis DD.MM.YYYY HH24:MI:SS
+                      Tegevused, mida süsteem saab ise teha (nt kindlaks tegema, kes
+                       andmed registreeris), peab tegema süsteem ilma kasutajalt
+                       tagasiside küsimisega tülitamata.
+                      Kõikides olemite nimekirjades tuleb esitada selline hulk andmeid,
+                       et nende andmete alusel oleks võimalik olemeid üksteisest
+                       üheselt eristada ning et need andmed oleksid konkreetse kasutaja
+                       jaoks mõistetavad ja sisukad.
+                      Andmete sisestamiseks ja vaatamiseks mõeldud väljade juures
+                       peab olema võimalikult arusaadavalt ja täielikult välja toodud
+                       nende andmete tähendus.
+                           1. Mõõtmistulemusi või rahasummasid esitavate atribuutide
+                               väärtuste juures tuleb esitada ühik – rahasummade puhul
+                               valuuta tähis ning mõõtmistulemuste korral mõõtühik.
+                           2. Hinna/maksumuse välja juures tuleb öelda, kas väärtus
+                               sisaldab ka maksudeks minevat osa.
+                      Kasutajale esitatavad andmed peavad olema sorteeritud viisil, mis
+                       võimaldab tal vajalikud andmed lihtsalt üles leida või peab olema
+                       kasutajal võimalik sorteerimiseeskirja ise muuta.
+andmebaasi-        Päringu tegemisel ei tohi vastuse kuvamine võtta aega rohkem kui 5
+operatsioonide     sekundit. Andmete muudatuse salvestamine süsteemi poolt ei tohi
+töökiirus          võtta aega rohkem kui 5 sekundit.
+töökindlus         Vastuvõtuaegade haldamise süsteemi tõrgeteta töö on hädavajalik
+                   organisatsiooni tõrgeteta töötamiseks. Tõrked tekitaksid suurt
+                   praktilist kahju ja ka moraalset kahju.
+
+                   Taasteaja siht (recovery time objective)("maksimaalne talutav süsteemi
+                   käideldamatuse kestus pärast intsidenti" (AKIT)): Juhul kui tekib veaolukord ja
+                   andmebaas või rakendus kahjustub, siis tuleb need taastada viimase
+                   tehtud varukoopia põhjal.
+                    Õppetöö perioodil (15. august – 21. juuni (otspunktid kaasa
+                       arvatud)) tuleb seda teha kahe tunni jooksul peale rikke põhjuse
+                       kõrvaldamist ja serveri töökorda saamist.
+                    Suvisel perioodil (22. juuni – 14. august (otspunktid kaasa
+                       arvatud)) tuleb seda teha kahekümne nelja tunni jooksul peale
+                       rikke põhjuse kõrvaldamist ja serveri töökorda saamist.
+
+
+
+                                           24
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+
+       Tüüp                                     Nõude kirjeldus
+                   Taasteseisu siht (recovery point objective)("intsidendijärgsele taastele
+                   seatud eesmärk ajahetkena, millele eelnevad andmed peavad olema täielikult
+                   taastatud (näiteks eelmine tund, eelmine tööpäev, eelmine nädal)"(AKIT) ):
+                   Maksimaalselt võivad kaotsi minna viimase 24 tunni andmed, st. et
+                   sellele eelnevad andmed peavad olema täielikult taastatud.
+varukoopiad        Kuna hallatavad andmed on organisatsiooni jaoks väga olulised, siis
+                   tuleb vähemalt kord päevas teha andmetest varukoopia ja säilitada
+                   koopiaid mitmes erinevas asukohas.
+turvalisus         Andmebaasis olevad andmed on mõeldud asutusesiseseks
+                   kasutamiseks. See tähendab, et juurdepääs teabele on lubatav
+                   juurdepääsu taotleva isiku õigustatud huvi korral.
+
+                   Kui parooli hoitakse andmebaasis, siis ei tohi see olla avatekst, vaid
+                   peab olema parooli räsiväärtus, mis on leitud selle parooli jaoks
+                   genereeritud soola kasutades. Räsiväärtuse leidmiseks ei tohi
+                   kasutada MD5 või SHA-1 räsifunktsioone, sest need on juba liiga
+                   ebaturvalised ja võimaldavad liiga lihtsalt algset parooli teada saada
+                   ning selle kaudu kasutaja identiteet varastada.
+
+                   Kasutajanimed peavad olema tõstutundetud. Seega, näiteks:
+                       kui süsteemis on registreeritud kasutajanimi Kasutaja1, siis ei
+                          saa registreerida kasutajanime kasutaja1,
+                       kui süsteemis on registreeritud kasutajanimi Kasutaja1, siis
+                          kasutaja tuvastamisel loetakse see samaväärseks sisestatud
+                          kasutajanimega kasutaja1.
+andmekvaliteet     Rakenduses võib andmeid kontrollida, andmebaasis peab andmeid
+                   kontrollima. Andmete reeglitele vastavust tuleb eelistatult kontrollida
+                   andmebaasi tasemel loodud deklaratiivsete kitsendustega (PRIMARY
+                   KEY, UNIQUE, FOREIGN KEY, NOT NULL, CHECK). MS Accessi
+                   kasutamise korral võib CHECK kitsenduste asemel luua veeru- ja
+                   tabelitaseme valideerimisreegleid ning muuta veeru Allow Zero
+                   Length omadust. Iga valideerimisreegli kohta MS Accessis tuleb luua
+                   sisukas valideerimistekst.
+
+                   Igas tabelis tuleb deklareerida primaarvõti.
+andmebaasi-        Andmebaasiobjektide nimed peavad olema sisukad (selgitama
+objektide          andmebaasiobjekti tähendust) ja järjekindlad.
+nimetamine
+
+
+
+
+                                          25
+Andmebaasi näidisprojekt (2025)                                  © Erki Eessaar
+
+   1.2.5 Allsüsteemi kahe elementaarse äriprotsessi tegevusdiagrammid
+
+Joonis 3 esitab kasutusjuhu "Registreeri vastuvõtule tulek" protsessi kirjelduse
+tegevusdiagrammina.
+
+
+
+
+Joonis 3 Vastuvõtule tuleku registreerimise tegevusdiagramm.
+
+
+                                          26
+Andmebaasi näidisprojekt (2025)                                              © Erki Eessaar
+Joonis 4 esitab kasutusjuhu       "Tühista        vastuvõtule   tulek"   protsessi kirjelduse
+tegevusdiagrammina.
+
+
+
+
+Joonis 4 Vastuvõtule tuleku tühistamise tegevusdiagramm.
+
+
+
+
+                                             27
+Andmebaasi näidisprojekt (2025)                                          © Erki Eessaar
+
+                1.3 Vastuvõtuaegade registri eskiismudelid
+
+Järgnevalt esitatakse eskiismudelid, mida detailanalüüsi käigus täpsustatakse ja
+täiendatakse.
+
+
+                                   1.3.1 Eesmärgid
+
+Säilitada informatsiooni vastuvõtuaegade kohta sellises mahus, et oleks tagatud
+vastuvõtuaegade funktsionaalses allsüsteemis defineeritud eesmärkide täitmine.
+
+
+                      1.3.2 Registrit kasutavad pädevusalad
+
+Registrist loevad andmeid ja muudavad andmeid üliõpilased ja õppejõud.
+
+
+           1.3.3 Registrit teenindavad funktsionaalsed allsüsteemid
+
+Vastuvõtuaegade registri andmeid teenindab (loeb ja muudab) vastuvõtuaegade
+funktsionaalne allsüsteem.
+
+
+               1.3.4 Infovajadused, mida register aitab rahuldada
+
+   Nimekiri konkreetse õppejõu vastuvõttudest.
+   Nimekiri konkreetse vastuvõtuga seotud vastuvõtuaegadest.
+   Nimekiri konkreetse õppejõu vabadest vastuvõtuaegadest.
+   Nimekiri vastuvõtuaegadest, millele konkreetne üliõpilane on registreerunud.
+   Nimekiri vastuvõtuaegades, koos neile registreerinud üliõpilastega.
+
+
+
+                          1.3.5 Seosed teiste registritega
+
+Töötajate register – Töötajate registriga on vastuvõtuaeg seotud olemitüübi Töötaja
+kaudu. Vastuvõtuajal annab õppejõu ametis töötaja üliõpilastele konsultatsiooni.
+
+
+
+                                           28
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+Üliõpilaste register – Üliõpilaste registriga on vastuvõtuaeg seotud olemitüübi Üliõpilane
+kaudu. Üliõpilane registreerib ennast vastuvõtuajale.
+
+
+Ruumide register – Ruumide registriga on vastuvõtuaeg seotud olemitüübi Ruum kaudu.
+Vastuvõtt, mis ei toimu Internetis, toimub kindlas ruumis.
+
+
+                                   1.3.6 Ärireeglid
+
+Jõustatavad vastuvõtuaegade registri põhjal.
+ Igal õppejõul on null või rohkem vastuvõttu.
+ Iga vastuvõtuga on seotud null või rohkem vastuvõtuaega.
+ Ühelgi vastuvõtul ei tohi olla kaks või rohkem samasugust vastuvõtuaega.
+ Vastuvõtuajale registreeruv isik peab olema ülikoolis õppiv üliõpilane.
+ Igale vastuvõtuajale saab ennast registreerida maksimaalselt üks üliõpilane.
+ Ei ole piiranguid, kui mitmele vastuvõtuajale võib üliõpilane ennast samaaegselt
+   registreerida.
+ Ei saa lisada vastuvõttu, mis toimub varasemal kuupäeval, kui on vastuvõtu lisamise
+   aeg.
+ Ei saa lisada vastuvõtuaega, mis toimub samal kuupäeval kui vastuvõtuaja lisamise
+   kuupäev, kuid varasemal kellaajal, kui vastuvõtuaja lisamise kellaaeg.
+ Ei saa tühistada vastuvõttu, mis toimub samal kuupäeval või varasemal kuupäeval, kui
+   on vastuvõtu tühistamise aeg.
+ Ei saa tühistada vastuvõtuaega, mis toimub samal kuupäeval või varasemal kuupäeval,
+   kui on vastuvõtuaja tühistamise aeg.
+ Ei saa muuta vastuvõtte, mille kuupäev on varasem kui muutmise kuupäev.
+ Ei saa ennast registreerida vastuvõtuajale, mis algab varasemal ajal, kui on
+   vastuvõtule tuleku registreerimise aeg.
+ Ei saa tühistada enda vastuvõtule tulekut, mis algab varasemal ajal, kui on vastuvõtule
+   tuleku tühistamise aeg.
+ Kui vastuvõtt toimub Internetis, siis tuleb see kirjutada vastuvõtu kommentaari. Igal
+   vastuvõtul peab olema registreeritud vähemalt üks kahest – ruum või kommentaar.
+
+Jõustatavad teiste registrite põhjal, kuid vajalikud vastuvõtuaegade funktsionaalse
+allsüsteemi toimimiseks.
+ Süsteemis registreeritavateks isikuteks (sh üliõpilasteks ja õppejõududeks) saavad olla
+    vaid isikud, kellele on väljastatud Eesti Vabariigi isikukood.
+
+
+
+
+                                           29
+Andmebaasi näidisprojekt (2025)                                      © Erki Eessaar
+
+
+                   1.3.7 Registri kontseptuaalne eskiismudel
+
+Joonis 5 esitab esimese versiooni vastuvõtuaegade registri kontseptuaalse andmemudeli
+olemi-suhte diagrammist.
+
+
+
+
+Joonis 5 Vastuvõtuaegade registri kontseptuaalne eskiismudel.
+
+
+
+
+                                           30
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+
+
+                                2. Detailanalüüs
+Selles    peatükis    kirjeldatakse     detailselt  ja    mittetehniliselt   funktsionaalse
+allsüsteemi/registri paari, mille eskiismudelid esitati strateegilise analüüsi dokumendis.
+Registrite vaadet on laiendatud kõigi registritega, mida vastuvõtuaegade funktsionaalne
+allsüsteem vajab toimimiseks.
+
+
+            2.1 Vastuvõtuaegade funktsionaalne allsüsteem
+
+Järgnevalt kirjeldatakse detailselt ja mittetehniliselt vastuvõtuaegade funktsionaalse
+allsüsteemi toimimist.
+
+
+            2.1.1 Allsüsteemi täpsustunud funktsionaalsed nõuded
+
+Allsüsteemi funktsionaalsete nõuete esitamiseks kasutatakse käesolevas töös
+kasutusjuhtude mudelit. Käesolevas peatükis esitatakse kasutusjuhtude tekstikirjeldused
+laiendatud formaadis.
+
+Vastuvõtuaegade funktsionaalse allsüsteemi kasutusjuhtude diagramm (vt joonis 2).
+
+Punasega viidatakse andmebaasioperatsioonidele, mis seisnevad ainult andmete
+lugemises. Sinisega viidatakse andmebaasioperatsioonidele, mis tegelevad andmebaasis
+andmete muutmisega.
+
+
+
+                          2.1.1.1 Kasutusjuht: Tuvasta kasutaja
+Primaarne tegutseja: Üliõpilane, õppejõud – (edaspidi subjekt).
+Osapooled ja nende huvid:
+ Üliõpilane, õppejõud: Soovivad siseneda süsteemi ja teha tegevusi neile antud
+    volituste piires.
+ Kõik ülikooli töötajad: Soovivad, et andmete volitusteta kasutuse tõttu ei saaks ülikool
+    majanduslikku ja mainekahju.
+Käivitav sündmus: Subjekt soovib süsteemi siseneda.
+Eeltingimused: Subjekt on süsteemis kasutajaks registreeritud.
+
+
+
+                                            31
+Andmebaasi näidisprojekt (2025)                                                © Erki Eessaar
+Järeltingimused: On tehtud kindlaks, kas subjektil on õigus süsteemi siseneda või mitte.
+Subjekt on autenditud ja talle on antud võimalus kasutada süsteemi talle antud volituste
+piires (subjekt on autoriseeritud).
+Stsenaarium (tüüpiline sündmuste järjestus):
+         1. Subjekt soovib siseneda süsteemi.
+         2. Süsteem palub subjektil ennast identifitseerida.
+         3. Subjekt identifitseerib ennast (määrates rolli ning sisestades kasutajanime ja
+         parooli).
+         4. Süsteem kontrollib, kas esitatud volitustõendiga (antud juhul parooliga) subjekti
+         andmed on süsteemis olemas ning kas ta on sobivas rollis ja seisundis (OP1.1).
+         5. Süsteem annab subjektile volituse süsteemi kasutada ja annab talle
+         juurdepääsu infosüsteemi objektidele.
+Subjekt võib üritada süsteemi siseneda kuni kolm korda.
+Laiendused (või alternatiivne sündmuste käik):
+5a. Kui süsteem ei leia esitatud volitustõendiga subjekti siis, ei saa subjekt õigust süsteemi
+kasutada.
+         1. Süsteem kuvab subjektile teate, et taolist kasutajat ei leidu ja ei anna talle
+         õigust süsteemi kasutada.
+
+
+                    2.1.1.2 Kasutusjuht: Otsi enda aktiivseid vastuvõtte
+Primaarne tegutseja: Õppejõud
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib võimalikult operatiivselt saada õppejõult konsultatsiooni.
+        Soovib, et ta peaks ootama õppejõu vastuvõtu ruumi ukse taga võimalikult vähe
+        aega.
+     Õppejõud: Soovib, et võimalikult paljud üliõpilased saaksid tulla vastuvõtule.
+        Soovib, et üliõpilased peaksid võimalikult vähe vastuvõtu ruumi ukse taga ootama
+        ning et vastuvõtt kulgeks võimalikult sujuvalt.
+Käivitav sündmus: Õppejõud soovib vaadata, lisada, muuta või tühistada enda aktiivset
+vastuvõttu või selle üksikut vastuvõtuaega.
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud.
+Järeltingimused: Õppejõuga seotud aktiivsed vastuvõtud on leitud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi vaadata, lisada, muuta või tühistada enda aktiivset
+        vastuvõttu või selle üksikut vastuvõtuaega.
+        2. Süsteem kuvab nimekirja otsingut tegeva õppejõuga seotud aktiivsetest
+        vastuvõttudest. Need on vastuvõtud, mis toimuvad vastuvõtu lisamise ajaga samal
+        kuupäeval või tulevikus. Nimekirjas esitatakse vastuvõtu kuupäev, vastuvõtu
+        toimumise koht – hoone ja ruum ning vastuvõtu kommentaar. Vastuvõtud on
+        sorteeritud kuupäeva järgi kahanevalt (OP2.1).
+
+                                             32
+Andmebaasi näidisprojekt (2025)                                    © Erki Eessaar
+       3. Õppejõud võib leitud vastuvõttude andmeid vastuvõtu kuupäeva ning
+       toimumise hoone ja ruumi alusel sorteerida või filtreerida.
+       4. Süsteem kuvab vastuvõtud soovitud järjekorras või piirab filtri alusel
+       vastuvõttude hulka (OP2.1).
+Laiendused (või alternatiivne sündmuste käik):
+2a – Kui õppejõul ei ole ühtegi seotud aktiivset vastuvõttu, siis ei kuva süsteem
+vastuvõttude andmeid.
+
+
+
+
+                          2.1.1.3 Kasutusjuht: Paku välja vastuvõtt
+Primaarne tegutseja: Õppejõud
+Osapooled ja nende huvid:
+ Üliõpilane: Soovib võimalikult operatiivselt saada õppejõult konsultatsiooni. Soovib, et
+    ta peaks ootama õppejõu vastuvõtu ruumi ukse taga võimalikult vähe aega.
+ Õppejõud: Soovib, et võimalikult paljud üliõpilased saaksid tulla vastuvõtule. Soovib,
+    et üliõpilased peaksid võimalikult vähe vastuvõtu ruumi ukse taga ootama ning et
+    vastuvõtt kulgeks võimalikult sujuvalt.
+Käivitav sündmus: Õppejõud soovib mingil kuupäeval konsulteerida üliõpilasi õppetööga
+seotud küsimustes.
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud. Ruum, kus vastuvõtt toimub
+ning õppejõud, kes võtab üliõpilasi vastu, on registreeritud.
+Järeltingimused: Vastuvõtt on registreeritud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi registreerida uue vastuvõtu.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        3. Õppejõud annab korralduse alustada uue vastuvõtu sisestamist.
+        4. Süsteem kuvab vastuvõtu sisestamise maketi. Süsteem kuvab ruumide
+        nimekirja (OP2.2).
+        5. Õppejõud valib vastuvõtu kuupäeva, vastuvõtu ruumi (kui vastuvõtt ei toimu
+        Internetis) ning sisestab vajadusel kommentaari (kohustuslik, kui vastuvõtt toimub
+        Internetis).
+        6. Süsteem salvestab andmed (OP2.3).
+Laiendused (või alternatiivne sündmuste käik):
+6a – Kui vastuvõtu kuupäev on varasem kui vastuvõtu lisamise kuupäev, siis vastuvõttu
+andmeid ei salvestata.
+
+
+                        2.1.1.4 Kasutusjuht: Lisa vastuvõtuaeg
+Primaarne tegutseja: Õppejõud
+Osapooled ja nende huvid:
+                                           33
+Andmebaasi näidisprojekt (2025)                                          © Erki Eessaar
+     Üliõpilane: Soovib võimalikult operatiivselt saada õppejõult konsultatsiooni.
+        Soovib, et ta peaks ootama õppejõu vastuvõtu ruumi ukse taga võimalikult vähe
+        aega.
+     Õppejõud: Soovib, et võimalikult paljud üliõpilased saaksid tulla vastuvõtule.
+        Soovib, et üliõpilased peaksid võimalikult vähe vastuvõtu ruumi ukse taga ootama
+        ning et vastuvõtt kulgeks võimalikult sujuvalt.
+Käivitav sündmus: Õppejõud soovib määrata konkreetsed kellaajad, millal ta saab
+üliõpilasi vastu võtta.
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud. Vastuvõtt on registreeritud.
+Järeltingimused: Vastuvõtuga seotud vastuvõtuaeg on registreeritud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi lisada uue vastuvõtuaja.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        3. Õppejõud on valinud aktiivse vastuvõtu, millele ta soovib lisada uue
+        vastuvõtuaja.
+        4. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade
+        andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed,
+        matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel
+        sisestatud kommentaarid (OP3.3).
+        5. Õppejõud sisestab vastuvõtuaja kellaaja.
+        6. Süsteem salvestab vastuvõtuaja andmed (OP3.4).
+Õppejõud võib korrata samme 5–6 nii mitu korda kui soovib.
+Laiendused (või alternatiivne sündmuste käik):
+3a – Kui õppejõul pole ühtegi aktiivset vastuvõttu, siis ei saa õppejõud vastuvõtuaega
+sisestada.
+6a – Kui vastuvõtt toimub samal kuupäeval, kui vastuvõtuaja lisamise aeg ning
+vastuvõtuaja kellaaeg on varasem, kui vastuvõtu lisamise kellaaeg, siis vastuvõtuaja
+lisamine ebaõnnestub.
+
+
+                           2.1.1.5 Kasutusjuht: Tühista vastuvõtuaeg
+Primaarne tegutseja: Õppejõud
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib saada võimalikult kiiresti informatsiooni ärajäävatest
+         vastuvõtuaegadest.
+     Õppejõud: Soovib tühistada vastuvõtuajad, millal tal ei ole võimalik üliõpilastele
+         konsultatsiooni anda.
+Käivitav sündmus: Õppejõud soovib tühistada vastuvõtuaja, sest ta ei saa mingil tööalasel
+või isiklikul põhjusel sellel ajal üliõpilastele konsultatsiooni anda.
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud. Vastuvõtt ja sellega seotud
+vastuvõtuaeg on registreeritud.
+
+                                           34
+Andmebaasi näidisprojekt (2025)                                             © Erki Eessaar
+Järeltingimused: Vastuvõtt ja kõik sellega seotud vastuvõtuajad ning vastuvõtule tulekud
+või üksik vastuvõtuaeg ja sellega seotud vastuvõtule tulek on kustutatud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi tühistada vastuvõtuaja.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        3. Õppejõud valib aktiivse vastuvõtu, milles sisalduva vastuvõtuaja ta soovib
+        tühistada.
+        4. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade
+        andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed,
+        matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel
+        sisestatud kommentaarid (OP3.3).
+        5. Õppejõud annab korralduse tühistada konkreetne vastuvõtuaeg.
+        6. Süsteem küsib, kas õppejõud soovib kindlasti vastuvõtuaega tühistada.
+        7. Õppejõud kinnitab oma soovi tühistada vastuvõtuaeg.
+        8. Süsteem saadab üliõpilasele, kes oli registreerunud tühistatud ajale selle kohta
+        e-posti sõnumi ning tühistab vastuvõtuaja (OP4.1).
+Õppejõud võib korrata samme 5–8 nii mitu korda kui soovib.
+Laiendused (või alternatiivne sündmuste käik):
+        9. Õppejõud avaldab soovi tühistada vastuvõtu.
+        10. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        11. Õppejõud valib aktiivse vastuvõtu, mille ta soovib tervikuna tühistada.
+        12. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud
+        vastuvõtuaegade andmed (OP3.2) ning vastuvõtuaegadele registreerinud
+        üliõpilaste nimed, matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele
+        registreerimisel sisestatud kommentaarid (OP3.3).
+        13. Õppejõud annab korralduse tühistada terve vastuvõtt.
+        14. Süsteem küsib, kas õppejõud soovib kindlasti vastuvõttu tühistada.
+        15. Õppejõud kinnitab oma soovi tühistada vastuvõtt.
+        16. Süsteem saadab üliõpilastele, kes olid registreerunud tühistatud vastuvõtule,
+        selle kohta e-posti sõnumi ning tühistab vastuvõtu (OP4.2).
+3a – Kui õppejõul pole ühtegi aktiivset vastuvõttu, siis ei saa õppejõud vastuvõtuaega
+tühistada.
+5a – Kui vastuvõtuga pole seotud ühtegi vastuvõtuaega, siis ei saa vastuvõtuaega
+tühistada.
+7a – Kui õppejõud siiski ei soovi vastuvõtuaega tühistada, siis süsteem ei tühista
+vastuvõtuaega.
+8a – Kui vastuvõtuaeg algab samal kuupäeval, kui on vastuvõtuaja tühistamise aeg, siis
+tühistamine ebaõnnestub.
+11a – Kui õppejõul pole ühtegi aktiivset vastuvõttu, siis ei saa õppejõud vastuvõttu
+tühistada.
+15a – Kui õppejõud siiski ei soovi vastuvõttu tühistada, siis süsteem ei tühista vastuvõttu.
+
+
+                                            35
+Andmebaasi näidisprojekt (2025)                                   © Erki Eessaar
+16a – Kui vastuvõtt toimub samal kuupäeval, kui on vastuvõtu tühistamise aeg, siis
+tühistamine ebaõnnestub.
+
+
+                         2.1.1.6 Kasutusjuht: Paranda vastuvõttu
+Primaarne tegutseja: Õppejõud
+Osapooled ja nende huvid:
+ Üliõpilane: Soovib saada korrektset informatsiooni vastuvõttude kohta, et leida
+    endale kõige sobivam vastuvõtuaeg.
+ Õppejõud: Soovib, et üliõpilastel oleks võimalikult täpne informatsioon vastuvõttude
+    kohta.
+Käivitav sündmus: Õppejõud avastas ebatäpsuse vastuvõtuga seotud kommentaaris,
+soovib täiendada kommentaari või soovib muuta ruumi, kus toimub vastuvõtt.
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud. Ruumi ja vastuvõtu andmed on
+registreeritud.
+Järeltingimused: Vastuvõtuga seotud kommentaar on muudetud või vastuvõtt on seotud
+uue ruumiga.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi parandada vastuvõtu andmeid.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        3. Õppejõud on valinud aktiivse vastuvõtu, mille andmeid ta soovib parandada.
+        4. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade
+        andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed,
+        matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel
+        sisestatud kommentaarid (OP3.3). Süsteem kuvab ruumide nimekirja (OP2.2).
+        5. Õppejõud valib vajadusel ruumide nimekirjast uue ruumi ning vajadusel
+        parandab kommentaari.
+        6. Süsteem salvestab vastuvõtu andmed (OP5.1).
+Laiendused (või alternatiivne sündmuste käik):
+3a – Kui õppejõul ei ole ühtegi aktiivset vastuvõttu, siis ei saa õppejõud vastuvõtu
+andmeid muuta.
+
+
+                   2.1.1.7 Kasutusjuht: Õppejõud, vaata oma vastuvõtte
+Primaarne tegutseja: Õppejõud
+    Üliõpilane: Soovib, et õppejõud oleksid teadlikud enda poolt välja kuulutatud
+       vastuvõttudest ning oleksid vastuvõtu ajal kohal ning valmis nende küsimustele
+       vastama.
+    Õppejõud: Soovib täpset ülevaadet enda välja kuulutatud vastuvõttudest, et olla
+       õigel ajal kohal ning anda üliõpilastele võimalikult head nõu.
+Osapooled ja nende huvid:
+Käivitav sündmus: Õppejõud soovib teada, milliseid vastuvõtte on ta välja kuulutanud.
+                                         36
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+Eeltingimused: Õppejõud on autenditud ja autoriseeritud. Õppejõuga seotud vastuvõtud
+ja nendega seotud vastuvõtuajad on registreeritud.
+Järeltingimused: On leitud kõik õppejõuga seotud vastuvõtud ning nendega seotud
+vastuvõtuajad ja vastuvõtule tulekud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Õppejõud avaldab soovi vaadata oma aktiivseid vastuvõtte.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtte".
+        3. Õppejõud valib konkreetse vastuvõtu.
+        4. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade
+        andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed,
+        matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel
+        sisestatud kommentaarid (OP3.3).
+Laiendused (või alternatiivne sündmuste käik):
+        5. Õppejõud avaldab soovi vaadata oma mitteaktiivseid vastuvõtte – need on
+        vastuvõtud, mis toimuvad vastuvõtu lisamise ajast varasemal kuupäeval.
+        6. Süsteem kuvab nimekirja mitteaktiivsetest vastuvõttudest. Nimekirjas
+        esitatakse vastuvõtu kuupäev ning vastuvõtu toimumise koht – hoone ja ruum.
+        Vastuvõtud on sorteeritud kuupäeva järgi kahanevalt (OP6.1).
+        7. Õppejõud valib konkreetse vastuvõtu.
+        8. Süsteem kuvab vastuvõtu andmed (OP3.1) ning sellega seotud vastuvõtuaegade
+        andmed (OP3.2) ning vastuvõtuaegadele registreerinud üliõpilaste nimed,
+        matriklinumbrid, e-posti aadressid ja vastuvõtuaegadele registreerimisel
+        sisestatud kommentaarid (OP3.3).
+6a – Kui õppejõul ei ole ühtegi seotud mitteaktiivset vastuvõttu, siis ei kuva süsteem
+vastuvõttude andmeid.
+
+
+               2.1.1.8 Kasutusjuht: Otsi enda aktiivseid vastuvõtule tulekuid
+Primaarne tegutseja: Üliõpilane
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib saada konsultatsiooni mingis õppetööga seotud küsimuses.
+     Õppejõud: Soovib anda konsultatsioone õppetööga seotud küsimustes, et
+        parandada õppe- ja teadustöö kvaliteeti.
+Käivitav sündmus: Üliõpilane soovib vaadata, lisada või tühistada enda aktiivset
+vastuvõtule tulekut.
+Eeltingimused: Üliõpilane on autenditud ja autoriseeritud.
+Järeltingimused: Üliõpilasega seotud aktiivsed vastuvõtule tulekud on leitud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Üliõpilane avaldab soovi vaadata, lisada või tühistada enda aktiivset vastuvõtule
+        tulekut.
+        2. Süsteem kuvab nimekirja otsingut tegeva üliõpilasega seotud aktiivsetest
+        vastuvõtule tulekutest. Need tulekud on seotud vastuvõtuaegadega, mille algus on
+                                            37
+Andmebaasi näidisprojekt (2025)                                               © Erki Eessaar
+       tulevikus või mis algavad vaatamise hetkel. Süsteem kuvab iga vastuvõtule tuleku
+       kohta vastuvõtu kuupäeva, vastuvõtuaja kellaaja, õppejõu ees- ja perenime,
+       õppejõu e-posti aadressi, hoone ja ruumi, kus vastuvõtt toimub, üliõpilase lisatud
+       kommentaari ning vastuvõtuga seotud kommentaari. Vastuvõtule tulekud on
+       sorteeritud kuupäeva alusel kahanevalt ning selle sees kellaaja alusel kahanevalt
+       (OP7.1).
+       3. Üliõpilane võib leitud vastuvõtule tulekute andmeid vastuvõtu kuupäeva kellaja,
+       õppejõu ees- ja perenime ning e-posti aadressi, hoone, ruumi ja kommentaari
+       alusel sorteerida või filtreerida.
+       4. Süsteem kuvab vastuvõtule tulekud soovitud järjekorras või piirab filtri alusel
+       vastuvõtule tulekute hulka (OP7.1).
+Laiendused (või alternatiivne sündmuste käik):
+2a – Kui üliõpilasel ei ole ühtegi seotud aktiivset vastuvõtule tulekut, siis ei kuva süsteem
+vastuvõtule tulekute andmeid.
+
+
+                     2.1.1.9 Kasutusjuht: Registreeri vastuvõtule tulek
+Primaarne tegutseja: Üliõpilane
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib saada konsultatsiooni mingis õppetööga seotud küsimuses.
+     Õppejõud: Soovib anda konsultatsioone õppetööga seotud küsimustes, et
+        parandada õppe- ja teadustöö kvaliteeti.
+Käivitav sündmus: Üliõpilane soovib tulla õppe jõu vastuvõtule, et arutada mingit
+õppetööga seotud küsimust.
+Eeltingimused: Üliõpilane on autenditud ja autoriseeritud. Vastuvõtt ja sellega seotud
+vastuvõtuajad on registreeritud.
+Järeltingimused: Üliõpilane on registreerinud ennast konkreetsele vastuvõtuajale.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Üliõpilane avaldab soovi enda vastuvõtule tuleku registreerida.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtule tulekuid".
+        3. Üliõpilane annab korralduse vastuvõtule tuleku registreerimise alustamiseks.
+        4. Süsteem kuvab õppejõudude nimekirja, kus on iga õppejõu kohta eesnimi,
+        perenimi ja e-posti aadress. Süsteem kuvab vaid sellised õppejõud, kellel on
+        vähemalt üks vaba vastuvõtuaeg. (OP7.2).
+        5. Üliõpilane valib õppejõu, kelle vastuvõtule ta soovib tulla.
+        6. Süsteem kuvab valitud õppejõu aktiivsed vastuvõtud – vastuvõtud, mis
+        toimuvad kas samal päeval või tulevikus. Süsteem kuvab kuupäeva, vastuvõtja
+        kommentaari ning toimumiskoha ruumi ja hoone koodi. Süsteem kuvab vaid
+        sellised vastuvõtud, millega on seotud vähemalt üks vaba vastuvõtuaeg (OP7.3).
+        7. Üliõpilane valib vastuvõtu.
+        8. Süsteem kuvab valitud vastuvõtuga seotud vastuvõtuajad, mis ei ole veel
+        alanud ning mis on vabad – sinna pole ükski üliõpilane registreerunud (OP7.4).
+                                             38
+Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+        9. Üliõpilane valib vastuvõtuaja ning vajadusel sisestab kommentaari.
+        10. Üliõpilane annab korralduse registreerida ennast vastuvõtule.
+        11. Süsteem küsib, kas üliõpilane soovib kindlasti vastuvõtule tuleku registreerida.
+        12. Üliõpilane kinnitab oma soovi vastuvõtule tulek registreerida.
+        13. Süsteem registreerib vastuvõtule tuleku (OP7.5).
+Üliõpilane võib korrata samme 5–13 nii mitu korda kui soovib.
+Laiendused (või alternatiivne sündmuste käik):
+5a – Kui ei leita ühegi õppejõu andmeid, siis ei saa üliõpilane enda vastuvõtule tulekut
+registreerida.
+7a – Kui ei leita ühegi vastuvõtu andmeid, siis ei saa üliõpilane enda vastuvõtule tulekut
+registreerida.
+9a – Kui ei leita ühegi vastuvõtuaja andmeid, siis ei saa üliõpilane enda vastuvõtule
+tulekut registreerida.
+12a – Kui üliõpilane siiski ei soovi vastuvõtule tulekut registreerida, siis süsteem ei
+registreeri vastuvõtule tulekut.
+13a – Kui üliõpilane üritab ennast registreerida vastuvõtuajale, mis algab varasemal ajal,
+kui on vastuvõtule tuleku registreerimise aeg, siis vastuvõtule tuleku registreerimine
+ebaõnnestub.
+13b – Kui vahepeal on juba keegi jõudnud valitud vastuvõtuajale registreeruda, siis
+vastuvõtule tuleku registreerimine ebaõnnestub.
+
+
+
+                2.1.1.10 Kasutusjuht: Üliõpilane, vaata oma vastuvõtuaegu
+Primaarne tegutseja: Üliõpilane
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib teada, millistele vastuvõtuaegadele ta on ennast registreerinud,
+        et jõuda õigeks ajaks kohale.
+     Õppejõud: Soovib, et üliõpilased teaksid, millistele vastuvõtuaegadele nad on
+        registreerinud ning tuleksid kohale õigeks ajaks.
+Käivitav sündmus: Üliõpilane soovib teada, millistele vastuvõtuaegadele ta on
+registreerinud.
+Eeltingimused: Üliõpilane on autenditud ja autoriseeritud. Üliõpilasega seotud
+vastuvõtule tulek ning sellega seotud vastuvõtuaeg ja vastuvõtt on registreeritud.
+Järeltingimused: On leitud kõik üliõpilasega seotud vastuvõtule tulekud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Üliõpilane avaldab soovi vaadata enda aktiivseid vastuvõtule tulekuid.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtule tulekuid".
+Laiendused (või alternatiivne sündmuste käik):
+        3. Üliõpilane avaldab soovi vaadata enda mitteaktiivseid vastuvõtule tulekuid.
+        Need tulekud on seotud vastuvõtuaegadega, mille algus on minevikus.
+
+                                            39
+Andmebaasi näidisprojekt (2025)                                          © Erki Eessaar
+      4. Süsteem kuvab nimekirja üliõpilase mitteaktiivsetest vastuvõtule tulekutest.
+      Süsteem kuvab iga vastuvõtule tuleku kohta vastuvõtu kuupäeva, vastuvõtuaja
+      kellaaja, õppejõu ees- ja perenime, õppejõu e-posti aadressi, hoone ja ruumi, kus
+      vastuvõtt toimub, üliõpilase lisatud kommentaari ning vastuvõtuga seotud
+      kommentaari. Vastuvõtule tulekud on sorteeritud kuupäeva alusel kahanevalt ning
+      selle sees kellaaja alusel kahanevalt (OP8.1).
+4a – Kui üliõpilasel ei ole ühtegi seotud mitteaktiivset vastuvõtule tulekut, siis ei kuva
+süsteem vastuvõtule tulekute andmeid.
+
+
+                       2.1.1.11 Kasutusjuht: Tühista vastuvõtule tulek
+Primaarne tegutseja: Üliõpilane
+Osapooled ja nende huvid:
+     Üliõpilane: Soovib tulla vastuvõtule talle kõige sobivamal ajal.
+     Õppejõud: Soovib, et võimalikult paljud üliõpilased saaksid tulla vastuvõtule ning
+        et üliõpilased ei hoiaks vastuvõtuaega kinni, kui nad tegelikult ei soovi
+        konsultatsioonile tulla.
+Käivitav sündmus: Üliõpilane soovib mingil põhjusel tühistada vastuvõtule tuleku ning
+vabastada aja, et tema asemel saaks vastuvõtule tulla keegi teine.
+Eeltingimused: Üliõpilane on autenditud ja autoriseeritud. Üliõpilasega seotud
+vastuvõtule tulek on registreeritud.
+Järeltingimused: Üliõpilasega seotud vastuvõtule tulek on kustutatud.
+Stsenaarium (tüüpiline sündmuste järjestus):
+        1. Üliõpilane avaldab soovi enda vastuvõtule tuleku tühistada.
+        2. Käivitub kasutusjuht "Otsi enda aktiivseid vastuvõtule tulekuid".
+        3. Üliõpilane valib konkreetse vastuvõtule tuleku ja annab korralduse see
+        tühistada.
+        4. Süsteem küsib, kas üliõpilane on tühistamise soovis kindel.
+        5. Üliõpilane kinnitab vastuvõtule tuleku tühistamise soovi.
+        6. Süsteem tühistab vastuvõtule tuleku (OP8.2).
+Laiendused (või alternatiivne sündmuste käik):
+3a – Kui üliõpilasel ei ole ühtegi aktiivset vastuvõtule tulekut, siis ei saa ta vastuvõtule
+tulekut tühistada.
+5a – Kui üliõpilane siiski ei soovi vastuvõtule tulekut tühistada, siis süsteem ei tühista
+vastuvõtule tulekut.
+6a – Kui üliõpilane üritab tühistada vastuvõtule tulekut, mis algab varasemal ajal, kui on
+vastuvõtule tuleku tühistamise aeg, siis süsteem ei tühista vastuvõtule tulekut.
+
+
+
+
+                                            40
+Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+
+
+    2.2 Vastuvõtuaegade funktsionaalse allsüsteemi vajatavate
+                     registrite detailanalüüs
+
+Järgnevalt kirjeldatakse detailselt ja mittetehniliselt vastuvõtuaegade funktsionaalse
+allsüsteemi vajatavate registrite struktuuri ja toimimist.
+
+
+                       2.2.1 Kontseptuaalne andmemudel
+
+Järgnevalt esitatakse kontseptuaalne andmemudel, mis koosneb olemi-suhte
+diagrammidest ja nendel olevate olemitüüpide ja atribuutide sõnalistest kirjeldustest.
+
+
+                           2.2.1.1 Olemi-suhte diagrammid
+
+Joonis 6-Joonis 11 esitatud olemi-suhte diagrammidel on värvidel järgmine tähendus.
+ Punasega on tähistatud vastuvõtuaegade registri põhiobjekt.
+ Kollasega on tähistatud vastuvõtuaegade registrisse kuuluvad mitte-põhiobjektid.
+ Rohelisega on tähistatud teistesse registritesse kuuluvad objektid, mida on antud
+   juhul vaja vastuvõtuaegade funktsionaalse allsüsteemi toimimise tagamiseks.
+
+
+
+
+Joonis 6 Ruumide registri olemi-suhte diagramm.
+
+
+
+
+                                          41
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+
+
+
+
+Joonis 7 Isikute registri olemi-suhte diagramm.
+
+
+
+
+Joonis 8 Klassifikaatorite registri olemi-suhte diagramm.
+
+
+
+
+                                            42
+Andmebaasi näidisprojekt (2025)                        © Erki Eessaar
+
+
+
+
+Joonis 9 Töötajate registri olemi-suhte diagramm.
+
+
+
+
+Joonis 10 Üliõpilaste registri olemi-suhte diagramm.
+
+
+
+
+                                            43
+   Andmebaasi näidisprojekt (2025)                                                © Erki Eessaar
+
+
+
+
+   Joonis 11 Vastuvõtuaegade registri olemi-suhte diagramm.
+
+                                2.2.1.2 Olemitüüpide definitsioonid
+
+   Tabel 6 esitab olemi-suhte diagrammidel esitatud olemitüüpide sõnalised kirjeldused.
+   Tabel 6 Olemitüüpide sõnalised kirjeldused.
+       Olemitüübi nimi    Kuuluvus registrisse                         Definitsioon
+        (teised nimed)
+Amet                     Klassifikaatorite       Amet on ülikooli töötaja töölepingus sätestatud
+                         register                ametikohustuse üldnimetus. Näiteks: lektor,
+                                                 professor.
+Hoone                    Ruumide register        "Hoone on väliskeskkonnast katuse ja teiste
+                                                 välispiiretega eraldatud siseruumiga ehitis."
+                                                 (Ehitusseadustiku ja planeerimisseaduse rakendamise
+                                                 seadus)
+Isik                     Isikute register        Mistahes ülikooliga seotud füüsiline isik. Isik võib olla
+                                                   44
+  Andmebaasi näidisprojekt (2025)                                              © Erki Eessaar
+    Olemitüübi nimi     Kuuluvus registrisse                        Definitsioon
+     (teised nimed)
+                                               seotud ülikooliga läbi töösuhte, õppimise või lepingu.
+Klassifikaator         Klassifikaatorite       Klassifikaatorid on "mistahes andmed, mida
+                       register                kasutatakse andmebaasis teiste andmete
+                                               liigitamiseks või andmebaasis olevate andmete
+                                               seostamiseks väljaspool organisatsiooni vastutusala
+                                               oleva informatsiooniga." (Chisholm, 2000)
+Ruum                   Ruumide register        Hoones asuv siseruum, millel on põrand, seinad ja
+                                               katus ning millesse on inimestel võimalik siseneda.
+Töötaja                Töötajate register      Ülikoolis kas töölepinguga või tunnitasulisena töötav
+                                               isik ( nt õppejõud, dekanaadi sekretär).
+Töötaja_               Klassifikaatorite       Töötaja ja ülikooli kui tööandaja vahelise suhte
+seisundi_liik          register                hetkeolukorra iseloomustus. Näiteks: tööl, töösuhe
+                                               peatatud.
+Vastuvõtt              Vastuvõtuaegade         Ajaperiood, mille jooksul õppejõud kohtub
+(Konsultatsioon)       register                üliõpilastega, et vastata nende õppetööga seotud
+                                               küsimustele.
+Vastuvõtuaeg           Vastuvõtuaegade         Ajaperiood, mille jooksul saab õppejõud vastu võtta
+(Konsultatsiooniaeg)   register                ühe konkreetse üliõpilase või üliõpilaste rühma.
+Vastuvõtule_tulek      Vastuvõtuaegade         Üliõpilase kinnitus, et ta soovib konkreetsel
+(Konsultatsioonile_    register                vastuvõtuajal tulla õppejõu vastuvõtule.
+tulek)
+Üliõpilane (Tudeng,    Üliõpilaste register    "Üliõpilane on käesolevas seaduses sätestatud
+Õppur)                                         tingimustel kõrgharidustasemel õppija alates õppesse
+                                               vastuvõtmisest ehk immatrikuleerimisest kuni õppest
+                                               väljaarvamiseni ehk eksmatrikuleerimiseni."
+                                               (Kõrgharidusseadus)
+Üliõpilase_            Klassifikaatorite       Üliõpilase ja ülikooli vahelise suhte hetkeolukorra
+seisundi_liik          register                iseloomustus. Näiteks: immatrikuleeritud,
+                                               eksmatrikuleeritud.
+
+
+                               2.2.1.3 Atribuutide definitsioonid
+
+  Tabel 7 esitab atribuutide sõnalised kirjeldused.
+
+  Sageli esinevate piirangute lühidalt väljendamiseks kasutan atribuutide kirjeldustes
+  annotatsioone.
+
+          @Kohustuslik – atribuudi väärtuse registreerimine on kohustuslik, st väärtus ei
+           tohi ühegi olemi korral puududa.
+                                                 45
+Andmebaasi näidisprojekt (2025)                                     © Erki Eessaar
+    @Pole_tühi – atribuudi väärtus ei tohi olla tühi string ja ainult tühimärkidest
+     koosnev string.
+
+Tabel 7 Atribuutide sõnalised kirjeldused.
+ Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                  Näiteväärtus
+                 (teised nimed)
+Hoone            hoone_kood       Hoonet unikaalselt identifitseeriv kood, mida ICT
+                                  kasutatakse hoonele viitamiseks ka väljapool
+                                  andmebaasi.
+
+                                  {1. @Kohustuslik.
+                                  2. @Pole_tühi.
+                                  3. Hoone kood võib sisaldada tähti,
+                                  numbreid, kriipse, alakriipse, tühikuid.
+                                  4. Hoone unikaalne identifikaator.}
+Hoone            nimi             Hoonet unikaalselt identifitseeriv nimi, mida IT-maja
+                                  kasutatakse hoonele viitamiseks ka väljapool õppehoone
+                                  andmebaasi.
+
+                                  {1. @Kohustuslik.
+                                  2. @Pole_tühi.
+                                  3. Hoone unikaalne identifikaator.}
+Isik             isikukood        Eesti Vabariigi isikukood. "Isikukood on isiku 39204010231
+                                  soo ja sünniaja alusel moodustatud ning
+                                  Eesti Vabariigi standardile vastav isiku
+                                  üheselt kindlaksmääramist võimaldav
+                                  number." (Rahvastikuregistri seadus)
+                                  "Oluline on teada, et isikukoodid ei kuulu
+                                  delikaatsete isikuandmete alla. Isikukoodid
+                                  on tavalised isikuandmed ja nende
+                                  kasutamisele ei ole seatud rohkem
+                                  piiranguid kui näiteks inimese nime või
+                                  sünniaja kasutamisele." ( "Andmekaitse
+                                  inspektsioon. Isikukoodi kasutamine")
+                                  "Isikukood moodustatakse Eesti Vabariigi
+                                  standardi EVS 585:2007 „Isikukood.
+                                  Struktuur.“ alusel" (Isikukoodide
+                                  moodustamise, väljajagamise ja andmise
+                                  kord)
+
+                                  {1. @Kohustuslik.
+
+                                             46
+Andmebaasi näidisprojekt (2025)                                           © Erki Eessaar
+ Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                 Näiteväärtus
+                 (teised nimed)
+                                  2. Isikukood koosneb 11-st
+                                  numbrimärgist. Esimene märk on
+                                  numbrimärk vahemikus 3 kuni 6. See on soo
+                                  tähis. Neljas märk on number 0 või 1 See on
+                                  sünnikuu esimene number. Kuues märk on
+                                  number vahemikus 0 kuni 3. See on sünni
+                                  päeva esimene number.
+                                  3. Isiku unikaalne identifikaator.}
+Isik            eesnimi           "Lapsele sünni registreerimisel pandav nimi, Mart
+                                  isikunime osa; eesnimi asetseb harilikult
+                                  perekonnanime ees." (Sõnaveeb) Isikut
+                                  tõendavasse dokumenti kantud nimi, mida
+                                  vajadusel on lühendatud. "Välisriigi
+                                  dokumendis olev nimi, mis ei ole eesnime
+                                  ega perekonnanime osa, loetakse eesnime
+                                  osaks ja lisatakse eesnime järele."
+                                  (Nimeseadus)
+
+                                  {1. @Pole_tühi.
+                                  2. Võib olla kuni 50 märki pikk.
+                                  3. Vähemalt üks kahest – eesnimi või
+                                  perenimi peab olema registreeritud.}
+Isik            perenimi          "Vanemailt lapsele kanduv või abiellumise Mets
+                (perekonna-       teel saadav nimi (eesti keeles eesnime
+                nimi)             järel)." (Sõnaveeb) Isikut tõendavasse
+                                  dokumenti kantud nimi, mida vajadusel on
+                                  lühendatud.
+
+                                  {1. @Pole_tühi.
+                                  2. Võib olla kuni 50 märki pikk.
+                                  3. Vähemalt üks kahest – eesnimi või
+                                  perenimi peab olema registreeritud.}
+Isik            elukoht           Isiku alalise elukoha aadress.                 Tallinn, Pikk tn. 12
+
+                                  "Koha-aadress on territooriumi
+                                  haldusjaotuse hierarhiast ja ametlikest
+                                  kohanimedest lähtuv aadressobjekti
+                                  tekstilis-numbriline kirje või tunnus. Ühele
+                                  objektile võib määrata mitu koha-aadressi.
+                                  Ühele objektile määratud koha-aadressid on
+
+                                             47
+Andmebaasi näidisprojekt (2025)                                               © Erki Eessaar
+ Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                 Näiteväärtus
+                 (teised nimed)
+                                  paralleelaadressid." (Aadressandmete
+                                  süsteemi kehtestamine)
+
+                                  Näide: Tallinn, 34124, Ehitajate tee 62-12.
+                                  Harjumaa, Viimsi vald, Kaku küla, Laane talu.
+
+                                  {1. @Pole_tühi.
+                                  2. Elukoht ei tohi olla ainult numbritest
+                                  koosnev string.}
+Isik             kasutajanimi     Isiku poolt süsteemis kasutatav nimi.           testkasutaja
+
+                                  {1. @Kohustuslik.
+                                  2. @Pole_tühi.
+                                  3. Peab olema 4 kuni 20 märki pikk
+                                  (otspunktid kaasa arvatud).
+                                  4. Isiku tõstutundetu unikaalne
+                                  identifikaator (st näiteks Mets ja mets on
+                                  võrdsed).}
+Isik             parool           Isiku identsust tõendav teadmuslik (miski, $2a$11$FsKdoFDJe
+                                  mida isik teab) volitustõend. Andmebaasis PwuYtyg2hBxz.e8A
+                                  salvestatakse parooli ja soola põhjal leitud wSODaO/nFGGacE
+                                  räsiväärtus. Täpsemad nõuded selle kohta m05vIgOBNG9dHC
+                                  on mittefunktsionaalsete nõuete all (vt jaotis
+                                  1.2.6).
+
+                                {1. @Kohustuslik.
+                                2. @Pole_tühi.}
+Isik             e_mail         Aadress, millele saab üle võrgu (ühest       kalamees@hot.ee
+                 (e_meil, meil, arvutist või tööjaamast teise) saata isikule
+                 meiliaadress, mõeldud kirjalikke sõnumeid.
+                 e-posti
+                 aadress)       {1. @Kohustuslik.
+                                2. Võib olla kuni 254 märki pikk.
+                                3. e_mail peab sisaldama vähemalt ühte "@"
+                                märki.
+                                4. Isiku tõstutundetu unikaalne
+                                identifikaator (st näiteks Mets@hot.ee ja
+                                mets@hot.ee on võrdsed).}
+Klassifikaator   kood           Klassifikaatori väärtust esitav kood, mida   1
+                                saab kasutada selle väärtuse lühidalt
+
+                                             48
+Andmebaasi näidisprojekt (2025)                                               © Erki Eessaar
+Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                  Näiteväärtus
+                (teised nimed)
+                                 esitamiseks. Kood võib olla tekstiline või
+                                 numbriline väärtus.
+
+                                 {1. @Kohustuslik.
+                                 2. Kui kood on tekstiline väärtus, siis
+                                 @Pole_tühi.
+                                 3. Klassifikaatori unikaalne identifikaator,
+                                 mis on unikaalne klassifikaatori tüübi piires.}
+Klassifikaator   nimetus         Klassifikaatori väärtuse ametlik nimetus.       koostamisel
+
+                                 {1. @Kohustuslik.
+                                 2. @Pole_tühi.
+                                 3. Klassifikaatori unikaalne identifikaator,
+                                 mis on unikaalne klassifikaatori tüübi piires.}
+Klassifikaator   kirjeldus       Klassifikaatori väärtuse vabatekstiline         Õpingukava
+                                 kirjeldus.                                      algseisund
+
+                                 {1. @Pole_tühi.}
+Klassifikaator   on_aktiivne     Tõeväärtus, mis määrab, kas klassifikaatori TRUE
+                                 väärtust on võimalik kasutada uute andmete
+                                 liigitamisel (TRUE) või mitte (FALSE).
+                                 Mitteaktiivset klassifikaatori väärtust ei saa
+                                 uute andmete sisestamisel kasutada, kuid
+                                 olemasolevate andmete juures on see
+                                 endiselt kasutuses. Vaikimisi väärtus on
+                                 TRUE.
+
+                                 {1. @Kohustuslik.}
+Ruum             ruum_kood       Ruumi hoone piires unikaalselt             409
+                                 identifitseeriv kood, mis on ka kirjutatud
+                                 ruumi sisenemiseks mõeldud ukse juurde.
+                                 Seda koodi kasutatakse ruumile viitamiseks
+                                 ka väljapool andmebaasi.
+
+                                 {1. @Kohustuslik.
+                                 2. @Pole_tühi.
+                                 3. Ruumi kood võib sisaldada tähti,
+                                 numbreid, kriipse, tühikuid.
+                                 4. Ühes hoones ei tohi olla kahte või rohkem
+                                 samasuguse koodiga ruumi.}
+
+                                            49
+Andmebaasi näidisprojekt (2025)                                            © Erki Eessaar
+Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                Näiteväärtus
+                (teised nimed)
+Ruum           korrus            Struktuur, mis koosneb hulgast ruumidest, 3
+                                 mis asuvad vertikaalteljel ühisel tasapinnal.
+
+                                 {1. @Kohustuslik.
+                                 2. Korrus võib olla vahemikus -5 kuni 10
+                                 (otspunktid kaasa arvatud).}
+Vastuvõtt      toimumise_        Kuupäev, millal üliõpilastel on võimalik tulla 2. juuni 2011
+               kuupäev           vastuvõtule.
+
+                                 {1. @Kohustuslik.
+                                 2. Kuupäev peab olema vahemikus 1.
+                                 jaanuar 2010 ja 1. jaanuar 2100 (otspunktid
+                                 kaasa arvatud).}
+Vastuvõtt      kommentaar        Vabas vormis kirjeldus, kus selgitatakse    Vaatan üle
+                                 vastuvõtu eesmärke. See kommentaar on projekte.
+                                 mõeldud vastuvõtule tulijatele.
+
+                                 {1. @Pole_tühi.
+                                 2. Vähemalt üks kahest – ruum või
+                                 kommentaar peab olema registreeritud.}
+Vastuvõtuaeg   alguse_           Kellaaeg vastuvõtu kuupäeval, mis ajaks       12:00
+               kellaaeg          üliõpilastel on võimalik tulla vastuvõtule.
+                                 Vastuvõtuaja ametlikuks pikkuseks on aeg
+                                 alguse kellaajast kuni sama vastuvõtu
+                                 toimumise kuupäeva järgmise kellaajani.
+                                 Selle puudumisel on vastuvõtuaja pikkus
+                                 üliõpilase ja õppejõu omavahelise
+                                 kokkuleppe küsimus.
+
+                                 {1. @Kohustuslik.
+                                 2. Ühelgi vastuvõtul ei tohi olla kaks või
+                                 rohkem samasugust vastuvõtuaega.}
+Vastuvõtule_   kommentaar        Vastuvõtule tuleku põhjuseid selgitav vabas Soovin tulla
+tulek                            vormis kommentaar. See kommentaar on näitama oma
+                                 mõeldud vastuvõtjale.                          iseseisva töö
+                                                                                projekti
+                                 {1. @Pole_tühi.}
+Üliõpilane     matrikli_nr       Üliõpilasele kindla algoritmi alusel koostatav 990999
+               (matrikli-        ülikooli teiste üliõpilaste seas unikaalne
+               number,           kood. Tegemist on nn. intelligentse koodiga,
+                                            50
+Andmebaasi näidisprojekt (2025)                                             © Erki Eessaar
+Olemitüübi nimi Atribuudi nimi               Atribuudi definitsioon                Näiteväärtus
+                (teised nimed)
+               matrikkel)        sest sellesse on kodeeritud täiendavat
+                                 informatsiooni. Koodi kaks esimest numbrit
+                                 näitavad üliõpilase ülikooli vastu võtmise
+                                 aasta kahte viimast numbrit.
+
+                                 Sellega on tulevikus seotud oluline
+                                 probleem. Käesoleva (21) sajandi lõpus
+                                 hakkavad sellise algoritmi alusel
+                                 genereeritud matriklinumbrid korduma ja ei
+                                 oleks enam unikaalsed. Seega teeme
+                                 ettepaneku, hakata tulevikus
+                                 matriklinumbris kasutama kahekohalise
+                                 aasta numbri asemel neljakohalist aasta
+                                 numbrit.
+
+                                 {1. @Kohustuslik.
+                                 2. Matriklinumber koosneb kuuest
+                                 numbrimärgist.
+                                 3. Üliõpilase unikaalne identifikaator.}
+Üliõpilane     pilt              Dokumendifoto üliõpilasest.
+
+
+
+
+                                             51
+Andmebaasi näidisprojekt (2025)                                      © Erki Eessaar
+
+                  2.2.2 Andmebaasioperatsioonide lepingud
+
+Järgnevalt esitatakse andmeid muutvate andmebaasioperatsioonide kirjeldus lepingu
+formaadis. Parameetrid näitavad seda, mis andmed tuleb operatsioonile väljakutsumisel
+ette anda. Eeltingimused kirjeldavad nõudeid andmetele, mis peavad olema täidetud, et
+operatsioon saaks õnnestuda (saavutada järeltingimuste täidetus). Järeltingimused
+näitavad operatsiooni tulemusena andmebaasis toimunud muudatusi.
+
+                                    2.2.2.1 OP2.3
+
+OP2.3 Loo vastuvõtt (
+      p_toimumise_kuupäev,
+      p_kommentaar,
+      ruumi identifikaator,
+      p_vastuvõtja_kasutajanimi
+)
+Eeltingimused:
+ Töötaja eksemplar t (millel on
+   kasutajanimi=p_vastuvõtja_kasutajanimi) on registreeritud.
+ Ruum eksemplar r (millel on ruumi identifikaator) on
+   registreeritud.
+Järeltingimused:
+ Vastuvõtt eksemplar v on registreeritud.
+ v.toimumise_kuupäev:= p_toimumise_kuupäev.
+ v.kommentaar:= p_kommentaar.
+ v ja t seos on registreeritud.
+ v ja r seos on registreeritud.
+Kasutus kasutusjuhtude poolt: Paku välja vastuvõtt
+
+
+
+
+                                         52
+Andmebaasi näidisprojekt (2025)                   © Erki Eessaar
+
+                                  2.2.2.2 OP3.4
+
+OP3.4 Loo vastuvõtuaeg (
+      p_alguse_kellaaeg,
+      vastuvõtu identifikaator
+)
+Eeltingimused:
+ Vastuvõtt eksemplar v (millel on vastuvõtu identifikaator)
+   on registreeritud.
+Järeltingimused:
+ Vastuvõtuaeg eksemplar va on registreeritud.
+ va.alguse_kellaaeg:= p_alguse_kellaaeg.
+ v ja va seos on registreeritud.
+Kasutus kasutusjuhtude poolt: Lisa vastuvõtuaeg
+
+
+                                  2.2.2.3 OP4.1
+
+OP4.1 Tühista vastuvõtuaeg (
+      vastuvõtuaja identifikaator
+)
+Eeltingimused:
+ Vastuvõtuaeg eksemplar va (millel on vastuvõtuaja
+   identifikaator) on registreeritud.
+Järeltingimused:
+ va ja kõik selle seosed on kustutatud.
+ Kõik va-ga seotud vastuvõtule tulekud ning nende seosed on
+   kustutatud.
+Kasutus kasutusjuhtude poolt: Tühista vastuvõtuaeg
+
+
+
+
+                                       53
+Andmebaasi näidisprojekt (2025)                   © Erki Eessaar
+
+                                  2.2.2.4 OP4.2
+
+OP4.2 Tühista vastuvõtt (
+      vastuvõtu identifikaator
+)
+Eeltingimused:
+ Vastuvõtt eksemplar v (millel on vastuvõtu identifikaator)
+   on registreeritud.
+Järeltingimused:
+ v ja kõik selle seosed on kustutatud.
+ Kõik v-ga seotud vastuvõtuajad ja nendega seotud
+   vastuvõtule tulekud ning kõik nende seosed on kustutatud.
+Kasutus kasutusjuhtude poolt: Tühista vastuvõtuaeg
+
+
+                                  2.2.2.5 OP5.1
+
+OP5.1 Paranda vastuvõttu (
+      p_kommentaar,
+      p_toimumise_kuupäev,
+      vastuvõtu identifikaator,
+      ruumi identifikaator
+)
+Eeltingimused:
+ Vastuvõtt eksemplar v (millel on vastuvõtu identifikaator)
+   on registreeritud.
+ Ruum eksemplar r (millel on ruumi identifikaator) on
+   registreeritud.
+Järeltingimused:
+ v.kommentaar:= p_kommentaar.
+ v.toimumise_kuupäev:= p_toimumise_kuupäev.
+ v olemasolev seos ruumiga on kustutatud.
+ v ja r seos on registreeritud.
+Kasutus kasutusjuhtude poolt: Paranda vastuvõttu
+
+
+
+
+                                       54
+Andmebaasi näidisprojekt (2025)                   © Erki Eessaar
+
+                                  2.2.2.6 OP7.5
+
+OP7.5 Registreeri vastuvõtule tulek (
+      p_kommentaar,
+      vastuvõtuaja identifikaator,
+      p_tulija_kasutajanimi
+)
+Eeltingimused:
+ Vastuvõtuaeg eksemplar va (millel on vastuvõtuaja
+   identifikaator) on registreeritud.
+ Üliõpilane eksemplar ü (millel on
+   kasutajanimi=p_tulija_kasutajanimi) on registreeritud.
+ va-ga ei ole seotud ühtegi vastuvõtule tulekut.
+Järeltingimused:
+ Vastuvõtule_tulek eksemplar vt on registreeritud
+ vt.kommentaar:= p_kommentaar.
+ vt ja va seos on registreeritud.
+ vt ja ü seos on registreeritud.
+Kasutus kasutusjuhtude poolt: Registreeri vastuvõtule tulek
+
+
+                                  2.2.2.7 OP8.2
+
+OP8.2 Tühista vastuvõtule tulek (
+      vastuvõtuaja identifikaator
+)
+Eeltingimused:
+ Vastuvõtule_tulek eksemplar vt (millel on vastuvõtuaja
+   identifikaator) on registreeritud.
+Järeltingimused:
+ vt ja kõik selle seosed on kustutatud.
+Kasutus kasutusjuhtude poolt: Tühista vastuvõtule tulek
+
+
+
+
+                                       55
+Andmebaasi näidisprojekt (2025)                                    © Erki Eessaar
+
+
+                 2.2.3 Registri põhiobjekti seisundidiagramm
+
+Joonis 12 esitab seisundidiagrammi, mis kirjeldab registri põhiobjekti Vastuvõtuaeg
+kõikvõimalikke elutsükleid.
+
+
+
+
+Joonis 12 Vastuvõtuaja seisundidiagramm.
+
+
+
+
+                                           56
+   Andmebaasi näidisprojekt (2025)                                      © Erki Eessaar
+
+                                     2.3 CRUD maatriks
+
+   Tabel 8 olev CRUD maatriks esitatakse olemitüüpide ja kasutusjuhtude täpsusega.
+   Maatriksi veergudele vastavad kasutusjuhud ja ridadele olemitüübid.
+
+   Oranžil taustal on esitatud olemitüübid, mis kuuluvad vaadeldava allsüsteemi
+   teenindatavasse registrisse.
+
+   Tabel 8 CRUD maatriks.
+Kasutusjuhud      1   2     3    4     5    6    7    8   9    10   11        Kokku
+Olemitüübid
+Isik              R                         R    R    R   R         R         R
+Töötaja           R                              R    R   R    R    R         R
+Üliõpilane        R                         R                       R         R
+Klassifikaator    R                              R                            R
+Amet              R                              R                            R
+Üliõpilase_       R                                                           R
+seisundi_liik
+Töötaja_          R                                                           R
+seisundi_liik
+Hoone                 R     R    R     R    R    R    R   R    R    R         R
+Ruum                  R     R    R     R    R    R    R   R    R    R         R
+Vastuvõtt             CR    R    RD    RU   R    R    R   R    R    R         CRUD
+Vastuvõtuaeg                CR   RD         R    R    R   R         R         CRD
+Vastuvõtule_                     RD         R    RC   R   RD        R         CRD
+registreerimine
+
+
+   Kasutusjuhtude nimekiri.
+      1. Tuvasta kasutaja
+      2. Paku välja vastuvõtt
+      3. Lisa vastuvõtuaeg
+      4. Tühista vastuvõtuaeg
+      5. Paranda vastuvõttu
+      6. Õppejõud, vaata oma vastuvõtte
+      7. Registreeri vastuvõtule tulek
+      8. Üliõpilane, vaata oma vastuvõtuaegu
+
+                                                57
+Andmebaasi näidisprojekt (2025)                    © Erki Eessaar
+   9. Tühista vastuvõtule tulek
+   10. Otsi enda aktiivseid vastuvõtte
+   11. Otsi enda aktiivseid vastuvõtule tulekuid
+
+
+
+
+                                            58
+Andmebaasi näidisprojekt (2025)                                    © Erki Eessaar
+
+
+                             3. Füüsiline disain
+Selles peatükis esitatakse mudel, mis kirjeldab vastuvõtuaegade funktsionaalse
+allsüsteemi toimimiseks vajalike registrite tehnilist lahendust PostgreSQL
+andmebaasisüsteemis.
+
+
+    3.1 Vastuvõtuaegade funktsionaalse allsüsteemi vajatavate
+                    registrite füüsiline disain
+
+Joonis 13-Joonis 18 esitavad vastuvõtuaegade funktsionaalset allsüsteemi vajatavate
+registrite füüsilise disaini andmebaasisüsteemi PostgreSQL jaoks.
+
+
+
+
+                                        59
+Andmebaasi näidisprojekt (2025)                                     © Erki Eessaar
+
+
+
+
+Joonis 13 Ruumide registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+                                           60
+Andmebaasi näidisprojekt (2025)                                     © Erki Eessaar
+
+
+
+
+Joonis 14 Isikute registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+                                            61
+Andmebaasi näidisprojekt (2025)                                               © Erki Eessaar
+
+
+
+
+Joonis 15 Klassifikaatorite registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+                                             62
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+
+
+
+Joonis 16 Töötajate registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+Joonis 17 Üliõpilaste registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+                                            63
+Andmebaasi näidisprojekt (2025)                                         © Erki Eessaar
+
+
+
+
+Joonis 18 Vastuvõtuaegade registri füüsilise disaini andmebaasi diagramm.
+
+
+
+
+                                          64
+Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+
+                       4. Realisatsioon PostgreSQLis
+Selles peatükis esitatakse andmebaasi PostgreSQLis (17) realiseerimiseks mõeldud laused.
+
+                             4.1 Andmebaasi loomine
+
+Andmebaasis vastuvotuajad kasutatav märkide klassifikatsioon ja märkide
+võrdlusreeglistik vastavad eesti keele reeglitele. Järgnev käsk tuleb käivitada shelli
+promptis.
+
+createdb -l et_EE.utf8 -T template0 vastuvotuajad
+
+Järgnevalt esitatakse andmebaasiobjektide loomise SQL laused.
+
+                                       4.2 Skeemid
+
+Laienduste skeemiobjektid lisan skeemi laiendused.
+
+CREATE SCHEMA laiendused;
+
+Välised tabelid lisan skeemi valine.
+
+CREATE SCHEMA valine;
+
+Kõik ülejäänud skeemiobjektid loon skeemis nimega public, mis loodi andmebaasi
+loomisel automaatselt.
+
+                                       4.3 Domeenid
+CREATE DOMAIN d_nimetus AS VARCHAR(70) NOT NULL
+CONSTRAINT Nimetus_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$')
+CONSTRAINT Nimetus_ei_tohi_olla_tyhi_string CHECK(VALUE<>'');
+
+CREATE DOMAIN d_kirjeldus AS TEXT
+CONSTRAINT Kirjeldus_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$')
+CONSTRAINT Kirjeldus_ei_tohi_olla_tyhi_string CHECK(VALUE<>'');
+
+CREATE DOMAIN d_isiku_nime_osa AS VARCHAR(50)
+CONSTRAINT Isiku_nime_osa_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$')
+CONSTRAINT Isiku_nime_osa_ei_tohi_olla_tyhi_string CHECK(VALUE<>'');
+
+
+                                            65
+Andmebaasi näidisprojekt (2025)                              © Erki Eessaar
+CREATE DOMAIN d_eesti_isikukood AS CHAR(11) NOT NULL
+CONSTRAINT Isikukood_koosneb_11_numbrist CHECK(VALUE ~ '^([[:digit:]]
+{11})$')
+CONSTRAINT Isikukoodi_esimene_number_peab_olema_vahemikus_3_ja_6
+CHECK(VALUE ~ '^([3-6]{1}.*)$')
+CONSTRAINT Isikukoodi_neljas_number_peab_olema_0_voi_1 CHECK(VALUE ~ '^(.
+{3}[0-1]{1}.*)$')
+CONSTRAINT Isikukoodi_kuues_number_peab_olema_vahemikus_0_ja_3
+CHECK(VALUE ~ '^(.{5}[0-3]{1}.*)$');
+
+CREATE DOMAIN d_kasutajanimi AS VARCHAR(20) NOT NULL
+CONSTRAINT Kasutajanimi_ei_tohi_sisaldada_tyhimarke CHECK(VALUE !~
+'^.*[[:space:]].*$')
+CONSTRAINT Kasutajanimi_peab_olema_vahemalt_4_marki
+CHECK(length(VALUE)>=4);
+
+CREATE DOMAIN d_parool VARCHAR(60) NOT NULL
+CONSTRAINT Parool_ei_tohi_olla_tyhimarkidest_koosnev_string CHECK(VALUE !
+~ '^[[:space:]]+$')
+CONSTRAINT Parool_ei_tohi_olla_tyhi_string CHECK(VALUE<>'');
+
+CREATE DOMAIN d_elukoht AS VARCHAR(500)
+CONSTRAINT Elukoht_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$')
+CONSTRAINT Elukoht_ei_tohi_olla_tyhi_string CHECK(VALUE<>'')
+CONSTRAINT Elukoht_ei_tohi_olla_numbritest_koosnev_string CHECK(VALUE !~
+'^[[:digit:]]+$');
+
+CREATE DOMAIN d_e_mail VARCHAR(254) NOT NULL CONSTRAINT
+E_mail_peab_sisaldama_vahemalt_yhte_at_marki CHECK (VALUE LIKE '%@%');
+
+CREATE DOMAIN d_matrikli_nr CHAR(6) NOT NULL CONSTRAINT
+Matrikli_nr_koosneb_ainult_numbritest CHECK (VALUE~'^[0-9]{6}$');
+
+CREATE DOMAIN d_kuupaev_kohustuslik DATE NOT NULL CONSTRAINT
+Kuupaev_peab_olema_vahemikus_01_01_2010_ja_01_01_2100 CHECK (VALUE
+BETWEEN '2010-01-01' AND '2100-01-01');
+
+CREATE DOMAIN d_hoone_kood AS VARCHAR(10) NOT NULL
+CONSTRAINT Hoone_kood_voib_sisaldada_ainult_tahti_nr_tyh_kr_voi_alakr
+CHECK(VALUE ~*'^([[:alpha:]]|[[:digit:]]| |-|_)+$')
+CONSTRAINT Hoone_kood_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$');
+
+CREATE DOMAIN d_ruum_kood AS VARCHAR(5) NOT NULL
+CONSTRAINT Ruum_kood_voib_sisaldada_ainult_tahti_nr_tyh_voi_kr
+CHECK(VALUE ~*'^([[:alpha:]]|[[:digit:]]| |-)+$')
+CONSTRAINT Ruum_kood_ei_tohi_olla_tyhimarkidest_koosnev_string
+CHECK(VALUE !~ '^[[:space:]]+$');
+
+CREATE DOMAIN d_on_aktiivne BOOLEAN NOT NULL DEFAULT TRUE;
+
+
+
+
+                                   66
+Andmebaasi näidisprojekt (2025)                                      © Erki Eessaar
+
+                   4.4 Tabelid ja arvujada generaatorid
+
+Arvujada generaatorid luuakse andmebaasisüsteemi poolt automaatselt tänu CREATE
+TABLE lausetes SERIAL notatsiooni kasutamisele ning seotakse automaatselt veergudega,
+mille puhul seda kasutatakse.
+
+CREATE TABLE Amet_R (
+amet_R_id SMALLINT,
+nimetus d_nimetus,
+kirjeldus d_kirjeldus,
+aktiivne d_on_aktiivne,
+CONSTRAINT Amet_R_id_on_primaarvoti PRIMARY KEY (amet_R_id),
+CONSTRAINT Ameti_nimetus_on_unikaalne UNIQUE(nimetus)
+) WITH (fillfactor=90);
+
+CREATE TABLE Yliopilase_seisundi_liik_R (
+yliopilase_seisundi_liik_R_id SMALLINT,
+nimetus d_nimetus,
+kirjeldus d_kirjeldus,
+aktiivne d_on_aktiivne,
+CONSTRAINT Yliopilase_seisundi_liik_R_id_on_primaarvoti PRIMARY KEY
+(yliopilase_seisundi_liik_R_id),
+CONSTRAINT Yliopilase_seisundi_liigi_nimetus_on_unikaalne UNIQUE(nimetus)
+) WITH (fillfactor=90);
+
+CREATE TABLE Tootaja_seisundi_liik_R (
+tootaja_seisundi_liik_R_id SMALLINT,
+nimetus d_nimetus,
+kirjeldus d_kirjeldus,
+aktiivne d_on_aktiivne,
+CONSTRAINT Tootaja_seisundi_liik_R_id_on_primaarvoti PRIMARY KEY
+(tootaja_seisundi_liik_R_id),
+CONSTRAINT Tootaja_seisundi_liigi_nimetus_on_unikaalne UNIQUE(nimetus)
+) WITH (fillfactor=90);
+
+CREATE TABLE Isik (
+isikukood d_eesti_isikukood,
+kasutajanimi d_kasutajanimi,
+e_mail d_e_mail,
+eesnimi d_isiku_nime_osa,
+perenimi d_isiku_nime_osa,
+parool d_parool,
+elukoht d_elukoht,
+CONSTRAINT Isik_isikukood_on_unikaalne UNIQUE(isikukood),
+CONSTRAINT Isik_e_mail_on_unikaalne UNIQUE(e_mail),
+CONSTRAINT Isik_kasutajanimi_on_unikaalne UNIQUE(kasutajanimi),
+CONSTRAINT Kas_isik_eesnimi_voi_perenimi_voi_molemad_maaratud
+CHECK((eesnimi IS NOT NULL) OR (perenimi IS NOT NULL))
+) WITH (fillfactor=90);
+
+
+
+
+                                         67
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+COMMENT ON TABLE Isik IS 'Füüsilise disaini käigus otsustati Isik-Töötaja
+ja Isik-Üliõpilane vaheliste pärimisseoste realiseerimiseks kasutada
+PostgreSQL-spetsiifilist tabelite vahelise pärimisseose defineerimise
+võimalust. Tabeli Isik loomine lihtsustab sellisel juhul tabelite
+Yliopilane ja Tootaja loomist Loomulikult saab neid tabeleid realiseerida
+ka otse loogilise disaini mudeli alusel, defineerides tabelites Tootaja
+ja Yliopilane välisvõtmed, mis loovad seose tabeliga Isik.';
+
+CREATE TABLE Yliopilane (
+matrikli_nr d_matrikli_nr,
+yliopilase_seisundi_liik_R_id SMALLINT NOT NULL DEFAULT 1,
+pilt BYTEA,
+CONSTRAINT Matrikli_nr_on_primaarvoti PRIMARY KEY (matrikli_nr),
+CONSTRAINT Yliopilane_isikukood_on_unikaalne UNIQUE(isikukood),
+CONSTRAINT Yliopilane_e_mail_on_unikaalne UNIQUE(e_mail),
+CONSTRAINT Yliopilane_kasutajanimi_on_unikaalne UNIQUE(kasutajanimi),
+CONSTRAINT Yliopilane_on_mingis_seisundis FOREIGN KEY
+(yliopilase_seisundi_liik_R_id) REFERENCES
+Yliopilase_seisundi_liik_R(yliopilase_seisundi_liik_R_id) ON UPDATE
+CASCADE
+) INHERITS (Isik) WITH (fillfactor=90);
+
+CREATE TABLE Tootaja (
+tootaja_id SERIAL,
+amet_R_id SMALLINT NOT NULL,
+tootaja_seisundi_liik_R_id SMALLINT NOT NULL DEFAULT 1,
+CONSTRAINT Tootaja_id_on_primaarvoti PRIMARY KEY (tootaja_id),
+CONSTRAINT Tootaja_isikukood_on_unikaalne UNIQUE(isikukood),
+CONSTRAINT Tootaja_e_mail_on_unikaalne UNIQUE(e_mail),
+CONSTRAINT Tootaja_kasutajanimi_on_unikaalne UNIQUE(kasutajanimi),
+CONSTRAINT Tootajal_on_amet FOREIGN KEY (amet_R_id) REFERENCES
+Amet_R(amet_R_id) ON UPDATE CASCADE,
+CONSTRAINT Tootaja_on_mingis_seisundis FOREIGN KEY
+(tootaja_seisundi_liik_R_id) REFERENCES
+Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id) ON UPDATE CASCADE
+) INHERITS (Isik) WITH (fillfactor=90);
+
+CREATE TABLE Hoone (
+hoone_kood d_hoone_kood,
+nimi d_nimetus,
+CONSTRAINT Hoone_kood_on_primaarvoti PRIMARY KEY (hoone_kood),
+CONSTRAINT Hoone_nimi_on_unikaalne UNIQUE (nimi)
+);
+
+CREATE TABLE Ruum (
+ruum_id SERIAL,
+hoone_kood d_hoone_kood,
+ruum_kood d_ruum_kood,
+korrus SMALLINT NOT NULL,
+CONSTRAINT Ruum_id_on_primaarvoti PRIMARY KEY (ruum_id),
+CONSTRAINT Hoone_koodi_ruumi_koodi_korruse_kombinatsioon_on_unikaalne
+UNIQUE (hoone_kood, ruum_kood),
+CONSTRAINT Ruum_asub_hoones FOREIGN KEY (hoone_kood) REFERENCES Hoone
+(hoone_kood) ON UPDATE CASCADE,
+CONSTRAINT Korrus_peab_olema_vahemikus_miinus_5_ja_10 CHECK (korrus
+BETWEEN -5 AND 10)
+);
+
+
+                                   68
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+CREATE TABLE Vastuvott (
+vastuvott_id SERIAL,
+ruum_id INTEGER,
+vastuvotja_id INTEGER NOT NULL,
+toimumise_kuupaev d_kuupaev_kohustuslik,
+kommentaar d_kirjeldus,
+CONSTRAINT Vastuvott_id_on_primaarvoti PRIMARY KEY (vastuvott_id),
+CONSTRAINT Vastuvott_toimub_ruumis FOREIGN KEY (ruum_id) REFERENCES Ruum
+(ruum_id),
+CONSTRAINT Tootaja_votab_vastu FOREIGN KEY (vastuvotja_id) REFERENCES
+Tootaja (tootaja_id) ,
+CONSTRAINT Kas_vastuvott_ruum_voi_kommentaar_voi_molemad_maaratud CHECK
+(ruum_id IS NOT NULL OR kommentaar IS NOT NULL)
+) WITH (fillfactor=90);
+
+CREATE TABLE Vastuvotuaeg (
+vastuvott_id INTEGER NOT NULL,
+alguse_kellaaeg TIME NOT NULL,
+CONSTRAINT Vastuvott_id_alguse_kellaaeg_kombinatsioon_on_primaarvoti
+PRIMARY KEY (vastuvott_id, alguse_kellaaeg),
+CONSTRAINT Vastuvotuaeg_on_seotud_vastuvotuga FOREIGN KEY (vastuvott_id)
+REFERENCES Vastuvott (vastuvott_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Vastuvotule_tulek (
+vastuvott_id INTEGER NOT NULL,
+alguse_kellaaeg TIME NOT NULL,
+matrikli_nr d_matrikli_nr,
+kommentaar d_kirjeldus,
+CONSTRAINT
+Vastuvott_id_algus_kellaaeg_kombinatsioon_on_tuleku_primaarvoti PRIMARY
+KEY (vastuvott_id, alguse_kellaaeg),
+CONSTRAINT Vastuvotule_tulek_on_seotud_vastuvotuga FOREIGN KEY
+(vastuvott_id, alguse_kellaaeg) REFERENCES Vastuvotuaeg (vastuvott_id,
+alguse_kellaaeg) ON DELETE CASCADE,
+CONSTRAINT Vastuvotule_tulek_on_seotud_yliopilasega FOREIGN KEY
+(matrikli_nr) REFERENCES Yliopilane (matrikli_nr) ON UPDATE CASCADE
+) WITH (fillfactor=90);
+
+
+
+                                  4.5 Vaated
+CREATE OR REPLACE VIEW Ruumid WITH (security_barrier)
+AS SELECT Ruum.ruum_id, Ruum.hoone_kood || '-' || Ruum.ruum_kood AS ruum
+FROM Ruum
+ORDER BY Ruum.hoone_kood, Ruum.ruum_kood
+WITH CHECK OPTION;
+
+COMMENT ON VIEW Ruumid IS 'Vaade leiab andmed ülikooli ruumide ja nendega
+seotud hoonete kohta. Seda vaadet läheb vaja vastuvõtu registreerimisel,
+sest iga vastuvõtt toimub kindlas ruumis.';
+
+
+
+
+                                      69
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+CREATE OR REPLACE VIEW Aktiivsed_vastuvotud WITH (security_barrier) AS
+SELECT Vastuvott.vastuvott_id, Vastuvott.toimumise_kuupaev,
+Ruum.hoone_kood, Ruum.ruum_kood, Tootaja.kasutajanimi AS
+vastuvotja_kasutajanimi, Vastuvott.kommentaar AS vastuvotja_kommentaar
+FROM Vastuvott LEFT JOIN Ruum USING (ruum_id)
+INNER JOIN Tootaja ON Vastuvott.vastuvotja_id=Tootaja.tootaja_id
+WHERE Vastuvott.toimumise_kuupaev>=CURRENT_DATE;
+
+COMMENT ON VIEW Aktiivsed_vastuvotud IS 'Vaade leiab andmed vastuvõttude
+kohta, mis toimuvad kas käesoleval kuupäeval või hiljem. Vaates
+näidatakse ka õppejõu kasutajanime, sest selle alusel saab rakendus leida
+iga konkreetse õppejõuga seotud vastuvõtud. Iga õppejõud näeb ainult
+temaga seotud vastuvõtte.';
+
+CREATE OR REPLACE VIEW Mitteaktiivsed_vastuvotud WITH (security_barrier)
+AS SELECT Vastuvott.vastuvott_id, Vastuvott.toimumise_kuupaev,
+Ruum.hoone_kood, Ruum.ruum_kood, Tootaja.kasutajanimi AS
+vastuvotja_kasutajanimi, Vastuvott.kommentaar AS vastuvotja_kommentaar
+FROM Vastuvott LEFT JOIN Ruum USING (ruum_id)
+INNER JOIN Tootaja ON Vastuvott.vastuvotja_id=Tootaja.tootaja_id
+WHERE Vastuvott.toimumise_kuupaev<CURRENT_DATE;
+
+COMMENT ON VIEW Mitteaktiivsed_vastuvotud IS 'Vaade leiab andmed
+vastuvõttude kohta, mis on toimunud varasemal kuupäeval kui tänane
+kuupäev. Vaates näidatakse ka õppejõu kasutajanime, sest selle alusel
+saab rakendus leida iga konkreetse õppejõuga seotud vastuvõtud. Iga
+õppejõud näeb ainult temaga seotud vastuvõtte.';
+
+CREATE OR REPLACE VIEW Koik_vastuvotud WITH (security_barrier)
+AS SELECT Vastuvott.vastuvott_id, Ruum.hoone_kood || '-' ||
+Ruum.ruum_kood AS ruum, Vastuvott.toimumise_kuupaev, Vastuvott.kommentaar
+AS vastuvotja_kommentaar, Tootaja.kasutajanimi AS vastuvotja_kasutajanimi
+FROM Vastuvott LEFT JOIN Ruum USING (ruum_id)
+INNER JOIN Tootaja ON Vastuvott.vastuvotja_id=Tootaja.tootaja_id;
+
+COMMENT ON VIEW Koik_vastuvotud IS 'Vaade leiab andmed kõigi vastuvõttude
+kohta. Vaates näidatakse ka õppejõu kasutajanime, sest selle alusel saab
+rakendus leida iga konkreetse õppejõuga seotud vastuvõtud. Iga õppejõud
+näeb ainult temaga seotud vastuvõtte.';
+
+CREATE OR REPLACE VIEW Vastuvotuajad_koos_tulijatega WITH
+(security_barrier)
+AS SELECT Vastuvotuaeg.vastuvott_id, Vastuvotuaeg.alguse_kellaaeg,
+Vastuvotule_tulek.kommentaar AS yliop_kommentaar,
+Vastuvotule_tulek.matrikli_nr AS yliop_matrikli_nr, Yliopilane.eesnimi AS
+yliop_eesnimi, Yliopilane.perenimi AS yliop_perenimi, Yliopilane.e_mail
+AS yliop_e_mail, Tootaja.kasutajanimi AS vastuvotja_kasutajanimi
+FROM Vastuvott INNER JOIN Vastuvotuaeg USING (vastuvott_id)
+INNER JOIN tootaja ON Vastuvott.vastuvotja_id = Tootaja.tootaja_id
+LEFT JOIN Vastuvotule_tulek USING (vastuvott_id, alguse_kellaaeg)
+LEFT JOIN Yliopilane USING (matrikli_nr);
+
+
+
+
+                                   70
+Andmebaasi näidisprojekt (2025)                                                   © Erki Eessaar
+COMMENT ON VIEW Vastuvotuajad_koos_tulijatega IS 'Vaade leiab andmed
+kõigi vastuvõttude (millel on vähemalt üks vastuvõtuaeg) ja nendega
+seotud vastuvõtuaegade kohta. Kui vastuvõtuajaga on seotud üliõpilane,
+siis leiab vaade ka selle üliõpilase matriklinumbri, eesnime, perenime ja
+e-posti aadressi ning üliõpilase poolt sisestatud kommentaari. Vaates
+näidatakse ka õppejõu kasutajanime, sest selle alusel saab rakendus leida
+iga konkreetse õppejõuga seotud vastuvõtud. Iga õppejõud näeb ainult
+temaga seotud vastuvõtte. Vaade on vajalik selleks, et õppejõud näeks
+tema vastuvõtule registreerunud üliõpilasi.';
+
+
+
+                              4.6 Protseduursed keeled
+Käesolevas projektis kasutatakse rutiinide loomiseks muuhulgas PL/pgSQL keelt. Kasutatavas PostgreSQL
+andmebaasisüsteemi versioonis installeeritakse PL/pgSQL keel vaikimisi kõikidesse andmebaasidesse.
+
+
+
+                        4.7 Trigeri funktsioonid ja trigerid
+CREATE OR REPLACE FUNCTION f_uus_vastuvott() RETURNS trigger AS $$
+BEGIN
+     RAISE EXCEPTION 'Ei saa lisada vastuvõttu, mis toimub varasemal
+     kuupäeval, kui on vastuvõtu lisamise aeg!';
+     RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION f_uus_vastuvott() IS 'See trigeri funktsioon aitab
+jõustada ärireegli: Ei saa lisada vastuvõttu, mis toimub varasemal
+kuupäeval, kui on vastuvõtu lisamise aeg';
+
+CREATE OR REPLACE TRIGGER trig_uus_vastuvott BEFORE INSERT OR UPDATE OF
+toimumise_kuupaev ON Vastuvott FOR EACH ROW WHEN
+(NEW.toimumise_kuupaev<CURRENT_DATE) EXECUTE FUNCTION f_uus_vastuvott();
+
+CREATE OR REPLACE FUNCTION f_tyhista_vastuvott() RETURNS trigger AS $$
+BEGIN
+     RAISE EXCEPTION 'Ei saa tühistada vastuvõttu, mis toimub samal
+     kuupäeval või varasemal kuupäeval, kui on vastuvõtu tühistamise
+     aeg!';
+     RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION f_tyhista_vastuvott() IS 'See trigeri funktsioon
+aitab jõustada ärireegli: Ei saa tühistada vastuvõttu, mis toimub samal
+kuupäeval või varasemal kuupäeval, kui on vastuvõtu tühistamise aeg';
+
+CREATE OR REPLACE TRIGGER trig_tyhista_vastuvott BEFORE DELETE ON
+Vastuvott
+    FOR EACH ROW WHEN (OLD.toimumise_kuupaev<=CURRENT_DATE) EXECUTE
+    FUNCTION f_tyhista_vastuvott();
+
+
+
+                                                 71
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+CREATE OR REPLACE FUNCTION f_uus_vastuvotuaeg() RETURNS trigger AS $$
+DECLARE
+     m_vastuvotu_kuupaev DATE;
+BEGIN
+SELECT toimumise_kuupaev INTO m_vastuvotu_kuupaev FROM Vastuvott WHERE
+     vastuvott_id=NEW.vastuvott_id FOR UPDATE;
+IF ((m_vastuvotu_kuupaev=CURRENT_DATE) AND
+     (NEW.alguse_kellaaeg<CURRENT_TIME)) THEN
+     RAISE EXCEPTION 'Ei saa lisada vastuvõtuaega, mis toimub samal
+     kuupäeval kui vastuvõtuaja lisamise kuupäev, kuid algab varasemal
+     kellaajal, kui vastuvõtuaja lisamise kellaaeg!';
+     RETURN NULL;
+ELSE
+       RETURN NEW;
+END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
+
+COMMENT ON FUNCTION f_uus_vastuvotuaeg() IS 'See trigeri funktsioon aitab
+jõustada ärireegli: Ei saa lisada vastuvõtuaega, mis toimub samal
+kuupäeval kui vastuvõtuaja lisamise kuupäev, kuid varasemal kellaajal,
+kui vastuvõtuaja lisamise kellaaeg';
+
+CREATE OR REPLACE TRIGGER trig_uus_vastuvotuaeg BEFORE INSERT OR UPDATE
+ON Vastuvotuaeg
+    FOR EACH ROW EXECUTE FUNCTION f_uus_vastuvotuaeg();
+
+CREATE OR REPLACE FUNCTION f_tyhista_vastuvotuaeg() RETURNS trigger AS $$
+DECLARE
+     m_vastuvotu_kuupaev DATE;
+BEGIN
+SELECT toimumise_kuupaev INTO m_vastuvotu_kuupaev FROM Vastuvott WHERE
+     vastuvott_id=OLD.vastuvott_id FOR UPDATE;
+IF (m_vastuvotu_kuupaev<=CURRENT_DATE) THEN
+     RAISE EXCEPTION 'Ei saa tühistada vastuvõtuaega, mis toimub samal
+     kuupäeval või varasemal kuupäeval, kui on vastuvõtuaja tühistamise
+     aeg!';
+     RETURN NULL;
+ELSE
+       RETURN OLD;
+END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
+
+COMMENT ON FUNCTION f_tyhista_vastuvotuaeg() IS 'See trigeri funktsioon
+aitab jõustada ärireegli: Ei saa tühistada vastuvõtuaega, mis toimub
+samal kuupäeval või varasemal kuupäeval, kui on vastuvõtuaja tühistamise
+aeg';
+
+CREATE OR REPLACE TRIGGER trig_tyhista_vastuvotuaeg BEFORE DELETE ON
+Vastuvotuaeg
+    FOR EACH ROW EXECUTE FUNCTION f_tyhista_vastuvotuaeg();
+
+
+
+
+                                   72
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+                         4.7.1Trigerite testimise laused
+
+Triger trig_uus_vastuvott.
+START TRANSACTION;
+INSERT INTO Vastuvott (vastuvotja_id, toimumise_kuupaev, kommentaar)
+SELECT tootaja_id, '2025-12-12', 'Teamsis'
+FROM Tootaja
+RETURNING *;
+ROLLBACK;
+Tulemus: Lisamine ebaõnnestub.
+
+START TRANSACTION;
+UPDATE Vastuvott SET toimumise_kuupaev=CURRENT_DATE- interval '1 day'
+RETURNING *;
+ROLLBACK;
+Tulemus: Muudatus ebaõnnestub.
+
+Triger trig_tyhista_vastuvott.
+START TRANSACTION;
+DELETE FROM Vastuvott WHERE toimumise_kuupaev<=CURRENT_DATE;
+ROLLBACK;
+Tulemus: Kustutamine ebaõnnestub.
+
+Triger trig_uus_vastuvotuaeg.
+START TRANSACTION;
+WITH Lisa AS (INSERT INTO Vastuvott (vastuvotja_id, toimumise_kuupaev,
+kommentaar)
+SELECT tootaja_id, CURRENT_DATE, 'Teamsis'
+FROM Tootaja
+ORDER BY tootaja_id
+FETCH FIRST 1 ROWS ONLY
+RETURNING vastuvott_id)
+INSERT INTO Vastuvotuaeg (vastuvott_id, alguse_kellaaeg)
+SELECT vastuvott_id, CURRENT_TIME - interval '2 hours' AS aeg
+FROM Lisa;
+ROLLBACK;
+Tulemus: Lisamine ebaõnnestub.
+
+START TRANSACTION;
+WITH Lisa AS (INSERT INTO Vastuvott (vastuvotja_id, toimumise_kuupaev,
+kommentaar)
+SELECT tootaja_id, CURRENT_DATE, 'Teamsis'
+FROM Tootaja
+ORDER BY tootaja_id
+FETCH FIRST 1 ROWS ONLY
+RETURNING vastuvott_id)
+INSERT INTO Vastuvotuaeg (vastuvott_id, alguse_kellaaeg)
+SELECT vastuvott_id, CURRENT_TIME + interval '2 hours' AS aeg
+FROM Lisa;
+ROLLBACK;
+Tulemus: Lisamine õnnestub.
+
+
+
+
+                                       73
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+Triger trig_tyhista_vastuvotuaeg.
+START TRANSACTION;
+WITH muuda AS (UPDATE Vastuvott SET toimumise_kuupaev=CURRENT_DATE
+RETURNING vastuvott_id)
+DELETE FROM Vastuvotuaeg
+WHERE vastuvott_id IN (SELECT vastuvott_id FROM Muuda);
+ROLLBACK;
+Tulemus: Kustutamine ebaõnnestub.
+
+                                  4.8 Reeglid
+CREATE OR REPLACE RULE ruumid_insert AS ON INSERT
+TO Ruumid
+DO INSTEAD NOTHING;
+
+COMMENT ON RULE ruumid_insert ON Ruumid IS 'Vaate Ruumid kaudu saab
+teoreetiliselt ridu lisada, kuid kuna vaate kaudu lisamist ei plaanita,
+siis keelatakse lisamine.';
+
+CREATE OR REPLACE RULE ruumid_update AS ON UPDATE
+TO Ruumid
+DO INSTEAD NOTHING;
+
+COMMENT ON RULE ruumid_update ON Ruumid IS 'Vaate Ruumid kaudu saab
+teoreetiliselt ridu uuendada, kuid kuna vaate kaudu uuendamist ei
+plaanita, siis keelatakse uuendamine.';
+
+CREATE OR REPLACE RULE ruumid_delete AS ON DELETE
+TO Ruumid
+DO INSTEAD NOTHING;
+
+COMMENT ON RULE ruumid_delete ON Ruumid IS 'Vaate Ruumid kaudu saab
+teoreetiliselt ridu kustutada, kuid kuna vaate kaudu kustutamist ei
+plaanita, siis keelatakse kustutamine.';
+
+                         4.8.1Reeglite testimise laused
+Reegel ruumid_insert
+START TRANSACTION;
+INSERT INTO Ruumid (ruum) VALUES ('midagi');
+SELECT * FROM Ruumid;
+ROLLBACK;
+Tulemus: Ühtegi rida ei lisata.
+
+Reegel ruumid_update
+START TRANSACTION;
+UPDATE Ruumid SET ruum=Lower(ruum);
+SELECT * FROM Ruumid;
+ROLLBACK;
+Tulemus: Ühtegi rida ei muudeta.
+
+Reegel ruumid_delete.
+START TRANSACTION;
+DELETE FROM Ruumid;
+SELECT * FROM Ruumid;
+                                      74
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+ROLLBACK;
+Tulemus: Ühtegi rida ei kustutata.
+
+                                     4.9 Rutiinid
+CREATE OR REPLACE FUNCTION f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id
+%TYPE, p_vastuvotja_kasutajanimi Tootaja.kasutajanimi%TYPE,
+p_toimumise_kuupaev Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar
+Vastuvott.kommentaar%TYPE) RETURNS VOID
+LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+INSERT INTO Vastuvott(ruum_id, vastuvotja_id, toimumise_kuupaev,
+kommentaar)
+SELECT p_ruum_id, Tootaja.tootaja_id, p_toimumise_kuupaev, p_kommentaar
+FROM Tootaja WHERE Upper(kasutajanimi)=Upper(p_vastuvotja_kasutajanimi);
+END;
+
+COMMENT ON FUNCTION f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id%TYPE,
+p_vastuvotja_kasutajanimi Tootaja.kasutajanimi%TYPE, p_toimumise_kuupaev
+Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar Vastuvott.kommentaar%TYPE)
+IS 'Selle funktsiooni abil registreeritakse uus vastuvõtt. See funktsioon
+realiseerib andmebaasioperatsiooni OP2.3. Parameetri p_ruum_id oodatav
+väärtus on vastuvõtu ruumi identifikaator, p_vastuvotja_kasutajanimi
+oodatav väärtus on vastuvõtva õppejõu tõstutundetu kasutajanimi,
+p_toimumise_kuupaev oodatav väärtus on vastuvõtu toimumise kuupäev ja
+p_kommentaar oodatav väärtus on vastuvõtuga seotud kommentaar.
+Eeltingimuste täidetuse kontroll: kui pole etteantud kasutajanimega
+töötajat, siis SELECT lause leiab null rida ja uut vastuvõttu ei lisata;
+kui ei ole etteantud identifikaatoriga ruumi, siis tekib viidete
+terviklikkuse viga ning uut vastuvõttu ei lisata.';
+
+CREATE OR REPLACE FUNCTION f_tyhista_vastuvott (p_vastuvott_id
+Vastuvott.vastuvott_id%TYPE) RETURNS VOID
+LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+DELETE FROM Vastuvott WHERE vastuvott_id=p_vastuvott_id;
+END;
+
+COMMENT ON FUNCTION f_tyhista_vastuvott (p_vastuvott_id
+Vastuvott.vastuvott_id%TYPE) IS 'Selle funktsiooni abil tühistatakse
+õppejõu vastuvõtt. Funktsioon realiseerib andmebaasioperatsiooni OP4.2.
+Parameetri p_vastuvott_id oodatav väärtus on vastuvõtu identifikaator.
+Eeltingimuste täidetuse kontroll: Kui ei ole etteantud identifikaatoriga
+vastuvõttu, siis kustutatase null rida.';
+
+CREATE OR REPLACE FUNCTION f_tyhista_vastuvotuaeg (p_vastuvott_id
+Vastuvotuaeg.vastuvott_id%TYPE, p_alguse_kellaaeg
+Vastuvotuaeg.alguse_kellaaeg%TYPE) RETURNS VOID
+LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+DELETE FROM Vastuvotuaeg WHERE vastuvott_id=p_vastuvott_id AND
+alguse_kellaaeg=p_alguse_kellaaeg;
+END;
+
+
+                                          75
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+COMMENT ON FUNCTION f_tyhista_vastuvotuaeg (p_vastuvott_id
+Vastuvotuaeg.vastuvott_id%TYPE, p_alguse_kellaaeg
+Vastuvotuaeg.alguse_kellaaeg%TYPE) IS 'Selle funktsiooni abil
+tühistatakse õppejõu vastuvõtuga seotud üks vastuvõtuaeg. Funktsioon
+realiseerib andmebaasioperatsiooni OP4.1. Parameetri p_vastuvott_id
+oodatav väärtus on vastuvõtu identifikaator ja p_alguse_kellaaeg oodatav
+väärtus on tühistatava vastuvõtuaja alguse kellaaeg. Eeltingimuste
+täidetuse kontroll: Kui ei ole etteantud identifikaatoriga vastuvõtuaega,
+siis kustutatase null rida.';
+
+CREATE OR REPLACE FUNCTION f_on_oppejoud(p_kasutajanimi text, p_parool
+text)
+RETURNS boolean
+LANGUAGE SQL SECURITY DEFINER STABLE
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+SELECT EXISTS (SELECT *
+FROM Tootaja
+WHERE Upper(kasutajanimi)=Upper(p_kasutajanimi)
+AND parool = laiendused.crypt(p_parool, parool)
+AND amet_r_id BETWEEN 1 AND 9
+AND tootaja_seisundi_liik_r_id IN (2, 3)) AS tulemus;
+END;
+
+COMMENT ON FUNCTION f_on_oppejoud(p_kasutajanimi text, p_parool text) IS
+'Selle funktsiooni abil autenditakse õppejõudu. Parameetri p_kasutajanimi
+oodatav väärtus on tõstutundetu kasutajanimi ja p_parool oodatav väärtus
+on avatekstiline tõstutundlik parool. Õppejõul on õigus süsteemi
+siseneda, vaid siis kui tema seisundiks on tööl või haiguslehel';
+
+
+
+                         4.9.1Rutiinide testimise laused
+
+SELECT f_loo_vastuvott (p_ruum_id:=(SELECT ruum_id FROM Ruum WHERE
+hoone_kood='ICT' AND ruum_kood='627'),
+p_vastuvotja_kasutajanimi:='kasutaja1',
+p_toimumise_kuupaev:=(CURRENT_DATE + interval '1 day')::date,
+p_kommentaar:=NULL);
+
+SELECT f_loo_vastuvott (p_ruum_id:=(SELECT ruum_id FROM Ruum WHERE
+hoone_kood='ICT' AND ruum_kood='627'),
+p_vastuvotja_kasutajanimi:='kasutaja1',
+p_toimumise_kuupaev:=(CURRENT_DATE + interval '2 days')::date,
+p_kommentaar:=NULL);
+
+START TRANSACTION;
+SELECT f_tyhista_vastuvott(p_vastuvott_id:=vastuvott_id) AS vastuvott
+FROM Vastuvott
+WHERE toimumise_kuupaev>CURRENT_DATE;
+ROLLBACK;
+
+
+
+
+                                       76
+Andmebaasi näidisprojekt (2025)                                 © Erki Eessaar
+START TRANSACTION;
+SELECT f_tyhista_vastuvotuaeg(p_vastuvott_id:=vastuvott_id,
+p_alguse_kellaaeg:=alguse_kellaaeg) AS vastuvotuaeg
+FROM Vastuvotuaeg
+WHERE vastuvott_id IN (SELECT vastuvott_id
+FROM Vastuvott
+WHERE toimumise_kuupaev>CURRENT_DATE);
+ROLLBACK;
+
+START TRANSACTION;
+SELECT f_tyhista_vastuvotuaeg(p_vastuvott_id:=vastuvott_id,
+p_alguse_kellaaeg:=alguse_kellaaeg) AS vastuvotuaeg
+FROM Vastuvotuaeg
+WHERE vastuvott_id IN (SELECT vastuvott_id
+FROM Vastuvott
+WHERE toimumise_kuupaev<=CURRENT_DATE);
+ROLLBACK;
+
+SELECT f_on_oppejoud(p_kasutajanimi:='kasutaja1',
+p_parool:='testparool2');
+Tagastab TRUE.
+
+
+
+                                    4.10 Indeksid
+
+Järgnevalt esitatakse indeksite loomise laused.
+
+
+                     4.10.1 Välisvõtmetele lisatavad indeksid
+
+CREATE INDEX idx_Tootaja_amet_R_id ON Tootaja (amet_R_id);
+
+CREATE INDEX idx_Vastuvott_ruum_id ON Vastuvott (ruum_id);
+CREATE INDEX idx_Vastuvott_vastuvotja_id ON Vastuvott (vastuvotja_id);
+
+CREATE INDEX idx_Vastuvotule_tulek_matrikli_nr ON Vastuvotule_tulek
+(matrikli_nr);
+
+CREATE INDEX idx_Yliopilane_yliopilase_seisundi_liik_R_id ON Yliopilane
+(yliopilase_seisundi_liik_R_id);
+
+CREATE INDEX idx_Tootaja_tootaja_seisundi_liik_R_id ON Tootaja
+(tootaja_seisundi_liik_R_id);
+
+
+
+                    4.10.2 Täiendavad sekundaarsed indeksid
+CREATE INDEX idx_Tootaja_nimi ON Tootaja USING Btree(perenimi
+varchar_pattern_ops, eesnimi varchar_pattern_ops);
+
+
+
+                                            77
+Andmebaasi näidisprojekt (2025)                                                      © Erki Eessaar
+COMMENT ON INDEX idx_Tootaja_nimi IS 'Operaatori klass varchar_pattern_ops võimaldab kasutada
+indeksit ka siis, kui otsing tehakse mustripõhiselt perenime või perenime ja eesnime alguse järgi';
+
+                         4.10.3 Funktsioonil põhinevad indeksid
+
+Tagamaks kasutajanimede unikaalsuse sõltumata sellest, kas neis kasutatakse suur- või väiketähti ning
+kiirendamaks kasutajanimede tõstutundetut otsingut, asendan tabelites Isik, Tootaja ja Yliopilane
+veergudele kasutajanimi ja e_mail loodud unikaalsuse kitsendused unikaalse funktsioonil Upper põhineva
+indeksiga.
+
+ALTER TABLE Isik DROP CONSTRAINT Isik_kasutajanimi_on_unikaalne;
+ALTER TABLE Tootaja DROP CONSTRAINT Tootaja_kasutajanimi_on_unikaalne;
+ALTER TABLE Yliopilane DROP CONSTRAINT
+Yliopilane_kasutajanimi_on_unikaalne;
+
+CREATE UNIQUE INDEX Isik_kasutajanimi_on_unikaalne ON Isik
+(Upper(kasutajanimi));
+CREATE UNIQUE INDEX Yliopilane_kasutajanimi_on_unikaalne ON Yliopilane
+(Upper(kasutajanimi));
+CREATE UNIQUE INDEX Tootaja_kasutajanimi_on_unikaalne ON Tootaja
+(Upper(kasutajanimi));
+
+ALTER TABLE Isik DROP CONSTRAINT Isik_e_mail_on_unikaalne;
+ALTER TABLE Tootaja DROP CONSTRAINT Tootaja_e_mail_on_unikaalne;
+ALTER TABLE Yliopilane DROP CONSTRAINT Yliopilane_e_mail_on_unikaalne;
+
+CREATE UNIQUE INDEX Isik_e_mail_on_unikaalne ON Isik (Upper(e_mail));
+CREATE UNIQUE INDEX Yliopilane_e_mail_on_unikaalne ON Yliopilane
+(Upper(e_mail));
+CREATE UNIQUE INDEX Tootaja_e_mail_on_unikaalne ON Tootaja
+(Upper(e_mail));
+
+
+               4.11 Klassifikaatorite väärtustamise SQL laused
+
+Õppejõudude ametite kirjeldused pärinevad Tallinna Tehnikaülikooli akadeemilise
+personali ametijuhendist.
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (1,'professor',
+'Professor on rahvusvahelisel tasemel teadus-, arendus- või muus
+loometegevuses aktiivselt osalev oma eriala juhtiv õppejõud, kes
+korraldab ja viib läbi oma ainevaldkonna õpet, juhib teadus-, arendus-
+või muud loometegevust ning juhendab tulemuslikult nendesse tegevustesse
+kaasatud üliõpilasi, õppejõude ja teadustöötajaid. Professoril on
+doktorikraad või sellele vastav kvalifikatsioon');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (2,'dotsent',
+'Dotsent on õppejõud, kes viib ülikoolis läbi oma ainevaldkonna õpet,
+osaleb aktiivselt teadus-, arendus- või muus loometegevuses ning juhendab
+tulemuslikult nendesse tegevustesse kaasatud üliõpilasi ja õppejõude.
+Dotsendil on doktorikraad või sellele vastav kvalifikatsioon');
+
+
+
+
+                                                   78
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (3,'lektor',
+'Lektor on õppejõud, kes viib ülikoolis läbi õpet kõrghariduse esimesel
+kahel astmel või
+juhul, kui lektoril on doktorikraadkraad, kõigil kõrgharidustaseme
+astmetel. Lektoril on vähemalt magistrikraad või sellele vastav
+kvalifikatsioon.');
+
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (4,'assistent',
+'Assistent on õppejõud, kes viib ülikoolis läbi õpet kõrghariduse
+esimesel kahel astmel. Assistent võib juhendada kõrghariduse esimese ja
+teise astme õppe üliõpilasi ning olla kaasatud teadus- ja
+arendustegevusse. Assistendil on magistrikraad või sellele vastav
+kvalifikatsioon. Rakenduskõrgharidusõppe assistendil on vähemalt
+kõrgharidus.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (5,'õpetaja',
+'Õpetaja on õppejõud, kes viib ülikoolis läbi õpet kõrghariduse esimesel
+kahel astmel. Õpetajal on magistrikraad või sellele vastav
+kvalifikatsioon. Rakenduskõrgharidusõppe õpetajal on vähemalt
+kõrgharidus.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES
+(6,'juhtivteadur', 'Juhtivteadur on oma eriala rahvusvaheliselt
+tunnustatud teadlane. Juhtivteaduril on doktorikraad või sellele vastav
+kvalifikatsioon.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES
+(7,'vanemteadur', 'Vanemteadur on oma eriala tunnustatud teadlane.
+Vanemteaduril on doktorikraad või sellele vastav kvalifikatsioon.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES (8,'teadur',
+'Teadur on teadustöötaja, kes osaleb teadusteema või uurimisprojekti
+täitmises. Teaduril on teaduskraad või sellele vastav kvalifikatsioon.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES
+(9,'nooremteadur', 'Nooremteadur on teadustöötaja, kes osaleb teadusteema
+või uurimisprojekti täitmises. Nooremteaduril on vähemalt magistrikraad
+või sellele vastav kvalifikatsioon.');
+
+INSERT INTO Amet_R(amet_R_id, nimetus, kirjeldus) VALUES
+(10,'administraator', 'Administraator tagab ülikooli infosüsteemide
+tõrgeteta töö');
+
+INSERT INTO Yliopilase_seisundi_liik_R(yliopilase_seisundi_liik_R_id,
+nimetus, kirjeldus) VALUES (1,'immatrikuleeritud', 'Isik on arvatud
+üliõpilaste nimekirja');
+
+INSERT INTO Yliopilase_seisundi_liik_R(yliopilase_seisundi_liik_R_id,
+nimetus, kirjeldus) VALUES (2,'lõpetamisetapis', 'Üliõpilane on kogunud
+õppekavaga ette nähtud ainepunktide summa ning ei pea seetõttu täitma
+õppetegevuse eeskirjas toodud õpingukava kohustusliku esitamise ja
+sooritusnõudeid.');
+
+INSERT INTO Yliopilase_seisundi_liik_R(yliopilase_seisundi_liik_R_id,
+nimetus, kirjeldus) VALUES (3,'eksmatrikuleeritud', 'Isik on üliõpilaste
+nimekirjast välja arvatud');
+
+
+                                   79
+Andmebaasi näidisprojekt (2025)                                                       © Erki Eessaar
+INSERT INTO Yliopilase_seisundi_liik_R(yliopilase_seisundi_liik_R_id,
+nimetus, kirjeldus) VALUES (4,'akadeemilisel puhkusel', 'Üliõpilane on
+vabastatud õppe- ja teadustöö kohustustest.');
+
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (1,'töösuhe kokku lepitud', 'Isik on konkursi korras
+tööle võetud ning tööleping on sõlmitud, kuid tema tööleping pole veel
+kehtima hakanud');
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (2,'tööl', 'Isiku tööleping on kehtiv ja ta täidab
+töölepingus sätestatud kohustusi');
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (3,'haiguslehel', 'Isik ei saa töölepingus sätestatud
+kohustusi täita kuna ta on haiguslehele');
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (4,'töösuhe peatatud', 'Isiku töösuhe ülikooliga on
+ajutiselt peatatud');
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (5,'lõpp kokkuleppel', 'Isiku töösuhe ülikooliga lõppes
+poolte kokkuleppel');
+
+INSERT INTO Tootaja_seisundi_liik_R(tootaja_seisundi_liik_R_id, nimetus,
+kirjeldus) VALUES (6,'lõpp ühepoolne', 'Isiku töösuhe ülikooliga lõppes
+kuna ülikool otsustas töösuhte ennetähtaegselt lõpetada');
+
+
+
+                 4.12 JSON formaadis läheandmete laadimine
+Kuna järgnevates lausetes pöördutakse laienduse postgres_fdw funktsioonide poole, siis tuleb eelnevalt see
+laiendus andmebaasi lisada.
+
+CREATE EXTENSION IF NOT EXISTS postgres_fdw                     WITH SCHEMA laiendused;
+
+CREATE   SERVER   minu_testandmete_server_apex  FOREIGN   DATA   WRAPPER
+postgres_fdw OPTIONS (host 'apex2.taltech.ee', dbname 'testandmed', port
+'5432');
+
+--Lauseid käivitab kasutaja t990999
+CREATE USER MAPPING FOR t990999 SERVER minu_testandmete_server_apex
+OPTIONS (user 't990999', password 'secret');
+
+CREATE FOREIGN TABLE valine.Yliopilane_jsonb (
+yliopilane JSONB)
+SERVER minu_testandmete_server_apex
+OPTIONS (schema_name 'public', table_name 'yliopilane_jsonb', updatable
+'false');
+SELECT yliopilane FROM valine.Yliopilane_jsonb;
+Kuna järgnevates lausetes pöördutakse laienduse pgcrypto funktsioonide poole, siis tuleb eelnevalt see
+laiendus andmebaasi lisada.
+
+
+                                                   80
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA laiendused;
+
+INSERT INTO Yliopilane(isikukood, matrikli_nr, kasutajanimi, eesnimi,
+perenimi, e_mail, parool, elukoht, yliopilase_seisundi_liik_r_id)
+SELECT JSON_VALUE(yliopilane, '$.isikukood') AS isikukood,
+JSON_VALUE(yliopilane, '$.matrikli_nr') AS matrikli_nr,
+JSON_VALUE(yliopilane, '$.kasutajanimi') AS kasutajanimi,
+JSON_VALUE(yliopilane, '$.eesnimi') AS eesnimi,
+JSON_VALUE(yliopilane, '$.perenimi') AS perenimi,
+JSON_VALUE(yliopilane, '$.e_mail') AS e_mail,
+laiendused.crypt(yliopilane->>'parool', laiendused.gen_salt('bf', 12)) AS
+parool,
+JSON_VALUE(yliopilane, '$.elukoht') AS elukoht,
+JSON_VALUE(yliopilane,   '$.yliopilase_seisundi_liik_r_id')::smallint  AS
+yliopilase_seisundi_liik_r_id
+FROM valine.Yliopilane_jsonb;
+
+
+
+                 4.13 Täiendavate testandmete lisamine
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('AKAD1', 'Raamatukogu
+hoone');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('AKAD3', 'Õppehoone X');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT4_SH', 'Spordihoone');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT4_TX', 'Tekstiili
+õppehoone');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_1', 'Õppehoone I');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_2', 'Õppehoone II');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_2B', 'Õppehoone
+IIB');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_3', 'Õppehoone III');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_3B', 'Õppehoone
+IIIB');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_4', 'Õppehoone IV');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_4B', 'Õppehoone
+IVB');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_5', 'Õppehoone V');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_5B', 'Õppehoone VB');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_6', 'Õppehoone VI');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_7', 'Õppehoone VII');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_8', 'Õppehoone
+VIII');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('EHIT5_NG', 'GI vahehoone');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('MAEP3', 'Mäepealse maja');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('ICT', 'IT-maja õppehoone');
+INSERT INTO Hoone (hoone_kood, nimi) VALUES ('TEHN3', 'Tehnopolis 3');
+
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '627', 6 );
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '628', 6 );
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '632', 6 );
+
+                                   81
+Andmebaasi näidisprojekt (2025)                             © Erki Eessaar
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '401', 4 );
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '402', 4);
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '403', 4);
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '404', 4);
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '501', 5);
+
+INSERT INTO Ruum (hoone_kood, ruum_kood, korrus)
+VALUES ('ICT', '637', 6);
+
+INSERT INTO Tootaja(isikukood, eesnimi, perenimi, elukoht, kasutajanimi,
+amet_R_id, parool, e_mail, tootaja_seisundi_liik_r_id)
+VALUES ('47909051223','Reet','Kirss', 'Tallinn, Sipelga 2', 'kasutaja1',
+1, laiendused.crypt('testparool2', laiendused.gen_salt('bf', 12)),
+'reet.kirss@ttu.ee', 2);
+
+INSERT INTO Tootaja(isikukood, eesnimi, perenimi, kasutajanimi,
+amet_R_id, parool, e_mail, tootaja_seisundi_liik_r_id)
+VALUES ('37505042213','Taavi','Kirss', 'kasutaja4', 1,
+laiendused.crypt('testparool4', laiendused.gen_salt('bf', 12)),
+'taavi.kirss@ttu.ee', 2);
+
+INSERT INTO Tootaja(isikukood, eesnimi, perenimi, kasutajanimi,
+amet_R_id, parool, e_mail)
+VALUES ('35409051223','Ragnar','Mets', 'kasutaja2', 2,
+laiendused.crypt('testime24', laiendused.gen_salt('bf', 12)),
+'ragnar.mets@ttu.ee');
+
+INSERT INTO Tootaja(isikukood, eesnimi, perenimi, kasutajanimi,
+amet_R_id, parool, e_mail)
+VALUES ('35811081223','Andres','Suvi', 'kasutaja3', 3,
+laiendused.crypt('testime42', laiendused.gen_salt('bf', 12)),
+'andres.suvi@ttu.ee');
+
+INSERT INTO Yliopilane(matrikli_nr, isikukood, eesnimi, perenimi,
+elukoht, e_mail, kasutajanimi, parool)
+VALUES ('990995', '37707071234', 'Andres','Mets', 'Tartu, Vanemuise 12-
+1', 't990995@ttu.ee', 't990995', laiendused.crypt('testparool1',
+laiendused.gen_salt('bf', 12)));
+
+INSERT INTO Yliopilane(matrikli_nr, isikukood, eesnimi, perenimi, e_mail,
+kasutajanimi, parool)
+VALUES ('990998', '37707074321', 'Anti','Kala', 't990998@ttu.ee',
+'t990998', laiendused.crypt('nali', laiendused.gen_salt('bf', 12)));
+INSERT INTO Vastuvotule_tulek(vastuvott_id, alguse_kellaaeg, matrikli_nr,
+kommentaar)
+SELECT vastuvott_id, alguse_kellaaeg, (SELECT matrikli_nr FROM yliopilane
+ORDER BY random()+(generaator*0) FETCH FIRST 1 ROWS ONLY) AS matrikli_nr,
+'Projekt' AS kommentaar
+FROM vastuvotuaeg, generate_series(1,1) AS generaator
+ON CONFLICT DO NOTHING;
+
+                                   82
+Andmebaasi näidisprojekt (2025)                                                         © Erki Eessaar
+
+
+                       4.14 Andmebaasi statistika kogumine
+Serveris on seadistatud prügikoristuse ning statistika kogumise automaatne käivitumine (autovacuum
+protsess).
+
+Järgnev lause on mõeldud prügikoristuse ja statistika värskendamise erakorraliseks käivitamiseks.
+
+VACUUM ANALYZE;
+
+PostgreSQLis jäävad kustutatud ridade või muutmise tulemusena üleliigseks muutunud ridade andmed
+andmebaasi sisemisele tasemele alles. Nende lõplikuks kustutamiseks sisemiselt tasemelt tuleb käivitada
+prügikoristus – VACUUM. ANALYZE määrang lauses tagab, et lisaks prügikoristusele värskendatakse ka
+andmebaasi statistikat.
+
+
+
+                           4.15 Päringu täitmisplaani näide
+Analüüsin päringut, mis on tehtud vaate Aktiivsed_vastuvotud põhjal. Joonis 19 esitab selle analüüsi
+tulemuse nii tekstilisel kui ka graafilisel kujul.
+
+CREATE OR REPLACE VIEW Aktiivsed_vastuvotud WITH (security_barrier) AS
+SELECT Vastuvott.vastuvott_id, Vastuvott.toimumise_kuupaev,
+Ruum.hoone_kood, Ruum.ruum_kood, Tootaja.kasutajanimi AS
+vastuvotja_kasutajanimi, Vastuvott.kommentaar AS vastuvotja_kommentaar
+FROM (Vastuvott LEFT JOIN Ruum ON Vastuvott.ruum_id=Ruum.ruum_id) INNER
+JOIN Tootaja ON Vastuvott.vastuvotja_id=Tootaja.tootaja_id
+WHERE Vastuvott.toimumise_kuupaev>=CURRENT_DATE;
+
+
+
+
+                                                    83
+Andmebaasi näidisprojekt (2025)                                                          © Erki Eessaar
+vastuvotuajad=# ANALYZE;
+ANALYZE
+vastuvotuajad=# EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM Aktiivsed_vastuvotud;
+
+                             QUERY PLAN
+-----------------------------------------------------------------------------------------
+1 Hash Join (cost=2.29..4.17 rows=2 width=33) (actual time=0.055..0.059 rows=2 loops=1)
+2 Hash Cond: (vastuvott.vastuvotja_id = tootaja.tootaja_id)
+3 Buffers: shared hit=3
+4 -> Hash Left Join (cost=1.20..3.08 rows=2 width=27) (actual time=0.034..0.037 rows=2 loops=1)
+5        Hash Cond: (vastuvott.ruum_id = ruum.ruum_id)
+6        Buffers: shared hit=2
+7        -> Seq Scan on vastuvott (cost=0.00..1.87 rows=2 width=23) (actual time=0.022..0.023 rows=2
+         loops=1)
+8            Filter: ((toimumise_kuupaev)::date >= CURRENT_DATE)
+9            Rows Removed by Filter: 56
+10             Buffers: shared hit=1
+11        -> Hash (cost=1.09..1.09 rows=9 width=12) (actual time=0.006..0.007 rows=9 loops=1)
+12             Buckets: 1024 Batches: 1 Memory Usage: 9kB
+13             Buffers: shared hit=1
+14             -> Seq Scan on ruum (cost=0.00..1.09 rows=9 width=12) (actual time=0.002..0.004 rows=9
+         loops=1)
+15                 Buffers: shared hit=1
+16 -> Hash (cost=1.04..1.04 rows=4 width=14) (actual time=0.013..0.014 rows=4 loops=1)
+17        Buckets: 1024 Batches: 1 Memory Usage: 9kB
+18        Buffers: shared hit=1
+19        -> Seq Scan on tootaja (cost=0.00..1.04 rows=4 width=14) (actual time=0.007..0.008 rows=4
+         loops=1)
+20             Buffers: shared hit=1
+21 Planning:
+22 Buffers: shared hit=6
+23 Planning Time: 0.359 ms
+24 Execution Time: 0.091 ms
+
+Enne täitmisplaani uurimist värskendasin ANALYZE lause abil andmebaasi statistikat, et
+andmebaasisüsteemil oleks täitmisplaani koostamiseks võimalikult täpne sisendinformatsioon. Enne
+täitmisplaani uurimist veendusin, et päringu tulemuses on vähemalt üks rida. See tähendab, et täitmisplaani
+uurimise ajaks oli lauset hiljuti täidetud ning vähemalt osa andmeid olid muutmälus.
+
+EXPLAIN lauses määratud ANALYZE tähendab, et lause täidetakse ka tegelikult ning tulemuses näeb
+täitmisplaani koostamiseks kulunud aega, erinevate operatsioonide täitmiseks kulunud aega ja leitud
+andmete hulka ning ka lause kui terviku täitmiseks kulunud aega. EXPLAIN lauses määratud BUFFERS
+määrab, et tulemuses näeb lause täitmisplaani koostamiseks ning plaani täitmiseks vajalike andmete
+kasutust (kui palju toimus plokkide kettalt ja muutmälust lugemisi). Nii saab leida operatsioonid, mis loevad
+kõige rohkem andmeid ja operatsioonid, mis loevad liiga palju andmeid kettalt (kettalt lugemine on
+aeglasem kui muutmälust).
+
+Täitmisplaani tuleb lugeda alt üles ja seest välja (paremalt vasakule). Allpool/seespool esitatud operatsiooni
+tulemus on sisendiks ülalpool/väljaspool esitatud operatsioonile. Täitmisplaani koostamise ajal olid tabelid
+peaaegu tühjad ja see võib mõjutada plaani valikut (näiteks antud juhul eelistatakse tabeli täielikku
+läbiskaneerimist indeksi kasutamisele).
+                                                     84
+Andmebaasi näidisprojekt (2025)                                                          © Erki Eessaar
+
+7-9   – Tabeli Vastuvott läbiskaneerimisel leitakse vaid read, mis rahuldavad tingimust
+      ((toimumise_kuupaev)::date >= CURRENT_DATE) – võrreldakse kuupäevi. Tabelite Vastuvott ja Ruum
+      ühendamise operatsiooni sisendiks lähevad vaid leitud read tabelist Vastuvott.
+4-15 – Tabelid Vastuvott ja Ruum ühendatakse kasutades hash join algoritmi. Tulemuses peavad olema ka
+      vastuvõtud, millel pole ruum määratud ja seega on päringus vaja välisühendamise operatsiooni.
+      Tabelist Ruum loetud ruum_id väärtuste alusel leitakse räsiväärtused ja moodustatakse mällu ajutine
+      räsitabel. Räsitabelis olevaid väärtuseid hakatakse võrdlema tabelist Vastuvott loetud ruum_id
+      väärtuste põhjal leitud räsiväärtustega. Selle ühendamise kontekstis on Vastuvott väline tabel. Nii
+      ruum_id väärtused tabelist Ruum kui ka ruum_id väärtused tabelist Vastuvott leitakse tabelite
+      täielikku läbiskaneerimist kasutades.
+1,2,16-20 – Vastuvott ja Ruum ühendamise tulemus ühendatakse tabeliga Tootaja kasutades hash join
+      algoritmi. Tabelist Tootaja loetud tootaja_id väärtuste alusel leitakse räsiväärtused ja moodustatakse
+      mällu ajutine räsitabel. Räsitabelis olevaid väärtuseid hakatakse võrdlema tabelite Vastuvott ja Ruum
+      ühendamise tulemusena leitud tabelist loetud vastuvotja_id väärtuste põhjal leitud räsiväärtustega.
+      Selle ühendamise kontekstis on tabelite Vastuvott ja Ruum ühendamise tulemusena leitud tabel
+      väline tabel. Nii tootaja_id väärtused tabelist Tootaja kui ka vastuvotja_id väärtused tabelist
+      Vastuvott leitakse tabelite täielikku läbiskaneerimist kasutades.
+7, 14, 19 – lähteandmete lugemise käivitusmaksumus on 0, mis tähendab, et andmebaasisüsteem saab
+      asuda kohe operatsiooni täitma ja ei pea eelnevalt mingeid ettevalmistavaid tegevusi tegema.
+      Ülejäänud operatsioonide puhul on käivitusmaksumus suurem kui 0, mis tähendab, et nende
+      läbiviimiseks peab süsteem eelnevalt tööd tegema, nt mingeid andmeid lugema.
+
+Kuna tabelites on väga vähe andmeid, siis täitmisplaani koostamiseks kulunud aeg (planning time) on
+suurem kui plaani täitmiseks kulunud aeg (execution time).
+
+Shared hit on lehekülgede (plokkide) muutmälust (buffer cache mälupiirkonnast) lugemiste arv (sama plokki
+võidakse ka mitu korda lugeda). Shared read on lehekülgede (plokkide) kettalt lugemiste arv (sama plokki
+võidakse ka mitu korda lugeda). Mõlemate näitajate puhul hõlmab väärtus ka alamoperatsioonide
+väärtuseid e väärtus leitakse kumulatiivselt.
+(13) lugemiste arv = (15) lugemiste arv
+(6) lugemiste arv = (10)+(13) lugemiste arv
+(18) lugemiste arv = (20) lugemiste arv
+(3) lugemiste arv = (6)+(18) lugemiste arv
+
+Lause: SHOW block_size; näitab, et plokkide (lehekülgede) suurus on 8 KB.
+
+Kuna kõikide operatsioonide juures on shared hit, kuid ei ole shared read, siis see näitab, et lause täitmisel
+loeti kõiki andmeid muutmälust.
+
+
+
+
+                                                     85
+Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+
+
+
+
+Joonis 19 Täitmisplaan vaadatuna visuaalselt pgAdmin'is.
+
+
+                                   4.16 Rollid ja kasutajad
+Käesolevas töös rolle ei looda. Luuakse rakendusele vastav kasutaja.
+
+CREATE USER oppejoud_vastuvotud WITH PASSWORD 'TF36GH1';
+
+
+
+                         4.17 Üleliigsete õiguste äravõtmine
+Laiale avalikkusele (PUBLIC) vaikimisi antud õiguste äravõtmine.
+
+REVOKE CONNECT, TEMP ON DATABASE vastuvotuajad FROM PUBLIC;
+
+REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;
+
+REVOKE USAGE ON DOMAIN d_nimetus FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_kirjeldus FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_isiku_nime_osa FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_eesti_isikukood FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_kasutajanimi FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_parool FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_elukoht FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_e_mail FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_matrikli_nr FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_kuupaev_kohustuslik FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_hoone_kood FROM PUBLIC;
+REVOKE USAGE ON DOMAIN d_ruum_kood FROM PUBLIC;
+
+                                                     86
+Andmebaasi näidisprojekt (2025)                                                  © Erki Eessaar
+REVOKE EXECUTE ON FUNCTION
+f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id%TYPE,
+p_vastuvotja_kasutajanimi Tootaja.kasutajanimi%TYPE, p_toimumise_kuupaev
+Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar Vastuvott.kommentaar
+%TYPE),
+f_tyhista_vastuvott (p_vastuvott_id Vastuvott.vastuvott_id%TYPE),
+f_tyhista_vastuvotuaeg (p_vastuvott_id Vastuvotuaeg.vastuvott_id%TYPE,
+p_alguse_kellaaeg Vastuvotuaeg.alguse_kellaaeg%TYPE),
+f_on_oppejoud(p_kasutajanimi text, p_parool text),
+f_uus_vastuvott(),
+f_tyhista_vastuvott(),
+f_uus_vastuvotuaeg(),
+f_tyhista_vastuvotuaeg()
+FROM PUBLIC;
+
+Võtan õigused ka kõigi laiendustesse kuuluvate funktsioonide suhtes. Antud projektis on need skeemis
+laiendused.
+
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA laiendused FROM PUBLIC;
+
+
+
+                                 4.18 Õiguste jagamine
+Kasutajale oppejoud_vastuvotud õiguste andmine.
+
+GRANT CONNECT ON DATABASE vastuvotuajad TO oppejoud_vastuvotud;
+
+GRANT USAGE ON SCHEMA public TO oppejoud_vastuvotud;
+
+GRANT SELECT, UPDATE ON TABLE
+Vastuvott
+TO oppejoud_vastuvotud;
+
+GRANT SELECT, INSERT, UPDATE ON TABLE
+Vastuvotuaeg
+TO oppejoud_vastuvotud;
+
+GRANT SELECT ON
+Ruumid,
+Aktiivsed_vastuvotud,
+Mitteaktiivsed_vastuvotud,
+Koik_vastuvotud,
+Vastuvotuajad_koos_tulijatega
+TO oppejoud_vastuvotud;
+
+
+
+
+                                                  87
+Andmebaasi näidisprojekt (2025)                                              © Erki Eessaar
+GRANT EXECUTE ON FUNCTION
+f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id%TYPE,
+p_vastuvotja_kasutajanimi Tootaja.kasutajanimi%TYPE, p_toimumise_kuupaev
+Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar Vastuvott.kommentaar
+%TYPE),
+f_tyhista_vastuvott (p_vastuvott_id Vastuvott.vastuvott_id%TYPE),
+f_tyhista_vastuvotuaeg (p_vastuvott_id Vastuvotuaeg.vastuvott_id%TYPE,
+p_alguse_kellaaeg Vastuvotuaeg.alguse_kellaaeg%TYPE),
+f_on_oppejoud(p_kasutajanimi text, p_parool text)
+TO oppejoud_vastuvotud;
+
+Vaikimisi õiguste muutmine tulevikus loodavate funktsioonide jaoks. See ei mõjuta olemasolevaid
+funktsioone.
+
+ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+
+
+
+                     4.19 Andmebaasiobjektide kustutamine
+
+Järgnevalt esitatakse andmebaasiobjektide kustutamise laused.
+
+
+                                   4.19.1 Õiguste äravõtmine
+
+Enne kasutaja kustutamist tuleb ära võtta sellele antud õigused.
+
+REVOKE CONNECT ON DATABASE vastuvotuajad FROM oppejoud_vastuvotud;
+
+REVOKE USAGE ON SCHEMA public FROM oppejoud_vastuvotud;
+
+REVOKE SELECT, UPDATE ON TABLE
+Vastuvott
+FROM oppejoud_vastuvotud;
+
+REVOKE SELECT, INSERT, UPDATE ON TABLE
+Vastuvotuaeg
+FROM oppejoud_vastuvotud;
+
+REVOKE SELECT ON
+Ruumid,
+Aktiivsed_vastuvotud,
+Mitteaktiivsed_vastuvotud,
+Koik_vastuvotud,
+Vastuvotuajad_koos_tulijatega
+FROM oppejoud_vastuvotud;
+
+
+
+
+                                                     88
+Andmebaasi näidisprojekt (2025)                               © Erki Eessaar
+REVOKE EXECUTE ON FUNCTION
+f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id%TYPE,
+p_vastuvotja_kasutajanimi Tootaja.kasutajanimi%TYPE, p_toimumise_kuupaev
+Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar Vastuvott.kommentaar
+%TYPE),
+f_tyhista_vastuvott (p_vastuvott_id Vastuvott.vastuvott_id%TYPE),
+f_tyhista_vastuvotuaeg (p_vastuvott_id Vastuvotuaeg.vastuvott_id%TYPE,
+p_alguse_kellaaeg Vastuvotuaeg.alguse_kellaaeg%TYPE),
+f_on_oppejoud(p_kasutajanimi text, p_parool text)
+FROM oppejoud_vastuvotud;
+
+
+
+                        4.19.2 Domeenide kustutamine
+
+DROP DOMAIN IF EXISTS d_nimetus CASCADE;
+DROP DOMAIN IF EXISTS d_kirjeldus CASCADE;
+DROP DOMAIN IF EXISTS d_isiku_nime_osa CASCADE;
+DROP DOMAIN IF EXISTS d_eesti_isikukood CASCADE;
+DROP DOMAIN IF EXISTS d_kasutajanimi CASCADE;
+DROP DOMAIN IF EXISTS d_parool CASCADE;
+DROP DOMAIN IF EXISTS d_elukoht CASCADE;
+DROP DOMAIN IF EXISTS d_e_mail CASCADE;
+DROP DOMAIN IF EXISTS d_matrikli_nr CASCADE;
+DROP DOMAIN IF EXISTS d_hoone_kood CASCADE;
+DROP DOMAIN IF EXISTS d_ruum_kood CASCADE;
+
+
+
+            4.19.3 Tabelite ja arvujada generaatorite kustutamine
+
+ALTER TABLE IF EXISTS Vastuvott DROP CONSTRAINT IF EXISTS
+vastuvott_toimub_ruumis;
+ALTER TABLE IF EXISTS Vastuvott DROP CONSTRAINT IF EXISTS
+tootaja_votab_vastu;
+ALTER TABLE IF EXISTS Tootaja DROP CONSTRAINT IF EXISTS tootajal_on_amet;
+ALTER TABLE IF EXISTS Ruum DROP CONSTRAINT IF EXISTS ruum_asub_hoones;
+ALTER TABLE IF EXISTS Yliopilane DROP CONSTRAINT IF EXISTS
+yliopilane_on_mingis_seisundis;
+ALTER TABLE IF EXISTS Tootaja DROP CONSTRAINT IF EXISTS
+tootaja_on_mingis_seisundis;
+ALTER TABLE IF EXISTS Vastuvotuaeg DROP CONSTRAINT IF EXISTS
+vastuvotuaeg_on_seotud_vastuvotuga;
+ALTER TABLE IF EXISTS Vastuvotule_tulek DROP CONSTRAINT IF EXISTS
+vastuvotule_tulek_on_seotud_vastuvotuga;
+ALTER TABLE IF EXISTS Vastuvotule_tulek DROP CONSTRAINT IF EXISTS
+vastuvotule_tulek_on_seotud_yliopilasega;
+DROP TABLE IF EXISTS Vastuvott CASCADE;
+DROP TABLE IF EXISTS Tootaja CASCADE;
+DROP TABLE IF EXISTS Hoone CASCADE;
+DROP TABLE IF EXISTS Ruum CASCADE;
+DROP TABLE IF EXISTS Isik CASCADE;
+DROP TABLE IF EXISTS Yliopilane CASCADE;
+DROP TABLE IF EXISTS Amet_R CASCADE;
+DROP TABLE IF EXISTS Vastuvotuaeg CASCADE;
+
+                                     89
+Andmebaasi näidisprojekt (2025)                                                  © Erki Eessaar
+DROP TABLE IF EXISTS Vastuvotule_tulek CASCADE;
+DROP TABLE IF EXISTS Yliopilase_seisundi_liik_R CASCADE;
+DROP TABLE IF EXISTS Tootaja_seisundi_liik_R CASCADE;
+
+
+
+     4.19.4 Väliste tabelite ja seotud andmebaasiobjektide kustutamine
+
+DROP FOREIGN TABLE IF EXISTS valine.Yliopilane_jsonb CASCADE;
+DROP USER MAPPING FOR t990999 SERVER minu_testandmete_server_apex;
+DROP SERVER IF EXISTS minu_testandmete_server_apex CASCADE;
+
+Kuna arvujada generaatorid loodi SERIAL notatsiooni kasutamise abil, siis kustutas andmebaasisüsteem
+tabelite kustutamisel automaatselt nendega seotud arvujada generaatorid.
+
+
+
+                               4.19.5 Vaadete kustutamine
+
+DROP VIEW IF EXISTS Ruumid CASCADE;
+
+DROP VIEW IF EXISTS Aktiivsed_vastuvotud CASCADE;
+
+DROP VIEW IF EXISTS Mitteaktiivsed_vastuvotud CASCADE;
+
+DROP VIEW IF EXISTS Koik_vastuvotud CASCADE;
+
+DROP VIEW IF EXISTS Vastuvotuajad_koos_tulijatega CASCADE;
+
+
+
+                              4.19.6 Indeksite kustutamine
+
+DROP INDEX IF EXISTS Isik_kasutajanimi_on_unikaalne;
+DROP INDEX IF EXISTS Isik_e_mail_on_unikaalne;
+
+DROP INDEX IF EXISTS idx_Tootaja_amet_R_id;
+DROP INDEX IF EXISTS idx_Tootaja_tootaja_seisundi_liik_R_id;
+DROP INDEX IF EXISTS Tootaja_kasutajanimi_on_unikaalne;
+DROP INDEX IF EXISTS Tootaja_e_mail_on_unikaalne;
+DROP INDEX IF EXISTS idx_Tootaja_nimi;
+
+DROP INDEX IF EXISTS idx_Yliopilane_yliopilase_seisundi_liik_R_id;
+DROP INDEX IF EXISTS Yliopilane_kasutajanimi_on_unikaalne;
+DROP INDEX IF EXISTS Yliopilane_e_mail_on_unikaalne;
+
+DROP INDEX IF EXISTS idx_Vastuvott_ruum_id;
+DROP INDEX IF EXISTS idx_Vastuvott_vastuvotja_id;
+
+DROP INDEX IF EXISTS idx_Vastuvotuaeg_vastuvott_id;
+
+DROP INDEX IF EXISTS idx_Vastuvotule_tulek_matrikli_nr;
+
+
+                                                90
+Andmebaasi näidisprojekt (2025)                               © Erki Eessaar
+                          4.19.7 Rutiinide kustutamine
+
+DROP FUNCTION IF EXISTS f_loo_vastuvott (p_ruum_id Vastuvott.ruum_id
+%TYPE, p_kasutajanimi Tootaja.kasutajanimi%TYPE, p_toimumise_kuupaev
+Vastuvott.toimumise_kuupaev%TYPE, p_kommentaar Vastuvott.kommentaar%TYPE)
+CASCADE;
+
+DROP FUNCTION IF EXISTS f_tyhista_vastuvott (p_vastuvott_id
+Vastuvott.vastuvott_id%TYPE) CASCADE;
+
+DROP FUNCTION IF EXISTS f_tyhista_vastuvotuaeg (p_vastuvott_id
+Vastuvotuaeg.vastuvott_id%TYPE, p_alguse_kellaaeg
+Vastuvotuaeg.alguse_kellaaeg%TYPE) CASCADE;
+
+DROP FUNCTION IF EXISTS f_on_oppejoud(p_kasutajanimi text, p_parool text)
+CASCADE;
+
+
+
+                          4.19.8 Trigerite kustutamine
+
+DROP TRIGGER IF EXISTS trig_uus_vastuvott ON Vastuvott CASCADE;
+
+DROP TRIGGER IF EXISTS trig_tyhista_vastuvott ON Vastuvott CASCADE;
+
+DROP TRIGGER IF EXISTS trig_uus_vastuvotuaeg ON Vastuvotuaeg CASCADE;
+
+DROP TRIGGER IF EXISTS trig_tyhista_vastuvotuaeg ON Vastuvotuaeg CASCADE;
+
+
+
+                   4.19.9 Trigerifunktsioonide kustutamine
+
+DROP FUNCTION IF EXISTS f_uus_vastuvott() CASCADE;
+
+DROP FUNCTION IF EXISTS f_tyhista_vastuvott() CASCADE;
+
+DROP FUNCTION IF EXISTS f_uus_vastuvotuaeg() CASCADE;
+
+DROP FUNCTION IF EXISTS f_tyhista_vastuvotuaeg() CASCADE;
+
+
+
+                          4.19.10 Reeglite kustutamine
+DROP RULE IF EXISTS ruumid_insert ON Ruumid;
+
+DROP RULE IF EXISTS ruumid_update ON Ruumid;
+
+DROP RULE IF EXISTS ruumid_delete ON Ruumid;
+
+
+
+                                       91
+Andmebaasi näidisprojekt (2025)                                                     © Erki Eessaar
+                          4.19.11 Kasutajate ja rollide kustutamine
+
+Kuna projektis rolle ei kasutata, siis ei esitata ka rollide kustutamise lauseid.
+
+DROP USER IF EXISTS oppejoud_vastuvotud;
+
+
+
+                                 4.19.12 Laienduste kustutamine
+DROP EXTENSION IF EXISTS pgcrypto CASCADE;
+
+DROP EXTENSION IF EXISTS postgres_fdw CASCADE;
+
+
+
+                                  4.19.13 Skeemide kustutamine
+DROP SCHEMA valine CASCADE;
+
+DROP SCHEMA laiendused CASCADE;
+
+
+
+                                4.19.14 Andmebaasi kustutamine
+
+DROP DATABASE IF EXISTS vastuvotuajad WITH (FORCE);
+
+
+
+
+                                                        92
+Andmebaasi näidisprojekt (2025)                                                            © Erki Eessaar
+
+
+                                5.Tehisintellekti kasutus
+Välisest tabelist andmete lugemise ja Yliopilane tabelisse andmete laadimise lause
+ümberkirjutamiseks vanemast PostgreSQL süntaksist uuemale (võimalik alates PostgreSQL
+17). Kasutati ChatGPTd (ver 4) ja esitati küsimus:
+
+Kirjuta see PostgreSQL lause ümber PostgreSQL 17 jaoks kasutades funktsioone
+JSON_VALUE ja JSON_TABLE.
+
+
+SELECT yliopilane->>'isikukood' AS isikukood,
+yliopilane->>'matrikli_nr' AS matrikli_nr,
+yliopilane->>'kasutajanimi' AS kasutajanimi, yliopilane->>'eesnimi' AS eesnimi,
+yliopilane->>'perenimi' AS perenimi,
+yliopilane->>'e_mail' AS e_mail, laiendused.crypt(yliopilane->>'parool', laiendused.gen_salt('bf', 12)) AS
+parool,
+yliopilane->>'elukoht' AS elukoht, (yliopilane>>'yliopilase_seisundi_liik_r_id')::smallint AS
+yliopilase_seisundi_liik_r_id
+FROM valine.Yliopilane_jsonb;
+
+Vastust tuli ainult veidi muuta, sest ChatGPT ei saanud kohe aru, et funktsioonid crypt
+ning gen_salt on skeemis laiendused.
+
+Lause, mida ei pidanud muutma, genereeriti järgmise küsimuse põhjal.
+
+Kirjuta see PostgreSQL lause ümber PostgreSQL 17 jaoks kasutades funktsiooni JSON_VALUE. Arvesta, et
+pgcrypto funktsioonid on skeemis laiendused. Tüübiteisenduseks kasuta :: operaatorit.
+
+
+
+
+                                                      93
+Andmebaasi näidisprojekt (2025)                                                   © Erki Eessaar
+
+
+                             6.Kasutatud materjalid
+      Aadressandmete süsteemi kehtestamine. Vabariigi Valitsuse 28. juuni 2007. a
+       määrus nr 184. Elektrooniline Riigi Teataja.
+       [WWW] https://www.riigiteataja.ee/akt/12848733 (29.08.2025)
+
+      AKIT. Andmekaitse ja infoturbe seletussõnastik. [WWW] https://akit.cyber.ee/
+       (29.08.2025)
+
+      Andmebaasid I õppematerjalid. [WWW] https://maurus.ttu.ee (29.08.2025)
+
+      Andmebaasid II õppematerjalid. [WWW] https://maurus.ttu.ee (29.08.2025)
+
+      Andmekaitse Inspektsioon (2013). Isikukoodi kasutamine. [WWW]
+       https://www.aki.ee/sites/default/files/dokumendid/isikukoodi_kasutamise_juhend.pdf
+       (29.08.2025)
+
+      Chisholm, M. (2000). Managing Reference Data in Enterprise Databases: Binding
+       Corporate Data to the Wider World. Morgan Kaufmann.
+
+      Cybernetica AS (2013). Krüptograafiliste algoritmide kasutusvaldkondade ja
+       elutsükli uuring. Aruanne Versioon 3.1 31. detsember 2013. a. [WWW]
+       https://www.id.ee/wp-
+       content/uploads/2020/01/kruptograafiliste_algoritmide_elutsukli_uuring_II.pdf
+       (29.08.2025)
+
+      Cybernetica AS (2023). Krüptoalgoritmid ning nende tugi teekides ja
+       infosüsteemides. Tehniline dokument ver 2.0 15. juuni 2023. a. [WWW]
+       https://www.id.ee/wp-content/uploads/2023/06/cryptoreport-2023-final.pdf
+       (29.08.2025)
+
+      Ehitusseadustiku ja planeerimisseaduse rakendamise seadus. Elektrooniline Riigi
+       Teataja. [WWW] https://www.riigiteataja.ee/akt/123032015003?leiaKehtiv
+       (29.08.2025)
+
+      Isikukoodide moodustamise, väljajagamise ja andmise kord. Regionaalministri
+       määrus. Vastu võetud 07.01.2005 nr 4. Elektrooniline Riigi Teataja. [WWW]
+       https://www.riigiteataja.ee/akt/114022017005 (29.08.2025)
+
+
+                                                94
+Andmebaasi näidisprojekt (2025)                                        © Erki Eessaar
+    Kõrgharidusseadus. Elektrooniline Riigi Teataja.
+     [WWW] https://www.riigiteataja.ee/akt/KHaS (29.08.2025)
+
+      Nimeseadus. Elektrooniline Riigi Teataja. [WWW]
+       https://www.riigiteataja.ee/akt/NS (29.08.2025)
+
+      PostgreSQL Documentation. pgcrypto [WWW]
+       https://www.postgresql.org/docs/current/pgcrypto.html (29.08.2025)
+
+      Rahvastikuregistri seadus. Elektrooniline Riigi Teataja.
+       [WWW] https://www.riigiteataja.ee/akt/122122018013?leiaKehtiv (29.08.2025)
+
+      Sõnaveeb. [WWW] https://sõnaveeb.ee (29.08.2025)
+
+      Tallinna Tehnikaülikooli nõukogu määrus. Tunnustamise ja sümboolika eeskiri
+       20.06.2017 nr 11.
+
+
+
+
+                                          95
+
