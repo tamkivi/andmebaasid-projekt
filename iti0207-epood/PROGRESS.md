@@ -1,3 +1,30 @@
+# ITI0207 e-poe — progress
+
+**Updated:** 2026-09-20 · **Tool choice:** DBeaver path (no Windows EA on Mac)
+
+## Current decision
+- Modeling / diagram tool: **DBeaver Community** (`/Applications/DBeaver.app`)
+- Course route: Ü2 option **3** — design base tables carefully (SQL / notes from Dokument.docx), later visualize per-register diagrams in DBeaver (Erki explicitly allows this without CASE). Do **not** depend on opening `Diagrammid.eap`.
+- Stack still: PostgreSQL on school server + pgApex app later.
+- EA / Rational Rose: not required for our Mac workflow unless we later choose to use an ICT lab PC.
+
+## Repo layout (live)
+- `iti0206-jousaal/` — last year (archive)
+- `iti0207-epood/docs/lahteprojekt/` — Dokument.docx, Diagrammid.eap (reference only), Prototüüp.mdb
+- `iti0207-epood/docs/ulesanded/` — Ü2, tegevuskava, näidis
+- `iti0207-epood/models/`, `sql/`, `app/` — for upcoming slices
+
+## Next slice when we start building
+Week 5 / Ü2 (DBeaver variant):
+1. From Dokument.docx, draft PostgreSQL base-table design notes (names, PK/FK/UK, types) — **no CHECK/indexes yet**.
+2. Optional: local SQL draft under `sql/` (not executed on school server until Ü4 unless we choose a throwaway local DB for DBeaver diagrams).
+3. Produce readable portrait-A4-style register diagrams in DBeaver for the document.
+4. Stop before Ü3 (CHECK/indexes) and before school-server DDL unless explicitly asked.
+
+---
+
+## Historical prep log (Codex, earlier same day)
+
 # ITI0207 e-poe — Prep and grounding
 
 Verified locally: 2026-09-20. Scope: Prep and prerequisites verification only. Updated from newly supplied local sources on 2026-09-20. No implementation assignment is marked complete.
