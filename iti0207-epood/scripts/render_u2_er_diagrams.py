@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import os
 import subprocess
+import textwrap
 from collections import defaultdict
 from pathlib import Path
 
@@ -91,11 +92,12 @@ def load_schema():
         JOIN LATERAL unnest(c.conkey) AS k(attnum) ON true
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum
         LEFT JOIN pg_class ref ON ref.oid = c.confrelid
-        WHERE n.nspname = 'public' AND c.contype IN ('p', 'u', 'f')
+        WHERE n.nspname = 'public' AND c.contype IN ('p', 'u', 'f', 'c')
         ORDER BY t.relname, c.contype, c.conname, a.attnum
     """):
         constraints[table][name] = (kind, definition, target, delete, update)
-        flags[table][column].add({"p": "PK", "u": "UK", "f": "FK"}[kind])
+        if kind in {"p", "u", "f"}:
+            flags[table][column].add({"p": "PK", "u": "UK", "f": "FK"}[kind])
 
     fks = []
     for table, column, target, name in psql("""
@@ -133,16 +135,20 @@ def table_html(name: str, cols, constraints, flags, detailed: bool) -> str:
         )
     for constraint, (kind, definition, target, delete, update) in constraints[name].items():
         columns = definition.split("(", 1)[1].split(")", 1)[0]
-        if kind == "f":
+        if kind == "c":
+            detail = f"CHECK {constraint}: {definition.removeprefix('CHECK ')}"
+            detail = detail.replace("::timestamp with time zone", "::timestamptz")
+        elif kind == "f":
             detail = (f"FK {constraint} -> {target} "
                       f"[D {ACTION[delete]}; U {ACTION[update]}]")
         else:
             detail = f"{'PK' if kind == 'p' else 'UK'} {constraint}: ({columns})"
+        wrapped = '<BR ALIGN="LEFT"/>'.join(esc(part) for part in textwrap.wrap(detail, width=108, break_long_words=False, break_on_hyphens=False))
         rows.append(
             '<TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8">'
-            f'<FONT POINT-SIZE="9">{esc(detail)}</FONT></TD></TR>'
+            f'<FONT POINT-SIZE="8">{wrapped}</FONT></TD></TR>'
         )
-    return ('<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3">'
+    return ('<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
             + ''.join(rows) + '</TABLE>>')
 
 
@@ -167,8 +173,12 @@ def render_register(key: str, primary: list[str], cols, constraints, flags, fks)
         lines.append(f'  "{table}" [label={table_html(table, cols, constraints, flags, False)}];')
     for source, column, target in edges:
         lines.append(f'  "{target}" -> "{source}";')
-    # A reading-order chain prevents wide landscape rows.
-    ordered = sorted(context) + primary
+    # Paired context rows keep the full table descriptions readable.
+    context_rows = [sorted(context)[i:i + 2] for i in range(0, len(context), 2)]
+    for row in context_rows:
+        if len(row) > 1:
+            lines.append("  { rank=same; " + "; ".join(f'"{table}"' for table in row) + "; }")
+    ordered = [row[0] for row in context_rows] + primary
     for before, after in zip(ordered, ordered[1:]):
         lines.append(f'  "{before}" -> "{after}" [style=invis, weight=100];')
     lines.append('}')

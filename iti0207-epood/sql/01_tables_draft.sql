@@ -1,12 +1,10 @@
 -- =============================================================================
--- ITI0207 e-pood — Ü2 draft: PostgreSQL base tables
+-- ITI0207 e-pood — PostgreSQL base tables and constraints
 -- Teema: Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem
 -- Route: DBeaver / no-EA (Ü2 path 4)
 --
 -- DRAFT ONLY — not applied to school server (apex2) yet.
--- Ü2 scope: CREATE TABLE (+ sequences via GENERATED/IDENTITY), PK, UK, FK,
---           defaults, nullability. NO CHECK. NO CREATE INDEX.
--- CHECKs and indexes → Ü3. Server DDL apply → Ü4.
+-- Tabelid, võtmed, vaikeväärtused ja kontseptuaalse andmemudeli väärtusreeglid.
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -20,7 +18,9 @@ CREATE TABLE riik (
     on_aktiivne         boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_riik PRIMARY KEY (riik_id),
     CONSTRAINT uk_riik_kood UNIQUE (kood),
-    CONSTRAINT uk_riik_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_riik_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_riik_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_riik_kood_kuju CHECK (kood ~ '^[A-Z]{3}$')
 );
 
 CREATE TABLE isiku_seisundi_liik (
@@ -30,7 +30,9 @@ CREATE TABLE isiku_seisundi_liik (
     on_aktiivne             boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_isiku_seisundi_liik PRIMARY KEY (isiku_seisundi_liik_id),
     CONSTRAINT uk_isiku_seisundi_liik_kood UNIQUE (kood),
-    CONSTRAINT uk_isiku_seisundi_liik_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_isiku_seisundi_liik_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_isiku_seisundi_liik_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_isiku_seisundi_liik_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE tootaja_seisundi_liik (
@@ -40,7 +42,9 @@ CREATE TABLE tootaja_seisundi_liik (
     on_aktiivne               boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_tootaja_seisundi_liik PRIMARY KEY (tootaja_seisundi_liik_id),
     CONSTRAINT uk_tootaja_seisundi_liik_kood UNIQUE (kood),
-    CONSTRAINT uk_tootaja_seisundi_liik_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_tootaja_seisundi_liik_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_tootaja_seisundi_liik_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_tootaja_seisundi_liik_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE kliendi_seisundi_liik (
@@ -50,7 +54,9 @@ CREATE TABLE kliendi_seisundi_liik (
     on_aktiivne               boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kliendi_seisundi_liik PRIMARY KEY (kliendi_seisundi_liik_id),
     CONSTRAINT uk_kliendi_seisundi_liik_kood UNIQUE (kood),
-    CONSTRAINT uk_kliendi_seisundi_liik_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_kliendi_seisundi_liik_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_kliendi_seisundi_liik_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kliendi_seisundi_liik_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE tootaja_roll (
@@ -61,7 +67,10 @@ CREATE TABLE tootaja_roll (
     kirjeldus         text,
     CONSTRAINT pk_tootaja_roll PRIMARY KEY (tootaja_roll_id),
     CONSTRAINT uk_tootaja_roll_kood UNIQUE (kood),
-    CONSTRAINT uk_tootaja_roll_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_tootaja_roll_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_tootaja_roll_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_tootaja_roll_kood_sisu CHECK (kood ~ '[^[:space:]]'),
+    CONSTRAINT ck_tootaja_roll_kirjeldus_sisu CHECK (kirjeldus ~ '[^[:space:]]')
 );
 
 CREATE TABLE kauba_seisundi_liik (
@@ -71,7 +80,8 @@ CREATE TABLE kauba_seisundi_liik (
     on_aktiivne             boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kauba_seisundi_liik PRIMARY KEY (kauba_seisundi_liik_id),
     CONSTRAINT uk_kauba_seisundi_liik_kood UNIQUE (kood),
-    CONSTRAINT uk_kauba_seisundi_liik_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_kauba_seisundi_liik_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_kauba_seisundi_liik_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]')
 );
 -- Expected seed codes (data later): 1 Ootel, 2 Aktiivne, 3 Mitteaktiivne, 4 Lopetatud
 -- Initial goods state: New goods must reference the Ootel classifier via kauba_seisundi_liik_id FK.
@@ -86,7 +96,9 @@ CREATE TABLE brand (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_brand PRIMARY KEY (brand_id),
     CONSTRAINT uk_brand_kood UNIQUE (kood),
-    CONSTRAINT uk_brand_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_brand_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_brand_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_brand_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE diagonaal (
@@ -96,7 +108,9 @@ CREATE TABLE diagonaal (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_diagonaal PRIMARY KEY (diagonaal_id),
     CONSTRAINT uk_diagonaal_kood UNIQUE (kood),
-    CONSTRAINT uk_diagonaal_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_diagonaal_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_diagonaal_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_diagonaal_kood_positiivne CHECK (kood > 0 AND kood <> 'NaN'::numeric)
 );
 
 CREATE TABLE ekraani_resolutsioon (
@@ -109,7 +123,11 @@ CREATE TABLE ekraani_resolutsioon (
     CONSTRAINT pk_ekraani_resolutsioon PRIMARY KEY (ekraani_resolutsioon_id),
     CONSTRAINT uk_ekraani_resolutsioon_kood UNIQUE (kood),
     CONSTRAINT uk_ekraani_resolutsioon_nimetus UNIQUE (nimetus),
-    CONSTRAINT uk_ekraani_resolutsioon_horis_vert UNIQUE (horisontaalne, vertikaalne)
+    CONSTRAINT uk_ekraani_resolutsioon_horis_vert UNIQUE (horisontaalne, vertikaalne),
+    CONSTRAINT ck_ekraani_resolutsioon_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_ekraani_resolutsioon_kood_sisu CHECK (kood ~ '[^[:space:]]'),
+    CONSTRAINT ck_ekraani_resolutsioon_horisontaalne_positiivne CHECK (horisontaalne > 0),
+    CONSTRAINT ck_ekraani_resolutsioon_vertikaalne_positiivne CHECK (vertikaalne > 0)
 );
 
 CREATE TABLE kaamera (
@@ -119,7 +137,9 @@ CREATE TABLE kaamera (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kaamera PRIMARY KEY (kaamera_id),
     CONSTRAINT uk_kaamera_kood UNIQUE (kood),
-    CONSTRAINT uk_kaamera_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_kaamera_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_kaamera_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kaamera_kood_positiivne CHECK (kood > 0 AND kood <> 'NaN'::numeric)
 );
 
 CREATE TABLE protsessor (
@@ -129,7 +149,9 @@ CREATE TABLE protsessor (
     on_aktiivne    boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_protsessor PRIMARY KEY (protsessor_id),
     CONSTRAINT uk_protsessor_kood UNIQUE (kood),
-    CONSTRAINT uk_protsessor_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_protsessor_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_protsessor_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_protsessor_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE sisemalu (
@@ -139,7 +161,9 @@ CREATE TABLE sisemalu (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_sisemalu PRIMARY KEY (sisemalu_id),
     CONSTRAINT uk_sisemalu_kood UNIQUE (kood),
-    CONSTRAINT uk_sisemalu_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_sisemalu_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_sisemalu_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_sisemalu_kood_positiivne CHECK (kood > 0)
 );
 
 CREATE TABLE varv (
@@ -149,7 +173,9 @@ CREATE TABLE varv (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_varv PRIMARY KEY (varv_id),
     CONSTRAINT uk_varv_kood UNIQUE (kood),
-    CONSTRAINT uk_varv_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_varv_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_varv_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_varv_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE kauba_kategooria_tyyp (
@@ -159,7 +185,9 @@ CREATE TABLE kauba_kategooria_tyyp (
     on_aktiivne               boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kauba_kategooria_tyyp PRIMARY KEY (kauba_kategooria_tyyp_id),
     CONSTRAINT uk_kauba_kategooria_tyyp_kood UNIQUE (kood),
-    CONSTRAINT uk_kauba_kategooria_tyyp_nimetus UNIQUE (nimetus)
+    CONSTRAINT uk_kauba_kategooria_tyyp_nimetus UNIQUE (nimetus),
+    CONSTRAINT ck_kauba_kategooria_tyyp_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kauba_kategooria_tyyp_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 CREATE TABLE kauba_kategooria (
@@ -172,7 +200,9 @@ CREATE TABLE kauba_kategooria (
     CONSTRAINT uk_kauba_kategooria_kood UNIQUE (kood),
     CONSTRAINT uk_kauba_kategooria_tyyp_id_nimetus UNIQUE (kauba_kategooria_tyyp_id, nimetus),
     CONSTRAINT fk_kauba_kategooria_tyyp FOREIGN KEY (kauba_kategooria_tyyp_id)
-        REFERENCES kauba_kategooria_tyyp (kauba_kategooria_tyyp_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+        REFERENCES kauba_kategooria_tyyp (kauba_kategooria_tyyp_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT ck_kauba_kategooria_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kauba_kategooria_kood_sisu CHECK (kood ~ '[^[:space:]]')
 );
 
 -- ---------------------------------------------------------------------------
@@ -197,7 +227,20 @@ CREATE TABLE isik (
     CONSTRAINT fk_isik_riik FOREIGN KEY (riik_id)
         REFERENCES riik (riik_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_isik_isiku_seisundi_liik FOREIGN KEY (isiku_seisundi_liik_id)
-        REFERENCES isiku_seisundi_liik (isiku_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+        REFERENCES isiku_seisundi_liik (isiku_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT ck_isik_isikukood_sisu CHECK (isikukood ~ '[^[:space:]]'),
+    CONSTRAINT ck_isik_isikukood_margid CHECK (isikukood ~ '^[[:alpha:][:digit:] +/=\\-]+$'),
+    CONSTRAINT ck_isik_eesnimi_sisu CHECK (eesnimi ~ '[^[:space:]]'),
+    CONSTRAINT ck_isik_perenimi_sisu CHECK (perenimi ~ '[^[:space:]]'),
+    CONSTRAINT ck_isik_elukoht_sisu CHECK (elukoht ~ '[^[:space:]]'),
+    CONSTRAINT ck_isik_nimi_olemas CHECK (eesnimi IS NOT NULL OR perenimi IS NOT NULL),
+    CONSTRAINT ck_isik_elukoht_margid CHECK (elukoht !~ '^[0-9]+$'),
+    CONSTRAINT ck_isik_e_meil_kuju CHECK (position('@' in e_meil) > 0),
+    CONSTRAINT ck_isik_synni_kp_vahemik CHECK (synni_kp BETWEEN DATE '1900-01-01' AND DATE '2100-12-31'),
+    CONSTRAINT ck_isik_synni_kp_registreerimine CHECK (synni_kp <= (reg_aeg AT TIME ZONE 'Europe/Tallinn')::date),
+    CONSTRAINT ck_isik_reg_aeg_vahemik CHECK (reg_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND reg_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02'),
+    CONSTRAINT ck_isik_viimase_muutm_aeg_vahemik CHECK (viimase_muutm_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND viimase_muutm_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02'),
+    CONSTRAINT ck_isik_ajaline_jarjestus CHECK (viimase_muutm_aeg >= reg_aeg)
 );
 
 CREATE TABLE kasutajakonto (
@@ -206,7 +249,8 @@ CREATE TABLE kasutajakonto (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kasutajakonto PRIMARY KEY (isik_id),
     CONSTRAINT fk_kasutajakonto_isik FOREIGN KEY (isik_id)
-        REFERENCES isik (isik_id) ON DELETE CASCADE ON UPDATE NO ACTION
+        REFERENCES isik (isik_id) ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT ck_kasutajakonto_parool_sisu CHECK (parool ~ '[^[:space:]]')
 );
 -- parool: bcrypt/crypt hash (PostgreSQL path per Erki Ü2 §3.6); no separate sool column
 
@@ -237,7 +281,10 @@ CREATE TABLE tootaja_rolli_omamine (
     CONSTRAINT fk_tootaja_rolli_omamine_tootaja FOREIGN KEY (tootaja_id)
         REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_tootaja_rolli_omamine_roll FOREIGN KEY (tootaja_roll_id)
-        REFERENCES tootaja_roll (tootaja_roll_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+        REFERENCES tootaja_roll (tootaja_roll_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT ck_tootaja_rolli_omamine_alguse_aeg_vahemik CHECK (alguse_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND alguse_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02'),
+    CONSTRAINT ck_tootaja_rolli_omamine_lopu_aeg_vahemik CHECK (lopu_aeg = 'infinity'::timestamptz OR (lopu_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND lopu_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02')),
+    CONSTRAINT ck_tootaja_rolli_omamine_ajaline_jarjestus CHECK (lopu_aeg > alguse_aeg)
 );
 
 -- ---------------------------------------------------------------------------
@@ -281,9 +328,20 @@ CREATE TABLE kaup (
     CONSTRAINT fk_kaup_registreerija FOREIGN KEY (registreerija_id)
         REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_kaup_viimase_muutja FOREIGN KEY (viimase_muutja_id)
-        REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+        REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT ck_kaup_kauba_kood_min_pikkus CHECK (char_length(kauba_kood) >= 6),
+    CONSTRAINT ck_kaup_kauba_kood_kuju CHECK (kauba_kood ~ '^[A-Z]{3}[A-Z0-9]*$'),
+    CONSTRAINT ck_kaup_nimetus_sisu CHECK (nimetus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kaup_nimetus_min_pikkus CHECK (char_length(nimetus) >= 4),
+    CONSTRAINT ck_kaup_hind_positiivne CHECK (hind > 0 AND hind <> 'NaN'::numeric),
+    CONSTRAINT ck_kaup_kirjeldus_sisu CHECK (kirjeldus ~ '[^[:space:]]'),
+    CONSTRAINT ck_kaup_reg_aeg_vahemik CHECK (reg_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND reg_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02'),
+    CONSTRAINT ck_kaup_viimase_muutm_aeg_vahemik CHECK (viimase_muutm_aeg >= TIMESTAMPTZ '2010-01-01 00:00:00+02' AND viimase_muutm_aeg < TIMESTAMPTZ '2101-01-01 00:00:00+02'),
+    CONSTRAINT ck_kaup_ajaline_jarjestus CHECK (viimase_muutm_aeg >= reg_aeg),
+    CONSTRAINT ck_kaup_pildi_aadress_kuju CHECK (pildi_aadress ~ '\.(jpg|png)$'),
+    CONSTRAINT ck_kaup_kalli_kauba_pilt CHECK (hind <= 1000 OR pildi_aadress IS NOT NULL)
 );
--- Note: partial unique on nimetus for non-Lopetatud states → Ü3 (CHECK / partial UK / index)
+-- Nimetuse tingimuslik unikaalsus sõltub kauba seisundist.
 
 CREATE TABLE nutitelefon (
     kaup_id                    integer       NOT NULL,
@@ -333,8 +391,3 @@ CREATE TABLE kauba_kategooria_omamine (
     CONSTRAINT fk_kauba_kategooria_omamine_kategooria FOREIGN KEY (kauba_kategooria_id)
         REFERENCES kauba_kategooria (kauba_kategooria_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
-
--- =============================================================================
--- End of Ü2 draft. Deferred to Ü3: CHECK constraints, indexes (incl. FK indexes
--- and case-insensitive unique on isik.e_meil). Do not run on apex2 until Ü4.
--- =============================================================================

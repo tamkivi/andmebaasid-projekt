@@ -1,17 +1,17 @@
 # Ü2 — PostgreSQL baastabelite füüsiline disain (DBeaver / no-EA)
 
-**Kursus:** ITI0207 Andmebaasid II (2026 sügis)  
-**Teema:** Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem  
-**Töökoht:** kaupade halduri töökoht  
-**Uuendatud:** 2026-09-25 (Europe/Tallinn)
+**Kursus:** ITI0207 Andmebaasid II (2026 sügis)
+**Teema:** Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem
+**Töökoht:** kaupade halduri töökoht
+**Uuendatud:** 2026-10-19 (Europe/Tallinn)
 
 ## Valitud tee
 
 **Ü2 tee 4 (2026 ver2 §2.1):** luua baastabelid otse (SQL + disainimärkmed), arvestades ülesannete 2–4 põhimõtteid; registridiagrammid on pöördprojekteeritud kohalikust PostgreSQLi baasist Graphviziga ning sama baas on DBeaveris avatav.
 `Diagrammid.eap` jääb ainult referentsiks — seda ei avata ega muudeta.
 
-**Selles lõigus (Ü2):** tabelid, veerud, andmetüübid/pikkused, nullability, PK, UK, FK, sobivad vaikimisi väärtused, puhtad `snake_case` nimed, veergude järjekord Erki §3.7 järgi.  
-**Välja jäetud (→ Ü3):** CHECK kitsendused, indeksid.  
+**Füüsiline mudel:** tabelid, veerud, andmetüübid/pikkused, kohustuslikkus, PK, UK, FK, CHECK, sobivad vaikeväärtused, `snake_case` nimed ja veergude järjekord Erki §3.7 järgi.
+**Lisamata:** käsitsi loodavad indeksid.
 **Ei tehta:** DDL `apex2` peal, pgApex, trigerid, vaated, rutiinid, jõusaali domeen.
 
 Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/sources/Ylesanne_ITI0207_2_2026_ver2.txt`, `PROGRESS.md` elutsükli/rollide märkmed. Access `Prototüüp.mdb` / EA — ainult kontekst.
@@ -32,7 +32,7 @@ Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/sources/Ylesa
 
 **Tabelite arv:** **24**.
 
-23.09 auditi käigus jagati viis registrit 11 loetavaks jooniseks. Klassifikaatorite register võtab viis ja kaupade register kolm lehte; iga tabeli veerud/piirangud on ainult ühel lehel. Täpne lehtede loend, kontekstitabelid ja PDF-i mõõdud on docs/diagrams/README.md ning docs/u2-audit-2026-09-23.md.
+23.09 auditi käigus jagati viis registrit 11 loetavaks jooniseks. Klassifikaatorite register võtab viis ja kaupade register kolm lehte; iga tabeli veerud/piirangud on ainult ühel lehel. Täpne lehtede loend ja kontekstitabelid on docs/diagrams/README.md.
 
 ---
 
@@ -77,7 +77,7 @@ Igas tabelis: **PK → UK/alternatiivvõtmete veerud → ülejäänud FK-d → m
 
 ## Tabelite detailid
 
-Märkus: CHECK-reeglid (nt `@Pole_tühi`, positiivne hind, kauba_koodi muster, eesnimi∨perenimi, ajaintervallid) on **kirjeldatud allikates**, aga **ei kuulu Ü2 DDL-i** — need lähevad Ü3-sse. Siin ainult veerud/tüübid/null/PK/UK/FK/DEFAULT.
+DDL sisaldab 60 nimelist CHECK-kitsendust, mis lähtuvad kontseptuaalse mudeli atribuutide definitsioonidest. Teksti sisukontroll välistab tühja ja ainult tühimärkidest koosneva väärtuse. Valikulised veerud võivad jääda NULL-iks. Positiivse arvu reegel välistab ka PostgreSQLi eriväärtuse NaN. Ajapiirid on fikseeritud ISO-vormingus ega sõltu jooksva päeva väärtusest.
 
 ### Klassifikaatorid (ühine muster)
 
@@ -106,7 +106,7 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 | `synni_kp` | date | NOT NULL | |
 | `reg_aeg` | timestamptz(0) | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
 | `viimase_muutm_aeg` | timestamptz(0) | NOT NULL | DEFAULT `CURRENT_TIMESTAMP` |
-| `eesnimi` | varchar(50) | NULL | Erki: vähemalt üks nimi → CHECK Ü3 |
+| `eesnimi` | varchar(50) | NULL | CHECK nõuab vähemalt ühte nimeosa |
 | `perenimi` | varchar(50) | NULL | |
 | `elukoht` | varchar(500) | NULL | |
 
@@ -122,7 +122,7 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 
 ### `tootaja` / `tootaja_rolli_omamine`
 
-- `tootaja`: `tootaja_id` PK, **UK(`isik_id`)**, FK seisundiliigile.  
+- `tootaja`: `tootaja_id` PK, **UK(`isik_id`)**, FK seisundiliigile.
 - `tootaja_rolli_omamine`: surrogaat PK; FK-d `tootaja`, `tootaja_roll`; `alguse_aeg timestamptz(0) NOT NULL`; `lopu_aeg timestamptz(0) NOT NULL DEFAULT 'infinity'` — lõputa perioodi vaikimisi lõpp on `'infinity'`; **UK(tootaja_id, tootaja_roll_id, alguse_aeg)**.
 
 ### `klient`
@@ -152,8 +152,8 @@ Kõik 25 FK-d määravad nüüd selgesõnaliselt ON DELETE ja ON UPDATE. Isikust
 
 ### `nutitelefon` (1:1 alamtüüp)
 
-PK/FK `kaup_id` → `kaup` (**ON DELETE CASCADE** unustamise OP2 jaoks).  
-FK-d: `eesmine_kaamera_id`, `tagumine_kaamera_id`, `sisemalu_id`, `diagonaal_id`, `protsessor_id`, `ekraani_resolutsioon_id` — kõik NOT NULL.  
+PK/FK `kaup_id` → `kaup` (**ON DELETE CASCADE** unustamise OP2 jaoks).
+FK-d: `eesmine_kaamera_id`, `tagumine_kaamera_id`, `sisemalu_id`, `diagonaal_id`, `protsessor_id`, `ekraani_resolutsioon_id` — kõik NOT NULL.
 `on_sormejalelugeja`, `on_veekindel` — boolean NOT NULL DEFAULT FALSE.
 
 ### `kauba_variant`
@@ -175,7 +175,7 @@ Komposiit-PK (`kaup_id`, `kauba_kategooria_id`); CASCADE kaubalt.
 | 3 | Mitteaktiivne | Muuda; Aktiveeri→2; Lõpeta→4 |
 | 4 | Lõpetatud | peamiselt vaatamine; füüsilist kustutamist ei ole |
 
-Seisund on FK-veerg `kaup.kauba_seisundi_liik_id` — **mitte** CHECK ega enum Ü2-s.  
+Seisund on FK-veerg `kaup.kauba_seisundi_liik_id` — **mitte** CHECK ega enum Ü2-s.
 `registreerija_id` / `reg_aeg` jäävad muutumatuks peale loomist (jõustamine rutiinides/trigerites).
 
 ---
@@ -199,9 +199,18 @@ Parool: PostgreSQL tee **`varchar(60)` räsi, ilma eraldi `sool` veeruta** (Erki
 
 ---
 
-## Deferred to Ü3 (explicit)
+## Väärtuste kitsendused
 
-- Kõik **CHECK** kitsendused (positiivne hind, kauba_koodi muster 6–50, `@Pole_tühi`, eesnimi∨perenimi, ajaintervallid `@Lubatud_ajavahemik`, `lopu_aeg > alguse_aeg`, pildi laiend, hind>1000 ⇒ pilt kohustuslik, jms).
+- Klassifikaatorite nimetused ja tekstilised koodid peavad sisaldama vähemalt üht mittetühimärki. Riigikood koosneb kolmest suurtähest A–Z. Diagonaali, kaamera, sisemälu ja resolutsiooni mõõtmed on positiivsed.
+- Isikukood sisaldab ainult mudelis lubatud tähti, numbreid ja erimärke. Vähemalt üks nimeosa on olemas. E-post sisaldab @-märki; aadress ei koosne ainult numbritest. Sünnikuupäev jääb aastatesse 1900–2100 ega ole registreerimise Eesti kuupäevast hilisem.
+- Isiku ja kauba ajatemplid ning rolli algus jäävad aastatesse 2010–2100. Muutmise aeg ei eelne registreerimise ajale. Rolli lõpp on algusest hilisem ning võib olla infinity.
+- Kaubakoodi pikkus on 6–50 märki; see algab kolme suurtähega ja jätkub suurtähtede või numbritega. Kauba nimetus on vähemalt neli märki pikk, hind positiivne ja kirjeldus sisukas. Pildi aadress lõpeb .jpg või .png laiendiga; üle 1000-eurose hinna korral on pilt kohustuslik.
+- Konto räsi ja valikuline rollikirjeldus ei või olla tühi tekst. See ei asenda autentimisel räsi kontrollimist.
+
+Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärtust. Keelatud väärtuste puhul kontrollitakse SQLSTATE-i ning nimetatud CHECK-kitsendust. Riigist sõltuvat Eesti isikukoodi pikkuse reeglit ei saa praeguse riik_id kaudu väljendada ühe rea CHECK-kitsendusena.
+
+## Lisamata andmebaasiobjektid
+
 - **Indeksid:** kõik FK-veerud; võimalik osaline unikaalne indeks `kaup.nimetus` mitte-lõpetatud ridadele; `lower(e_meil)` unikaalsus.
 - Võimalik `citext` / domeenid (domeenid ametlikult Ü6).
 
@@ -209,14 +218,14 @@ Parool: PostgreSQL tee **`varchar(60)` räsi, ilma eraldi `sool` veeruta** (Erki
 
 ## Ambiguities left open
 
-1. **`kauba.nimetus` unikaalsus** — allikas: unikaalne ootel+aktiivne+mitteaktiivne ühendis (lõpetatud võib korduda). Ü2-s ainult tavaline veerg; osaline UK/indeks Ü3.  
-2. **`ekraani_resolutsioon.kood` vs horisontaalne×vertikaalne** — mõlemad allikas; hoiame mõlemat (kood OP jaoks, mõõtmed UK jaoks).  
-3. **Initial goods state assignment** — New goods must be inserted with `kauba_seisundi_liik_id` referencing the Ootel classifier (expected seed code 1). Application/routine queries the classifier by `kood=1`; no DEFAULT on the FK column (avoids brittle assumption that generated ID 1 always equals state code 1). Assignment implemented in Ü3+ application routines.  
-4. **Klientide register** — kaasas UC1 jaoks; kui registreeritud töökoht on rangelt ainult haldur, võib `klient` hiljem dokumendis “konteksttabeliks” märkida, ilma et seda eemaldaksime auth-teelt.  
+1. **`kauba.nimetus` unikaalsus** — allikas: unikaalne ootel+aktiivne+mitteaktiivne ühendis (lõpetatud võib korduda). Ü2-s ainult tavaline veerg; osaline UK/indeks Ü3.
+2. **`ekraani_resolutsioon.kood` vs horisontaalne×vertikaalne** — mõlemad allikas; hoiame mõlemat (kood OP jaoks, mõõtmed UK jaoks).
+3. **Initial goods state assignment** — New goods must be inserted with `kauba_seisundi_liik_id` referencing the Ootel classifier (expected seed code 1). Application/routine queries the classifier by `kood=1`; no DEFAULT on the FK column (avoids brittle assumption that generated ID 1 always equals state code 1). Assignment implemented in Ü3+ application routines.
+4. **Klientide register** — kaasas UC1 jaoks; kui registreeritud töökoht on rangelt ainult haldur, võib `klient` hiljem dokumendis “konteksttabeliks” märkida, ilma et seda eemaldaksime auth-teelt.
 5. **Pärimine** — `nutitelefon`/`tootaja`/`klient`/`kasutajakonto` on **FK 1:1**, mitte PostgreSQL `INHERITS` (selgem DBeaveri diagrammidel; näidisprojekti INHERITS on valikuline muster).
 
 ---
 
-## Järgmine samm
+## Kohalik kontroll
 
-Kasuta 23.09 puhtasse kohalikku auditibaasi laaditud skeemi ja docs/diagrams/ kausta 11 PNG/PDF joonist peatüki 3.1 ning 25.09 praktilise tunni jaoks. Täpsed DBeaveri ühenduse ja jooniste paigutamise juhised on docs/u2-chapter3-handoff.md. Olemasolev vana kohalik iti0207_epood_u2 baas ei ole uute FK-tegevustega sünkroonitud. Ü3 CHECK-id/indeksid ja Ü4 kooliserveri DDL jäävad järgmiseks ametlikuks tööks.
+Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/04_tables.sql` tagasirullitavas transaktsioonis. Jooniste taastamiseks kasuta sama andmebaasi ja `scripts/render_u2_er_diagrams.py` skripti. Testimiseks loodud andmebaas eemaldatakse pärast kontrolli. Olemasolevad varasemad andmebaasid ei ole selle kontrolli osa.
