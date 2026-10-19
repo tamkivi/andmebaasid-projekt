@@ -99,6 +99,17 @@ def load_schema():
         if kind in {"p", "u", "f"}:
             flags[table][column].add({"p": "PK", "u": "UK", "f": "FK"}[kind])
 
+    for table, name, definition in psql("""
+        SELECT t.relname, it.relname, pg_get_indexdef(ix.indexrelid)
+        FROM pg_index ix JOIN pg_class t ON t.oid = ix.indrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        JOIN pg_class it ON it.oid = ix.indexrelid
+        WHERE n.nspname = 'public'
+          AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = ix.indexrelid)
+        ORDER BY t.relname, it.relname
+    """):
+        constraints[table][name] = ("i", definition, "", "", "")
+
     fks = []
     for table, column, target, name in psql("""
         SELECT t.relname, a.attname, ref.relname, c.conname
@@ -135,7 +146,10 @@ def table_html(name: str, cols, constraints, flags, detailed: bool) -> str:
         )
     for constraint, (kind, definition, target, delete, update) in constraints[name].items():
         columns = definition.split("(", 1)[1].split(")", 1)[0]
-        if kind == "c":
+        if kind == "i":
+            unique = "UNIQUE " if definition.startswith("CREATE UNIQUE INDEX") else ""
+            detail = f"{unique}INDEX {constraint}: {definition.partition(' USING btree ')[2]}"
+        elif kind == "c":
             detail = f"CHECK {constraint}: {definition.removeprefix('CHECK ')}"
             detail = detail.replace("::timestamp with time zone", "::timestamptz")
         elif kind == "f":

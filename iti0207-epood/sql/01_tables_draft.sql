@@ -222,7 +222,6 @@ CREATE TABLE isik (
     perenimi                 varchar(50),
     elukoht                  varchar(500),
     CONSTRAINT pk_isik PRIMARY KEY (isik_id),
-    CONSTRAINT uk_isik_e_meil UNIQUE (e_meil),
     CONSTRAINT uk_isik_riik_isikukood UNIQUE (riik_id, isikukood),
     CONSTRAINT fk_isik_riik FOREIGN KEY (riik_id)
         REFERENCES riik (riik_id) ON DELETE NO ACTION ON UPDATE NO ACTION,

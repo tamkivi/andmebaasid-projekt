@@ -11,7 +11,7 @@
 `Diagrammid.eap` jääb ainult referentsiks — seda ei avata ega muudeta.
 
 **Füüsiline mudel:** tabelid, veerud, andmetüübid/pikkused, kohustuslikkus, PK, UK, FK, CHECK, sobivad vaikeväärtused, `snake_case` nimed ja veergude järjekord Erki §3.7 järgi.
-**Lisamata:** käsitsi loodavad indeksid.
+**Indeksid:** 16 välisvõtmeindeksit ja e-posti tõstutundetu unikaalne avaldisindeks.
 **Ei tehta:** DDL `apex2` peal, pgApex, trigerid, vaated, rutiinid, jõusaali domeen.
 
 Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/sources/Ylesanne_ITI0207_2_2026_ver2.txt`, `PROGRESS.md` elutsükli/rollide märkmed. Access `Prototüüp.mdb` / EA — ainult kontekst.
@@ -110,7 +110,7 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 | `perenimi` | varchar(50) | NULL | |
 | `elukoht` | varchar(500) | NULL | |
 
-**UK:** `(riik_id, isikukood)`, `(e_meil)`. Tõstutundetu e_meil-unikaalsus → Ü3 funktsiooniline indeks.
+**UK:** `(riik_id, isikukood)`. E-posti tõstutundetu unikaalsuse tagab `ux_isik_e_meil` avaldisel `lower(e_meil)`. Tavalist e-posti UNIQUE-indeksit ei dubleerita.
 
 ### `kasutajakonto`
 
@@ -209,9 +209,13 @@ Parool: PostgreSQL tee **`varchar(60)` räsi, ilma eraldi `sool` veeruta** (Erki
 
 Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärtust. Keelatud väärtuste puhul kontrollitakse SQLSTATE-i ning nimetatud CHECK-kitsendust. Riigist sõltuvat Eesti isikukoodi pikkuse reeglit ei saa praeguse riik_id kaudu väljendada ühe rea CHECK-kitsendusena.
 
+## Indeksid
+
+`sql/10_indexes.sql` lisab 16 välisvõtmeindeksit veergudele, mida olemasolev PK või UNIQUE indeks algusveeruna ei kata. Kõik 25 välisvõtme veergu on kaetud kehtiva, osalise tingimuseta B-puu indeksi algusveeruga. Primaar- ja alternatiivvõtmete automaatseid indekseid ei korrata. E-posti aadressi unikaalsust kontrollib ainult `lower(e_meil)` unikaalne indeks; eri tõstuvariandid põhjustavad SQLSTATE-i 23505. Kontrollid on failis `sql/tests/10_indexes.sql`.
+
 ## Lisamata andmebaasiobjektid
 
-- **Indeksid:** kõik FK-veerud; võimalik osaline unikaalne indeks `kaup.nimetus` mitte-lõpetatud ridadele; `lower(e_meil)` unikaalsus.
+- Võimalik osaline unikaalne indeks `kaup.nimetus` mitte-lõpetatud ridadele sõltub seisundite sidumisest; seda ei saa määrata juhusliku surrogaat-ID kaudu.
 - Võimalik `citext` / domeenid (domeenid ametlikult Ü6).
 
 ---
