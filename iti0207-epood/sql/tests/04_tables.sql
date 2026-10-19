@@ -89,12 +89,12 @@ BEGIN
   {
     "sql": "UPDATE public.riik SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_riik_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.isiku_seisundi_liik SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_isiku_seisundi_liik_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.isiku_seisundi_liik SET kood='   '",
@@ -104,7 +104,7 @@ BEGIN
   {
     "sql": "UPDATE public.tootaja_seisundi_liik SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_tootaja_seisundi_liik_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.tootaja_seisundi_liik SET kood='   '",
@@ -114,7 +114,7 @@ BEGIN
   {
     "sql": "UPDATE public.kliendi_seisundi_liik SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_kliendi_seisundi_liik_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.kliendi_seisundi_liik SET kood='   '",
@@ -124,7 +124,7 @@ BEGIN
   {
     "sql": "UPDATE public.tootaja_roll SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_tootaja_roll_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.tootaja_roll SET kood='   '",
@@ -134,12 +134,12 @@ BEGIN
   {
     "sql": "UPDATE public.kauba_seisundi_liik SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_kauba_seisundi_liik_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.brand SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_brand_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.brand SET kood='   '",
@@ -149,12 +149,12 @@ BEGIN
   {
     "sql": "UPDATE public.diagonaal SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_diagonaal_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.ekraani_resolutsioon SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_ekraani_resolutsioon_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.ekraani_resolutsioon SET kood='   '",
@@ -164,12 +164,12 @@ BEGIN
   {
     "sql": "UPDATE public.kaamera SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_kaamera_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.protsessor SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_protsessor_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.protsessor SET kood='   '",
@@ -179,12 +179,12 @@ BEGIN
   {
     "sql": "UPDATE public.sisemalu SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_sisemalu_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.varv SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_varv_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.varv SET kood='   '",
@@ -194,7 +194,7 @@ BEGIN
   {
     "sql": "UPDATE public.kauba_kategooria_tyyp SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_kauba_kategooria_tyyp_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.kauba_kategooria_tyyp SET kood='   '",
@@ -204,7 +204,7 @@ BEGIN
   {
     "sql": "UPDATE public.kauba_kategooria SET nimetus=E' \\t\\n'",
     "state": "23514",
-    "constraint": "ck_kauba_kategooria_nimetus_sisu"
+    "constraint": "ck_klassifikaatori_nimetus_sisu"
   },
   {
     "sql": "UPDATE public.kauba_kategooria SET kood='   '",

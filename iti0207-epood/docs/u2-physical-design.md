@@ -81,7 +81,7 @@ Tabelite loomise fail on ühes transaktsioonis (`START TRANSACTION` ja `COMMIT`)
 
 ## Tabelite detailid
 
-DDL sisaldab 60 nimelist CHECK-kitsendust, mis lähtuvad kontseptuaalse mudeli atribuutide definitsioonidest. Teksti sisukontroll välistab tühja ja ainult tühimärkidest koosneva väärtuse. Valikulised veerud võivad jääda NULL-iks. Positiivse arvu reegel välistab ka PostgreSQLi eriväärtuse NaN. Ajapiirid on fikseeritud ISO-vormingus ega sõltu jooksva päeva väärtusest.
+DDL sisaldab 45 tabeli CHECK-kitsendust ja ühte jagatud domeeni CHECK-kitsendust, mis lähtuvad kontseptuaalse mudeli atribuutide definitsioonidest. Teksti sisukontroll välistab tühja ja ainult tühimärkidest koosneva väärtuse. Valikulised veerud võivad jääda NULL-iks. Positiivse arvu reegel välistab ka PostgreSQLi eriväärtuse NaN. Ajapiirid on fikseeritud ISO-vormingus ega sõltu jooksva päeva väärtusest.
 
 ### Klassifikaatorid (ühine muster)
 
@@ -217,10 +217,14 @@ Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärt
 
 `sql/10_indexes.sql` lisab 16 välisvõtmeindeksit veergudele, mida olemasolev PK või UNIQUE indeks algusveeruna ei kata. Kõik 25 välisvõtme veergu on kaetud kehtiva, osalise tingimuseta B-puu indeksi algusveeruga. Primaar- ja alternatiivvõtmete automaatseid indekseid ei korrata. E-posti aadressi unikaalsust kontrollib ainult `lower(e_meil)` unikaalne indeks; eri tõstuvariandid põhjustavad SQLSTATE-i 23505. Kontrollid on failis `sql/tests/10_indexes.sql`.
 
+## Klassifikaatori nimetuse domeen
+
+`sql/00_domains.sql` loob domeeni `klassifikaatori_nimetus` tüübiga `varchar(100)`. Domeen sisaldab NOT NULL-i ja sisuka teksti CHECK-kitsendust. Seda kasutavad kõigi 15 klassifikaatoritabeli `nimetus` veerud, mis ei ole välisvõtmed. Veergudel neid reegleid ei korrata. Kauba nimetus on eraldi `varchar(255)` ning sellel on lisaks miinimumpikkuse reegel, mistõttu see ei kasuta sama domeeni. Joonistel näidatakse domeeni nime, baastüüpi ja sellest tulenevat kohustuslikkust. Domeeni täielik deklaratsioon on dokumendi jaotises 4.3.
+
 ## Lisamata andmebaasiobjektid
 
 - Võimalik osaline unikaalne indeks `kaup.nimetus` mitte-lõpetatud ridadele sõltub seisundite sidumisest; seda ei saa määrata juhusliku surrogaat-ID kaudu.
-- Võimalik `citext` / domeenid (domeenid ametlikult Ü6).
+- Võimalik `citext` ei ole vajalik, sest e-posti tõstutundetust jõustab avaldisindeks.
 
 ---
 

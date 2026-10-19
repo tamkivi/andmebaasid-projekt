@@ -25,3 +25,5 @@ Taastamiseks laadi SQL tühja kohalikku baasi ja käivita skript teadlikult vali
     ITI0207_U2_DB=tyhi_kohalik_baas python3 iti0207-epood/scripts/render_u2_er_diagrams.py
 
 Skript loeb ainult valitud andmebaasi süsteemikataloogi. Kontrollimiseks kasuta eraldi loodud tühja kohalikku andmebaasi.
+
+Klassifikaatori nimetuse tüübina näidatakse domeeni nime ja selle all baastüüpi. NOT NULL arvestab domeeni kohustuslikkust. Jagatud sisureegel on domeeni deklaratsioonis `sql/00_domains.sql` ja dokumendi jaotises 4.3; tabelites seda ei korrata.

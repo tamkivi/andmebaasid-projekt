@@ -69,12 +69,14 @@ def display_type(value: str) -> str:
 def load_schema():
     cols = defaultdict(list)
     for table, column, typ, nullable, identity, default in psql("""
-        SELECT t.relname, a.attname, format_type(a.atttypid, a.atttypmod),
-               CASE WHEN a.attnotnull THEN 'NOT NULL' ELSE 'NULL' END,
+        SELECT t.relname, a.attname, format_type(a.atttypid, a.atttypmod) ||
+               CASE WHEN ty.typtype = 'd' THEN ' [' || format_type(ty.typbasetype, ty.typtypmod) || ']' ELSE '' END,
+               CASE WHEN a.attnotnull OR ty.typnotnull THEN 'NOT NULL' ELSE 'NULL' END,
                CASE WHEN a.attidentity <> '' THEN 'IDENTITY' ELSE '' END,
                COALESCE(pg_get_expr(d.adbin, d.adrelid), '')
         FROM pg_class t JOIN pg_namespace n ON n.oid = t.relnamespace
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum > 0 AND NOT a.attisdropped
+        JOIN pg_type ty ON ty.oid = a.atttypid
         LEFT JOIN pg_attrdef d ON d.adrelid = t.oid AND d.adnum = a.attnum
         WHERE n.nspname = 'public' AND t.relkind = 'r'
         ORDER BY t.relname, a.attnum
@@ -149,7 +151,7 @@ def table_html(name: str, cols, constraints, flags, detailed: bool) -> str:
             props.append(f"DEFAULT {default}")
         rows.append(
             f'<TR><TD ALIGN="LEFT">{esc(column)}</TD>'
-            f'<TD ALIGN="LEFT">{esc(typ)}</TD>'
+            f'<TD ALIGN="LEFT">{esc(typ).replace(" [", "<BR/>[")}</TD>'
             f'<TD ALIGN="LEFT">{esc("; ".join(props))}</TD></TR>'
         )
     for constraint, (kind, definition, target, delete, update) in constraints[name].items():
