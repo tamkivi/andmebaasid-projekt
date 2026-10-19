@@ -1,0 +1,19 @@
+digraph G {
+  graph [rankdir=TB, bgcolor=white, pad=0.1, nodesep=0.18, ranksep=0.15,
+         fontname=Helvetica, fontsize=12, size="7.3,10.5", page="8.27,11.69", margin=0.2];
+  node [shape=plaintext, fontname=Helvetica, fontsize=9];
+  edge [color="#667788", dir=none, fontsize=8, fontname=Helvetica];
+  labelloc="t";
+  label="ITI0207 Ü2 - Kaupade register: kaup";
+  "kaup" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD COLSPAN="3" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>kaup</B></FONT></TD></TR><TR><TD ALIGN="LEFT">kaup_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; PK; IDENTITY</TD></TR><TR><TD ALIGN="LEFT">kauba_kood</TD><TD ALIGN="LEFT">varchar(50)</TD><TD ALIGN="LEFT">NOT NULL; UK</TD></TR><TR><TD ALIGN="LEFT">nimetus</TD><TD ALIGN="LEFT">varchar(255)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">kauba_seisundi_liik_id</TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL; FK</TD></TR><TR><TD ALIGN="LEFT">brand_id</TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL; FK</TD></TR><TR><TD ALIGN="LEFT">registreerija_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; FK</TD></TR><TR><TD ALIGN="LEFT">viimase_muutja_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; FK</TD></TR><TR><TD ALIGN="LEFT">hind</TD><TD ALIGN="LEFT">numeric(12,2)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">kirjeldus</TD><TD ALIGN="LEFT">text</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">reg_aeg</TD><TD ALIGN="LEFT">timestamptz(0)</TD><TD ALIGN="LEFT">NOT NULL; DEFAULT CURRENT_TIMESTAMP</TD></TR><TR><TD ALIGN="LEFT">viimase_muutm_aeg</TD><TD ALIGN="LEFT">timestamptz(0)</TD><TD ALIGN="LEFT">NOT NULL; DEFAULT CURRENT_TIMESTAMP</TD></TR><TR><TD ALIGN="LEFT">pildi_aadress</TD><TD ALIGN="LEFT">varchar(500)</TD><TD ALIGN="LEFT">NULL</TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kaup_brand -&gt; brand [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kaup_kauba_seisundi_liik -&gt; kauba_seisundi_liik [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kaup_registreerija -&gt; tootaja [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kaup_viimase_muutja -&gt; tootaja [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">PK pk_kaup: (kaup_id)</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">UK uk_kaup_kauba_kood: (kauba_kood)</FONT></TD></TR></TABLE>>];
+  "brand" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>brand</B></TD></TR></TABLE>>];
+  "kauba_seisundi_liik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>kauba_seisundi_liik</B></TD></TR></TABLE>>];
+  "tootaja" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>tootaja</B></TD></TR></TABLE>>];
+  "brand" -> "kaup";
+  "kauba_seisundi_liik" -> "kaup";
+  "tootaja" -> "kaup";
+  "tootaja" -> "kaup";
+  "brand" -> "kauba_seisundi_liik" [style=invis, weight=100];
+  "kauba_seisundi_liik" -> "tootaja" [style=invis, weight=100];
+  "tootaja" -> "kaup" [style=invis, weight=100];
+}

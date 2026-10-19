@@ -1,12 +1,15 @@
 digraph G {
-  graph [rankdir=TB, bgcolor=white, pad=0.3, nodesep=0.35, ranksep=0.55, fontname=Helvetica];
+  graph [rankdir=TB, bgcolor=white, pad=0.1, nodesep=0.18, ranksep=0.15,
+         fontname=Helvetica, fontsize=12, size="7.3,10.5", page="8.27,11.69", margin=0.2];
   node [shape=plaintext, fontname=Helvetica, fontsize=9];
-  edge [color="#444444", arrowsize=0.7, fontsize=8, fontname=Helvetica];
+  edge [color="#667788", dir=none, fontsize=8, fontname=Helvetica];
   labelloc="t";
-  label="ITI0207 Ü2 — Klientide register\n(local iti0207_epood_u2)";
-  "klient" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="4" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>klient</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT">PK</TD></TR><TR><TD ALIGN="LEFT"><B>kliendi_seisundi_liik_id</B></TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR><TR><TD ALIGN="LEFT"><B>on_nous_tylitamisega</B></TD><TD ALIGN="LEFT">boolean</TD><TD ALIGN="LEFT">NOT NULL</TD><TD ALIGN="LEFT"></TD></TR></TABLE>>];
-  "isik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>isik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>isik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
-  "kliendi_seisundi_liik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD COLSPAN="2" BGCOLOR="#6c757d"><FONT COLOR="white"><B>kliendi_seisundi_liik</B> (kontekst)</FONT></TD></TR><TR><TD ALIGN="LEFT"><B>kliendi_seisundi_liik_id</B></TD><TD ALIGN="LEFT">PK</TD></TR></TABLE>>];
-  "klient" -> "isik" [label="isik_id"];
-  "klient" -> "kliendi_seisundi_liik" [label="kliendi_seisundi_liik_id"];
+  label="ITI0207 Ü2 - Klientide register";
+  "klient" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD COLSPAN="3" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>klient</B></FONT></TD></TR><TR><TD ALIGN="LEFT">isik_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; FK; PK</TD></TR><TR><TD ALIGN="LEFT">kliendi_seisundi_liik_id</TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL; FK</TD></TR><TR><TD ALIGN="LEFT">on_nous_tylitamisega</TD><TD ALIGN="LEFT">boolean</TD><TD ALIGN="LEFT">NOT NULL; DEFAULT false</TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_klient_isik -&gt; isik [D CASCADE; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_klient_kliendi_seisundi_liik -&gt; kliendi_seisundi_liik [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">PK pk_klient: (isik_id)</FONT></TD></TR></TABLE>>];
+  "isik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>isik</B></TD></TR></TABLE>>];
+  "kliendi_seisundi_liik" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>kliendi_seisundi_liik</B></TD></TR></TABLE>>];
+  "isik" -> "klient";
+  "kliendi_seisundi_liik" -> "klient";
+  "isik" -> "kliendi_seisundi_liik" [style=invis, weight=100];
+  "kliendi_seisundi_liik" -> "klient" [style=invis, weight=100];
 }

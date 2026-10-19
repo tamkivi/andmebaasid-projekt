@@ -1,0 +1,21 @@
+digraph G {
+  graph [rankdir=TB, bgcolor=white, pad=0.1, nodesep=0.18, ranksep=0.15,
+         fontname=Helvetica, fontsize=12, size="7.3,10.5", page="8.27,11.69", margin=0.2];
+  node [shape=plaintext, fontname=Helvetica, fontsize=9];
+  edge [color="#667788", dir=none, fontsize=8, fontname=Helvetica];
+  labelloc="t";
+  label="ITI0207 Ü2 - Kaupade register: variandid ja kategooriad";
+  "kauba_variant" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD COLSPAN="3" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>kauba_variant</B></FONT></TD></TR><TR><TD ALIGN="LEFT">kauba_variant_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; PK; IDENTITY</TD></TR><TR><TD ALIGN="LEFT">kaup_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; FK; UK</TD></TR><TR><TD ALIGN="LEFT">varv_id</TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL; FK; UK</TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kauba_variant_kaup -&gt; kaup [D CASCADE; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kauba_variant_varv -&gt; varv [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">PK pk_kauba_variant: (kauba_variant_id)</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">UK uk_kauba_variant_kaup_varv: (kaup_id, varv_id)</FONT></TD></TR></TABLE>>];
+  "kauba_kategooria_omamine" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD COLSPAN="3" BGCOLOR="#1f4e79"><FONT COLOR="white"><B>kauba_kategooria_omamine</B></FONT></TD></TR><TR><TD ALIGN="LEFT">kaup_id</TD><TD ALIGN="LEFT">integer</TD><TD ALIGN="LEFT">NOT NULL; FK; PK</TD></TR><TR><TD ALIGN="LEFT">kauba_kategooria_id</TD><TD ALIGN="LEFT">smallint</TD><TD ALIGN="LEFT">NOT NULL; FK; PK</TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kauba_kategooria_omamine_kategooria -&gt; kauba_kategooria [D NO ACTION; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">FK fk_kauba_kategooria_omamine_kaup -&gt; kaup [D CASCADE; U NO ACTION]</FONT></TD></TR><TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f2f5f8"><FONT POINT-SIZE="9">PK pk_kauba_kategooria_omamine: (kaup_id, kauba_kategooria_id)</FONT></TD></TR></TABLE>>];
+  "kauba_kategooria" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>kauba_kategooria</B></TD></TR></TABLE>>];
+  "kaup" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>kaup</B></TD></TR></TABLE>>];
+  "varv" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#e8edf2"><B>varv</B></TD></TR></TABLE>>];
+  "kauba_kategooria" -> "kauba_kategooria_omamine";
+  "kaup" -> "kauba_kategooria_omamine";
+  "kaup" -> "kauba_variant";
+  "varv" -> "kauba_variant";
+  "kauba_kategooria" -> "kaup" [style=invis, weight=100];
+  "kaup" -> "varv" [style=invis, weight=100];
+  "varv" -> "kauba_variant" [style=invis, weight=100];
+  "kauba_variant" -> "kauba_kategooria_omamine" [style=invis, weight=100];
+}
