@@ -3,18 +3,18 @@
 **Kursus:** ITI0207 Andmebaasid II (2026 sügis)  
 **Teema:** Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem  
 **Töökoht:** kaupade halduri töökoht  
-**Uuendatud:** 2026-09-20 (Europe/Tallinn)
+**Uuendatud:** 2026-09-25 (Europe/Tallinn)
 
 ## Valitud tee
 
-**Ü2 tee 3 (Erki §1.1):** luua baastabelid otse (SQL + disainimärkmed), arvestades ülesannete 2–4 põhimõtteid; diagrammid hiljem DBeaveri abil registrite kaupa (pöördprojekteerimine / visualiseerimine ilma EA-ta).  
+**Ü2 tee 4 (2026 ver2 §2.1):** luua baastabelid otse (SQL + disainimärkmed), arvestades ülesannete 2–4 põhimõtteid; registridiagrammid on pöördprojekteeritud kohalikust PostgreSQLi baasist Graphviziga ning sama baas on DBeaveris avatav.
 `Diagrammid.eap` jääb ainult referentsiks — seda ei avata ega muudeta.
 
 **Selles lõigus (Ü2):** tabelid, veerud, andmetüübid/pikkused, nullability, PK, UK, FK, sobivad vaikimisi väärtused, puhtad `snake_case` nimed, veergude järjekord Erki §3.7 järgi.  
 **Välja jäetud (→ Ü3):** CHECK kitsendused, indeksid.  
 **Ei tehta:** DDL `apex2` peal, pgApex, trigerid, vaated, rutiinid, jõusaali domeen.
 
-Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/ulesanded/Ylesanne_ITI0207_2_2025.txt`, `PROGRESS.md` elutsükli/rollide märkmed. Access `Prototüüp.mdb` / EA — ainult kontekst.
+Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/sources/Ylesanne_ITI0207_2_2026_ver2.txt`, `PROGRESS.md` elutsükli/rollide märkmed. Access `Prototüüp.mdb` / EA — ainult kontekst.
 
 ---
 
@@ -31,6 +31,8 @@ Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/ulesanded/Yle
 **Teadlikult välja jäetud** (pole kaupade allsüsteemi tuum): tellimused, arved, tarne, garantii, hinnareeglid, soodustused jne.
 
 **Tabelite arv:** **24**.
+
+23.09 auditi käigus jagati viis registrit 11 loetavaks jooniseks. Klassifikaatorite register võtab viis ja kaupade register kolm lehte; iga tabeli veerud/piirangud on ainult ühel lehel. Täpne lehtede loend, kontekstitabelid ja PDF-i mõõdud on docs/diagrams/README.md ning docs/u2-audit-2026-09-23.md.
 
 ---
 
@@ -121,11 +123,15 @@ Enamikul: surrogaat `*_id` (SMALLINT IDENTITY) + **UK(`kood`)** + **UK(`nimetus`
 ### `tootaja` / `tootaja_rolli_omamine`
 
 - `tootaja`: `tootaja_id` PK, **UK(`isik_id`)**, FK seisundiliigile.  
-- `tootaja_rolli_omamine`: surrogaat PK; FK-d `tootaja`, `tootaja_roll`; `alguse_aeg timestamptz(0) NOT NULL`; `lopu_aeg timestamptz(0) NOT NULL` — use `'infinity'` for open-ended periods; **UK(tootaja_id, tootaja_roll_id, alguse_aeg)**.
+- `tootaja_rolli_omamine`: surrogaat PK; FK-d `tootaja`, `tootaja_roll`; `alguse_aeg timestamptz(0) NOT NULL`; `lopu_aeg timestamptz(0) NOT NULL DEFAULT 'infinity'` — lõputa perioodi vaikimisi lõpp on `'infinity'`; **UK(tootaja_id, tootaja_roll_id, alguse_aeg)**.
 
 ### `klient`
 
 - PK/FK `isik_id`; FK `kliendi_seisundi_liik`; `on_nous_tylitamisega boolean NOT NULL DEFAULT FALSE`.
+
+### FK kompenseerivad tegevused
+
+Kõik 25 FK-d määravad nüüd selgesõnaliselt ON DELETE ja ON UPDATE. Isikust sõltuvad 1:1 alamtabelid `kasutajakonto`, `tootaja` ja `klient` kasutavad kustutamisel CASCADE. Kaubast sõltuvad `nutitelefon`, `kauba_variant` ja `kauba_kategooria_omamine` kasutavad samuti CASCADE. Ülejäänud 19 FK puhul on ON DELETE NO ACTION; kõigi 25 puhul ON UPDATE NO ACTION, sest viidatud surrogaat-ID-sid ei ole vaja muuta. See ei asenda hilisemat seisundipõhist kustutusõiguse kontrolli.
 
 ### `kaup`
 
@@ -211,10 +217,6 @@ Parool: PostgreSQL tee **`varchar(60)` räsi, ilma eraldi `sool` veeruta** (Erki
 
 ---
 
-## Järgmine samm (DBeaveri diagrammid)
+## Järgmine samm
 
-1. Kohalik Postgres (Docker/Postgres.app) **või** tühjad tabelid — **mitte** `apex2` kuni Ü4.  
-2. Käivita `sql/01_tables_draft.sql`.  
-3. DBeaver: Database Diagram / ER — **üks diagramm registri kohta** (kaupade, klassifikaatorite, isikute, töötajate, klientide), portrait A4 loetavus Erki §3.2.  
-4. Ekspordi PNG/PDF → dokumendi peatükk 3.1.  
-5. Peatu enne Ü3 (CHECK + indeksid).
+Kasuta 23.09 puhtasse kohalikku auditibaasi laaditud skeemi ja docs/diagrams/ kausta 11 PNG/PDF joonist peatüki 3.1 ning 25.09 praktilise tunni jaoks. Täpsed DBeaveri ühenduse ja jooniste paigutamise juhised on docs/u2-chapter3-handoff.md. Olemasolev vana kohalik iti0207_epood_u2 baas ei ole uute FK-tegevustega sünkroonitud. Ü3 CHECK-id/indeksid ja Ü4 kooliserveri DDL jäävad järgmiseks ametlikuks tööks.

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- ITI0207 e-pood — Ü2 draft: PostgreSQL base tables
 -- Teema: Nutitelefonide e-poe infosüsteemi kaupade funktsionaalne allsüsteem
--- Route: DBeaver / no-EA (Ü2 path 3)
+-- Route: DBeaver / no-EA (Ü2 path 4)
 --
 -- DRAFT ONLY — not applied to school server (apex2) yet.
 -- Ü2 scope: CREATE TABLE (+ sequences via GENERATED/IDENTITY), PK, UK, FK,
@@ -172,7 +172,7 @@ CREATE TABLE kauba_kategooria (
     CONSTRAINT uk_kauba_kategooria_kood UNIQUE (kood),
     CONSTRAINT uk_kauba_kategooria_tyyp_id_nimetus UNIQUE (kauba_kategooria_tyyp_id, nimetus),
     CONSTRAINT fk_kauba_kategooria_tyyp FOREIGN KEY (kauba_kategooria_tyyp_id)
-        REFERENCES kauba_kategooria_tyyp (kauba_kategooria_tyyp_id)
+        REFERENCES kauba_kategooria_tyyp (kauba_kategooria_tyyp_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- ---------------------------------------------------------------------------
@@ -195,9 +195,9 @@ CREATE TABLE isik (
     CONSTRAINT uk_isik_e_meil UNIQUE (e_meil),
     CONSTRAINT uk_isik_riik_isikukood UNIQUE (riik_id, isikukood),
     CONSTRAINT fk_isik_riik FOREIGN KEY (riik_id)
-        REFERENCES riik (riik_id),
+        REFERENCES riik (riik_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_isik_isiku_seisundi_liik FOREIGN KEY (isiku_seisundi_liik_id)
-        REFERENCES isiku_seisundi_liik (isiku_seisundi_liik_id)
+        REFERENCES isiku_seisundi_liik (isiku_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 CREATE TABLE kasutajakonto (
@@ -206,7 +206,7 @@ CREATE TABLE kasutajakonto (
     on_aktiivne   boolean       NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_kasutajakonto PRIMARY KEY (isik_id),
     CONSTRAINT fk_kasutajakonto_isik FOREIGN KEY (isik_id)
-        REFERENCES isik (isik_id)
+        REFERENCES isik (isik_id) ON DELETE CASCADE ON UPDATE NO ACTION
 );
 -- parool: bcrypt/crypt hash (PostgreSQL path per Erki Ü2 §3.6); no separate sool column
 
@@ -221,9 +221,9 @@ CREATE TABLE tootaja (
     CONSTRAINT pk_tootaja PRIMARY KEY (tootaja_id),
     CONSTRAINT uk_tootaja_isik UNIQUE (isik_id),
     CONSTRAINT fk_tootaja_isik FOREIGN KEY (isik_id)
-        REFERENCES isik (isik_id),
+        REFERENCES isik (isik_id) ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_tootaja_tootaja_seisundi_liik FOREIGN KEY (tootaja_seisundi_liik_id)
-        REFERENCES tootaja_seisundi_liik (tootaja_seisundi_liik_id)
+        REFERENCES tootaja_seisundi_liik (tootaja_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 CREATE TABLE tootaja_rolli_omamine (
@@ -231,13 +231,13 @@ CREATE TABLE tootaja_rolli_omamine (
     tootaja_id                integer       NOT NULL,
     tootaja_roll_id           smallint      NOT NULL,
     alguse_aeg                timestamptz(0)   NOT NULL,
-    lopu_aeg                  timestamptz(0)   NOT NULL,
+    lopu_aeg                  timestamptz(0)   NOT NULL DEFAULT 'infinity',
     CONSTRAINT pk_tootaja_rolli_omamine PRIMARY KEY (tootaja_rolli_omamine_id),
     CONSTRAINT uk_tootaja_rolli_omamine_algus UNIQUE (tootaja_id, tootaja_roll_id, alguse_aeg),
     CONSTRAINT fk_tootaja_rolli_omamine_tootaja FOREIGN KEY (tootaja_id)
-        REFERENCES tootaja (tootaja_id),
+        REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_tootaja_rolli_omamine_roll FOREIGN KEY (tootaja_roll_id)
-        REFERENCES tootaja_roll (tootaja_roll_id)
+        REFERENCES tootaja_roll (tootaja_roll_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- ---------------------------------------------------------------------------
@@ -250,9 +250,9 @@ CREATE TABLE klient (
     on_nous_tylitamisega      boolean       NOT NULL DEFAULT FALSE,
     CONSTRAINT pk_klient PRIMARY KEY (isik_id),
     CONSTRAINT fk_klient_isik FOREIGN KEY (isik_id)
-        REFERENCES isik (isik_id),
+        REFERENCES isik (isik_id) ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_klient_kliendi_seisundi_liik FOREIGN KEY (kliendi_seisundi_liik_id)
-        REFERENCES kliendi_seisundi_liik (kliendi_seisundi_liik_id)
+        REFERENCES kliendi_seisundi_liik (kliendi_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- ---------------------------------------------------------------------------
@@ -275,13 +275,13 @@ CREATE TABLE kaup (
     CONSTRAINT pk_kaup PRIMARY KEY (kaup_id),
     CONSTRAINT uk_kaup_kauba_kood UNIQUE (kauba_kood),
     CONSTRAINT fk_kaup_kauba_seisundi_liik FOREIGN KEY (kauba_seisundi_liik_id)
-        REFERENCES kauba_seisundi_liik (kauba_seisundi_liik_id),
+        REFERENCES kauba_seisundi_liik (kauba_seisundi_liik_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_kaup_brand FOREIGN KEY (brand_id)
-        REFERENCES brand (brand_id),
+        REFERENCES brand (brand_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_kaup_registreerija FOREIGN KEY (registreerija_id)
-        REFERENCES tootaja (tootaja_id),
+        REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_kaup_viimase_muutja FOREIGN KEY (viimase_muutja_id)
-        REFERENCES tootaja (tootaja_id)
+        REFERENCES tootaja (tootaja_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 -- Note: partial unique on nimetus for non-Lopetatud states → Ü3 (CHECK / partial UK / index)
 
@@ -297,19 +297,19 @@ CREATE TABLE nutitelefon (
     on_veekindel               boolean       NOT NULL DEFAULT FALSE,
     CONSTRAINT pk_nutitelefon PRIMARY KEY (kaup_id),
     CONSTRAINT fk_nutitelefon_kaup FOREIGN KEY (kaup_id)
-        REFERENCES kaup (kaup_id) ON DELETE CASCADE,
+        REFERENCES kaup (kaup_id) ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_eesmine_kaamera FOREIGN KEY (eesmine_kaamera_id)
-        REFERENCES kaamera (kaamera_id),
+        REFERENCES kaamera (kaamera_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_tagumine_kaamera FOREIGN KEY (tagumine_kaamera_id)
-        REFERENCES kaamera (kaamera_id),
+        REFERENCES kaamera (kaamera_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_sisemalu FOREIGN KEY (sisemalu_id)
-        REFERENCES sisemalu (sisemalu_id),
+        REFERENCES sisemalu (sisemalu_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_diagonaal FOREIGN KEY (diagonaal_id)
-        REFERENCES diagonaal (diagonaal_id),
+        REFERENCES diagonaal (diagonaal_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_protsessor FOREIGN KEY (protsessor_id)
-        REFERENCES protsessor (protsessor_id),
+        REFERENCES protsessor (protsessor_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_nutitelefon_ekraani_resolutsioon FOREIGN KEY (ekraani_resolutsioon_id)
-        REFERENCES ekraani_resolutsioon (ekraani_resolutsioon_id)
+        REFERENCES ekraani_resolutsioon (ekraani_resolutsioon_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 CREATE TABLE kauba_variant (
@@ -319,9 +319,9 @@ CREATE TABLE kauba_variant (
     CONSTRAINT pk_kauba_variant PRIMARY KEY (kauba_variant_id),
     CONSTRAINT uk_kauba_variant_kaup_varv UNIQUE (kaup_id, varv_id),
     CONSTRAINT fk_kauba_variant_kaup FOREIGN KEY (kaup_id)
-        REFERENCES kaup (kaup_id) ON DELETE CASCADE,
+        REFERENCES kaup (kaup_id) ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_kauba_variant_varv FOREIGN KEY (varv_id)
-        REFERENCES varv (varv_id)
+        REFERENCES varv (varv_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 CREATE TABLE kauba_kategooria_omamine (
@@ -329,9 +329,9 @@ CREATE TABLE kauba_kategooria_omamine (
     kauba_kategooria_id  smallint  NOT NULL,
     CONSTRAINT pk_kauba_kategooria_omamine PRIMARY KEY (kaup_id, kauba_kategooria_id),
     CONSTRAINT fk_kauba_kategooria_omamine_kaup FOREIGN KEY (kaup_id)
-        REFERENCES kaup (kaup_id) ON DELETE CASCADE,
+        REFERENCES kaup (kaup_id) ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_kauba_kategooria_omamine_kategooria FOREIGN KEY (kauba_kategooria_id)
-        REFERENCES kauba_kategooria (kauba_kategooria_id)
+        REFERENCES kauba_kategooria (kauba_kategooria_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- =============================================================================
