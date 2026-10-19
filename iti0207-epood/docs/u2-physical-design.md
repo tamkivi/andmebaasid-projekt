@@ -12,7 +12,7 @@
 
 **Füüsiline mudel:** tabelid, veerud, andmetüübid/pikkused, kohustuslikkus, PK, UK, FK, CHECK, sobivad vaikeväärtused, `snake_case` nimed ja veergude järjekord Erki §3.7 järgi.
 **Indeksid:** 16 välisvõtmeindeksit ja e-posti tõstutundetu unikaalne avaldisindeks.
-**Ei tehta:** DDL `apex2` peal, pgApex, trigerid, vaated, rutiinid, jõusaali domeen.
+**Ei tehta:** DDL `apex2` peal, pgApex, trigerid, rutiinid, jõusaali domeen.
 
 Allikad: `docs/lahteprojekt/Dokument.docx` (tekstiekstrakt), `docs/sources/Ylesanne_ITI0207_2_2026_ver2.txt`, `PROGRESS.md` elutsükli/rollide märkmed. Access `Prototüüp.mdb` / EA — ainult kontekst.
 
@@ -241,3 +241,7 @@ Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärt
 ## Kohalik kontroll
 
 Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/04_tables.sql` tagasirullitavas transaktsioonis. Jooniste taastamiseks kasuta sama andmebaasi ja `scripts/render_u2_er_diagrams.py` skripti. Testimiseks loodud andmebaas eemaldatakse pärast kontrolli. Olemasolevad varasemad andmebaasid ei ole selle kontrolli osa.
+
+## Kaupade halduri lugemisvaated
+
+`sql/05_views.sql` loob neli kommenteeritud ja security_barrier kaitsega vaadet: `v_kaup_muutmiseks` ootel või mitteaktiivsete kaupade nimekirja jaoks, `v_kaubad` kõigi kaupade nimekirja jaoks, `v_kauba_kategooriad` kauba kategooriate ja tüüpide kuvamiseks ning `v_kauba_variandid` värvivariantide kuvamiseks. Kõik ühendused kasutavad USING-süntaksit. Vaated on ainult lugemiseks: INSERT, UPDATE ja DELETE reeglid ei muuda baastabeleid. Need reeglid ei teosta äriloogikat ega asenda ärireeglite trigereid.
