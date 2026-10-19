@@ -110,6 +110,14 @@ def load_schema():
     """):
         constraints[table][name] = ("i", definition, "", "", "")
 
+    for table, options in psql("""
+        SELECT t.relname, array_to_string(t.reloptions, ', ')
+        FROM pg_class t JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE n.nspname = 'public' AND t.relkind = 'r' AND t.reloptions IS NOT NULL
+        ORDER BY t.relname
+    """):
+        constraints[table]["salvestus"] = ("o", options, "", "", "")
+
     fks = []
     for table, column, target, name in psql("""
         SELECT t.relname, a.attname, ref.relname, c.conname
@@ -145,8 +153,10 @@ def table_html(name: str, cols, constraints, flags, detailed: bool) -> str:
             f'<TD ALIGN="LEFT">{esc("; ".join(props))}</TD></TR>'
         )
     for constraint, (kind, definition, target, delete, update) in constraints[name].items():
-        columns = definition.split("(", 1)[1].split(")", 1)[0]
-        if kind == "i":
+        columns = definition.split("(", 1)[1].split(")", 1)[0] if "(" in definition else ""
+        if kind == "o":
+            detail = f"WITH ({definition})"
+        elif kind == "i":
             unique = "UNIQUE " if definition.startswith("CREATE UNIQUE INDEX") else ""
             detail = f"{unique}INDEX {constraint}: {definition.partition(' USING btree ')[2]}"
         elif kind == "c":

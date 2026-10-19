@@ -75,6 +75,10 @@ Igas tabelis: **PK → UK/alternatiivvõtmete veerud → ülejäänud FK-d → m
 
 ---
 
+## Tabelite salvestus ja loomine
+
+Tabelite loomise fail on ühes transaktsioonis (`START TRANSACTION` ja `COMMIT`). Muudetavate tabelite `FILLFACTOR=90` jätab lehtedele ruumi uuenduste jaoks. Variandi ja kategooria omamise seoseridade puhul tehakse lepingute järgi lisamine või kustutamine, mistõttu neile eraldi madalamat täitetegurit ei määrata. Kõik 20 surrogaatvõtit kasutavad IDENTITY-generaatoreid; välisvõtmetele generaatorit ei looda. Seisundite vaikeväärtused jäävad lahtiseks, kuni nende koodid ja algseisundid on kinnitatud.
+
 ## Tabelite detailid
 
 DDL sisaldab 60 nimelist CHECK-kitsendust, mis lähtuvad kontseptuaalse mudeli atribuutide definitsioonidest. Teksti sisukontroll välistab tühja ja ainult tühimärkidest koosneva väärtuse. Valikulised veerud võivad jääda NULL-iks. Positiivse arvu reegel välistab ka PostgreSQLi eriväärtuse NaN. Ajapiirid on fikseeritud ISO-vormingus ega sõltu jooksva päeva väärtusest.
