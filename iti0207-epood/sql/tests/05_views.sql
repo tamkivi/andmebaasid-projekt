@@ -5,6 +5,13 @@ DECLARE
     v_lause text;
     v_ridu bigint;
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='v_kaubad_muutmiseks'
+          AND column_name='xmin' AND udt_name='xid') OR EXISTS (
+        SELECT 1 FROM v_kaubad_muutmiseks AS v
+        INNER JOIN kaup AS k USING (kauba_kood) WHERE v.xmin<>k.xmin) THEN
+        RAISE EXCEPTION 'Muutmise vaade peab esitama kauba tegeliku xmin väärtuse';
+    END IF;
     IF (SELECT count(*) FROM pg_catalog.pg_class AS c
         INNER JOIN pg_catalog.pg_namespace AS n ON n.oid=c.relnamespace
         WHERE n.nspname='public' AND c.relkind='v'

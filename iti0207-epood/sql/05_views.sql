@@ -1,13 +1,13 @@
 -- Kaupade halduri lugemisliides.
 CREATE VIEW v_kaubad_muutmiseks
-    (kauba_kood,nimetus,seisundi_nimetus,hind,kirjeldus,pildi_aadress,reg_aeg)
+    (kauba_kood,nimetus,seisundi_nimetus,hind,kirjeldus,pildi_aadress,reg_aeg,xmin)
     WITH (security_barrier=true) AS
-SELECT k.kauba_kood,k.nimetus,s.nimetus,k.hind,k.kirjeldus,k.pildi_aadress,k.reg_aeg
+SELECT k.kauba_kood,k.nimetus,s.nimetus,k.hind,k.kirjeldus,k.pildi_aadress,k.reg_aeg,k.xmin
 FROM kaup AS k
 INNER JOIN kauba_seisundi_liik AS s USING (kauba_seisundi_liik_id)
 WHERE s.kood IN (1,3);
 COMMENT ON VIEW v_kaubad_muutmiseks IS
-    'Kasutusjuht Vaata kõiki ootel või mitteaktiivseid kaupu, OP7.1: halduri muudetavate kaupade nimekiri. Seisund leitakse koodi, mitte surrogaat-ID järgi. Ainult lugemiseks.';
+    'Kasutusjuht Vaata kõiki ootel või mitteaktiivseid kaupu, OP7.1: halduri muudetavate kaupade nimekiri koos OP6 muutmise versioonitunnusega xmin. Seisund leitakse koodi, mitte surrogaat-ID järgi. Ainult lugemiseks.';
 
 CREATE VIEW v_kaubad
     (kauba_kood,nimetus,brand_nimetus,seisundi_nimetus,hind,kirjeldus)
