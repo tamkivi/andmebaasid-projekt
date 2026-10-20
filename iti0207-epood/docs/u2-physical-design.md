@@ -245,3 +245,9 @@ Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/
 ## Kaupade halduri lugemisvaated
 
 `sql/05_views.sql` loob neli kommenteeritud ja security_barrier kaitsega vaadet: `v_kaup_muutmiseks` ootel või mitteaktiivsete kaupade nimekirja jaoks, `v_kaubad` kõigi kaupade nimekirja jaoks, `v_kauba_kategooriad` kauba kategooriate ja tüüpide kuvamiseks ning `v_kauba_variandid` värvivariantide kuvamiseks. Kõik ühendused kasutavad USING-süntaksit. Vaated on ainult lugemiseks: INSERT, UPDATE ja DELETE reeglid ei muuda baastabeleid. Need reeglid ei teosta äriloogikat ega asenda ärireeglite trigereid.
+
+## Õigused ja objektide kustutamine
+
+`sql/16_rights.sql` loob sisselogimisõiguseta rolli `epood_rakendus`, millel on ühendusõigus jooksvale andmebaasile, public-skeemi kasutusõigus ja nelja lugemisvaate SELECT. Baastabelite, arvujadade, muutmise, objektide loomise ega õiguste edasijagamise õigust rollil ei ole. PUBLIC-i liigsed õigused eemaldatakse. See on õiguste koondamise roll; tegelik rakenduse sisselogimiskasutaja ja autentimise teostus vajavad eraldi seadistust.
+
+`sql/19_drop_objects.sql` eemaldab realiseeritud projektiobjektid. Õigused võetakse enne ära; domeeni kustutamise CASCADE eemaldab sellest sõltuvad veerud ja vaated; seejärel kustutatakse ülejäänud tabelid ning roll. Tabelitega kustuvad nende identiteedijadad ja indeksid, vaadetega nende reeglid. Avalik skeem on andmebaasi vaikimisi skeem ning seda ei kustutata. Tegeliku projektiandmebaasi kustutamislauset ei määrata enne selle nime kinnitamist.
