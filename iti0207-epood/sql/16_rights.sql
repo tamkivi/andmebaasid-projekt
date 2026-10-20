@@ -16,7 +16,7 @@ END;
 $oigused$;
 
 GRANT USAGE ON SCHEMA public TO epood_rakendus;
-GRANT SELECT ON v_kaup_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid
+GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid
     TO epood_rakendus;
 
 DO $yhendus$

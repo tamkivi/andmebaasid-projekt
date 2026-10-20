@@ -44,7 +44,7 @@ DROP TABLE isiku_seisundi_liik;
 DROP TABLE riik;
 
 -- Domeenist sõltuvad vaated ja nende reeglid on juba eemaldatud.
-DROP VIEW IF EXISTS v_kaup_muutmiseks;
+DROP VIEW IF EXISTS v_kaubad_muutmiseks;
 DROP VIEW IF EXISTS v_kaubad;
 DROP VIEW IF EXISTS v_kauba_kategooriad;
 DROP VIEW IF EXISTS v_kauba_variandid;

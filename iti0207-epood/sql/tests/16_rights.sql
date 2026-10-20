@@ -35,7 +35,7 @@ END;
 $kontroll$;
 SET LOCAL ROLE epood_rakendus;
 SELECT kauba_kood,nimetus FROM public.v_kaubad;
-SELECT kauba_kood,nimetus FROM public.v_kaup_muutmiseks;
+SELECT kauba_kood,nimetus FROM public.v_kaubad_muutmiseks;
 SELECT kauba_kood,kategooria_kood FROM public.v_kauba_kategooriad;
 SELECT kauba_kood,varvi_kood FROM public.v_kauba_variandid;
 DO $keelatud$

@@ -1,12 +1,12 @@
 -- Kaupade halduri lugemisliides.
-CREATE VIEW v_kaup_muutmiseks
+CREATE VIEW v_kaubad_muutmiseks
     (kauba_kood,nimetus,seisundi_nimetus,hind,kirjeldus,pildi_aadress,reg_aeg)
     WITH (security_barrier=true) AS
 SELECT k.kauba_kood,k.nimetus,s.nimetus,k.hind,k.kirjeldus,k.pildi_aadress,k.reg_aeg
 FROM kaup AS k
 INNER JOIN kauba_seisundi_liik AS s USING (kauba_seisundi_liik_id)
 WHERE s.kood IN (1,3);
-COMMENT ON VIEW v_kaup_muutmiseks IS
+COMMENT ON VIEW v_kaubad_muutmiseks IS
     'Kasutusjuht Vaata kõiki ootel või mitteaktiivseid kaupu, OP7.1: halduri muudetavate kaupade nimekiri. Seisund leitakse koodi, mitte surrogaat-ID järgi. Ainult lugemiseks.';
 
 CREATE VIEW v_kaubad
@@ -41,12 +41,12 @@ COMMENT ON VIEW v_kauba_variandid IS
     'Kauba halduri kauba vaatamise ja muutmise vormi värvivariandid, OP2.4. Sama kauba ja värvi paar esineb korra. Ainult lugemiseks.';
 
 -- Lugemisvaadete kaudu tehtavad muutmiskatsed ei muuda baastabeleid.
-CREATE RULE r_v_kaup_muutmiseks_insert AS
-    ON INSERT TO v_kaup_muutmiseks DO INSTEAD NOTHING;
-CREATE RULE r_v_kaup_muutmiseks_update AS
-    ON UPDATE TO v_kaup_muutmiseks DO INSTEAD NOTHING;
-CREATE RULE r_v_kaup_muutmiseks_delete AS
-    ON DELETE TO v_kaup_muutmiseks DO INSTEAD NOTHING;
+CREATE RULE r_v_kaubad_muutmiseks_insert AS
+    ON INSERT TO v_kaubad_muutmiseks DO INSTEAD NOTHING;
+CREATE RULE r_v_kaubad_muutmiseks_update AS
+    ON UPDATE TO v_kaubad_muutmiseks DO INSTEAD NOTHING;
+CREATE RULE r_v_kaubad_muutmiseks_delete AS
+    ON DELETE TO v_kaubad_muutmiseks DO INSTEAD NOTHING;
 
 CREATE RULE r_v_kaubad_insert AS
     ON INSERT TO v_kaubad DO INSTEAD NOTHING;

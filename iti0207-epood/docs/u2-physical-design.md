@@ -244,7 +244,7 @@ Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/
 
 ## Kaupade halduri lugemisvaated
 
-`sql/05_views.sql` loob neli kommenteeritud ja security_barrier kaitsega vaadet: `v_kaup_muutmiseks` ootel või mitteaktiivsete kaupade nimekirja jaoks, `v_kaubad` kõigi kaupade nimekirja jaoks, `v_kauba_kategooriad` kauba kategooriate ja tüüpide kuvamiseks ning `v_kauba_variandid` värvivariantide kuvamiseks. Kõik ühendused kasutavad USING-süntaksit. Vaated on ainult lugemiseks: INSERT, UPDATE ja DELETE reeglid ei muuda baastabeleid. Need reeglid ei teosta äriloogikat ega asenda ärireeglite trigereid.
+`sql/05_views.sql` loob neli kommenteeritud ja security_barrier kaitsega vaadet: `v_kaubad_muutmiseks` ootel või mitteaktiivsete kaupade nimekirja jaoks, `v_kaubad` kõigi kaupade nimekirja jaoks, `v_kauba_kategooriad` kauba kategooriate ja tüüpide kuvamiseks ning `v_kauba_variandid` värvivariantide kuvamiseks. Kõik ühendused kasutavad USING-süntaksit. Vaated on ainult lugemiseks: INSERT, UPDATE ja DELETE reeglid ei muuda baastabeleid. Need reeglid ei teosta äriloogikat ega asenda ärireeglite trigereid.
 
 ## Õigused ja objektide kustutamine
 

@@ -8,7 +8,7 @@ BEGIN
     IF (SELECT count(*) FROM pg_catalog.pg_class AS c
         INNER JOIN pg_catalog.pg_namespace AS n ON n.oid=c.relnamespace
         WHERE n.nspname='public' AND c.relkind='v'
-          AND c.relname IN ('v_kaup_muutmiseks','v_kaubad','v_kauba_kategooriad','v_kauba_variandid')
+          AND c.relname IN ('v_kaubad_muutmiseks','v_kaubad','v_kauba_kategooriad','v_kauba_variandid')
           AND c.reloptions @> ARRAY['security_barrier=true']
           AND pg_catalog.obj_description(c.oid,'pg_class') IS NOT NULL) <> 4 THEN
         RAISE EXCEPTION USING ERRCODE='XX000', MESSAGE='Ootamatu kontrolltulemus',
@@ -43,8 +43,8 @@ BEGIN
             SELECT k.kaup_id,v.varv_id FROM public.kaup AS k CROSS JOIN public.varv AS v WHERE k.kauba_kood='ABC001';
         IF (SELECT count(*) FROM public.v_kaubad)<>4
             OR (SELECT count(DISTINCT kauba_kood) FROM public.v_kaubad)<>4
-            OR (SELECT count(*) FROM public.v_kaup_muutmiseks)<>2
-            OR EXISTS (SELECT 1 FROM public.v_kaup_muutmiseks WHERE kauba_kood NOT IN ('ABC001','ABC003'))
+            OR (SELECT count(*) FROM public.v_kaubad_muutmiseks)<>2
+            OR EXISTS (SELECT 1 FROM public.v_kaubad_muutmiseks WHERE kauba_kood NOT IN ('ABC001','ABC003'))
             OR (SELECT count(*) FROM public.v_kauba_kategooriad)<>2
             OR (SELECT count(*) FROM public.v_kauba_variandid)<>2
             OR NOT EXISTS (SELECT 1 FROM public.v_kaubad WHERE kauba_kood='ABC004' AND brand_nimetus='Kontrollbränd' AND seisundi_nimetus='Lõpetatud') THEN
@@ -52,7 +52,7 @@ BEGIN
                 DETAIL='Seisundite, seoste või korduste käsitlus ei vasta lähteandmetele.',
                 HINT='Kontrolli ühendamisi ja seisundikoodide kasutust.';
         END IF;
-        FOR v_vaade IN SELECT unnest(ARRAY['v_kaup_muutmiseks','v_kaubad','v_kauba_kategooriad','v_kauba_variandid'])
+        FOR v_vaade IN SELECT unnest(ARRAY['v_kaubad_muutmiseks','v_kaubad','v_kauba_kategooriad','v_kauba_variandid'])
         LOOP
             FOR v_lause IN SELECT unnest(ARRAY[
                 format('UPDATE public.%I SET kauba_kood=%L',v_vaade,'XYZ001'),
