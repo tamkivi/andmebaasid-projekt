@@ -5,6 +5,7 @@ DECLARE
     juht jsonb;
     v_tabel text;
     v_ids jsonb;
+    v_ridu bigint;
     tegelik_olek text;
     tegelik_kitsendus text;
 BEGIN
@@ -106,6 +107,8 @@ BEGIN
                 EXECUTE (juht #>> '{}')||format(' WHERE %I=%s',
                     CASE WHEN v_tabel='kasutajakonto' THEN 'isik_id' ELSE v_tabel||'_id' END,
                     v_ids->>v_tabel);
+                GET DIAGNOSTICS v_ridu=ROW_COUNT;
+                IF v_ridu<>1 THEN RAISE EXCEPTION 'Piirjuht peab muutma täpselt üht kontrollrida'; END IF;
                 RAISE EXCEPTION USING ERRCODE = 'ZP001', MESSAGE = 'Sobiva piirjuhu tagasipööramine', DETAIL = 'Kontrollrida ei jää andmebaasi.', HINT = 'See erand püütakse samas plokis.';
             EXCEPTION WHEN SQLSTATE 'ZP001' THEN NULL;
             END;
