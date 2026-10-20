@@ -1,0 +1,25 @@
+-- Käivita pärast klassifikaatorite ja tehinguandmete laadimist.
+ANALYZE public.riik;
+ANALYZE public.isiku_seisundi_liik;
+ANALYZE public.tootaja_seisundi_liik;
+ANALYZE public.kliendi_seisundi_liik;
+ANALYZE public.tootaja_roll;
+ANALYZE public.kauba_seisundi_liik;
+ANALYZE public.brand;
+ANALYZE public.diagonaal;
+ANALYZE public.ekraani_resolutsioon;
+ANALYZE public.kaamera;
+ANALYZE public.protsessor;
+ANALYZE public.sisemalu;
+ANALYZE public.varv;
+ANALYZE public.kauba_kategooria_tyyp;
+ANALYZE public.kauba_kategooria;
+ANALYZE public.isik;
+ANALYZE public.kasutajakonto;
+ANALYZE public.tootaja;
+ANALYZE public.tootaja_rolli_omamine;
+ANALYZE public.klient;
+ANALYZE public.kaup;
+ANALYZE public.nutitelefon;
+ANALYZE public.kauba_variant;
+ANALYZE public.kauba_kategooria_omamine;

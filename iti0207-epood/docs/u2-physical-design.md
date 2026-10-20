@@ -251,3 +251,7 @@ Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/
 `sql/16_rights.sql` loob sisselogimisõiguseta rolli `epood_rakendus`, millel on ühendusõigus jooksvale andmebaasile, public-skeemi kasutusõigus ja nelja lugemisvaate SELECT. Baastabelite, arvujadade, muutmise, objektide loomise ega õiguste edasijagamise õigust rollil ei ole. PUBLIC-i liigsed õigused eemaldatakse. See on õiguste koondamise roll; tegelik rakenduse sisselogimiskasutaja ja autentimise teostus vajavad eraldi seadistust.
 
 `sql/19_drop_objects.sql` eemaldab realiseeritud projektiobjektid. Õigused võetakse enne ära; domeeni kustutamise CASCADE eemaldab sellest sõltuvad veerud ja vaated; seejärel kustutatakse ülejäänud tabelid ning roll. Tabelitega kustuvad nende identiteedijadad ja indeksid, vaadetega nende reeglid. Avalik skeem on andmebaasi vaikimisi skeem ning seda ei kustutata. Tegeliku projektiandmebaasi kustutamislauset ei määrata enne selle nime kinnitamist.
+
+## Statistika ja täitmisplaan
+
+`sql/14_statistics.sql` kogub kõigi 24 baastabeli statistika ning tuleb käivitada pärast andmete laadimist. `sql/15_explain.sql` koostab vaate `v_kaubad` päringu JSON-vormingus täitmisplaani koos tegeliku täitmise ja puhvrite andmetega. Vaade ühendab kauba, brändi ja seisundiliigi. Tühja kohaliku andmebaasi plaan kontrollib lausete käivitatavust; see ei kirjelda andmetega kooliserveri jõudlust. Dokumendi lõplik plaanipilt ja konkreetse plaani selgitus tuleb koostada tegeliku serveri ja projektiandmete põhjal.
