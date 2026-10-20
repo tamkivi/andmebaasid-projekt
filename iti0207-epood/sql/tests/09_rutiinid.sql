@@ -145,7 +145,7 @@ BEGIN
             OR EXISTS (SELECT 1 FROM kauba_kategooria_omamine WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'OP2 ei eemaldanud kaupa koos sõltuvate ridadega';
         END IF;
-        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Kontrollmuudatuste eemaldamine';
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
     EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
     END;
 END;
@@ -571,7 +571,7 @@ BEGIN
         IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'OP6 muutis telefoni kirjeta kaupa';
         END IF;
-        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Kontrollmuudatuste eemaldamine';
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
     EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
     END;
 END;
@@ -771,7 +771,7 @@ BEGIN
             OR v_enne IS DISTINCT FROM (SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'Viimase kategooria eemaldamine rikkus aktiveerimise eeltingimust';
         END IF;
-        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Kontrollmuudatuste eemaldamine';
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
     EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
     END;
 END;

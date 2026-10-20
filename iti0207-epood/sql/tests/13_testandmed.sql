@@ -46,7 +46,7 @@ BEGIN
             SELECT 1 FROM klient WHERE on_nous_tylitamisega) THEN
             RAISE EXCEPTION 'Kliendi korduv lisamine ei ajakohastanud olemasolevat rida';
         END IF;
-        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Kontrollmuudatuste eemaldamine';
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
     EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
     END;
 END;

@@ -21,7 +21,7 @@ BEGIN
         INSERT INTO public.ekraani_resolutsioon (kood,nimetus,horisontaalne,vertikaalne) VALUES ('FHD','Täis-HD',1080,1920);
         INSERT INTO public.kaamera (kood,nimetus) VALUES (999.1, 'Kontrollkaamera');
         INSERT INTO public.protsessor (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
-        INSERT INTO public.sisemalu (kood,nimetus) VALUES (9999, 'Kontrollmälu');
+        INSERT INTO public.sisemalu (kood,nimetus) VALUES (9999, 'Katsemälu');
         INSERT INTO public.varv (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.kauba_kategooria_tyyp (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.kauba_kategooria (kood,nimetus,kauba_kategooria_tyyp_id) SELECT 'TEST','Kontrollkategooria',kauba_kategooria_tyyp_id FROM public.kauba_kategooria_tyyp WHERE kood='TEST';

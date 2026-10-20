@@ -27,7 +27,7 @@ BEGIN
         INSERT INTO public.isiku_seisundi_liik (kood,nimetus) VALUES ('TEST','Kontrollväärtus');
         INSERT INTO public.tootaja_seisundi_liik (kood,nimetus) VALUES ('TEST','Kontrollväärtus');
         INSERT INTO public.brand (kood,nimetus) VALUES ('TEST','Kontrollbränd');
-        INSERT INTO public.varv (kood,nimetus) VALUES ('MUST','Kontrollmust'),('VALGE','Kontrollvalge');
+        INSERT INTO public.varv (kood,nimetus) VALUES ('MUST','Katsemust'),('VALGE','Katsevalge');
         INSERT INTO public.kauba_kategooria_tyyp (kood,nimetus) VALUES ('OTSTARVE','Otstarve');
         INSERT INTO public.kauba_kategooria (kood,nimetus,kauba_kategooria_tyyp_id)
             SELECT v.kood,v.nimetus,t.kauba_kategooria_tyyp_id
