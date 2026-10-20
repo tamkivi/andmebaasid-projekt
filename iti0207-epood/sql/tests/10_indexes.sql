@@ -39,14 +39,14 @@ BEGIN
             HINT = 'Arvesta primaar- ja alternatiivvõtmete automaatsete indeksitega.';
     END IF;
     BEGIN
-        INSERT INTO public.riik (kood,nimetus) VALUES ('EST','Eesti') RETURNING riik_id INTO v_riik;
+        INSERT INTO public.riik (kood,nimetus) VALUES ('QZZ','Kontrollriik') RETURNING riik_id INTO v_riik;
         INSERT INTO public.isiku_seisundi_liik (kood,nimetus) VALUES ('TEST','Kontrollväärtus')
             RETURNING isiku_seisundi_liik_id INTO v_seisund;
         INSERT INTO public.isik (isikukood,e_meil,riik_id,isiku_seisundi_liik_id,synni_kp,eesnimi)
-            VALUES ('kontroll-a','Mari@Example.invalid',v_riik,v_seisund,DATE '2000-01-01','Mari');
+            VALUES ('kontroll-a','Index-Mari@Example.invalid',v_riik,v_seisund,DATE '2000-01-01','Mari');
         BEGIN
             INSERT INTO public.isik (isikukood,e_meil,riik_id,isiku_seisundi_liik_id,synni_kp,eesnimi)
-                VALUES ('kontroll-b','mari@example.INVALID',v_riik,v_seisund,DATE '2000-01-01','Mart');
+                VALUES ('kontroll-b','index-mari@example.INVALID',v_riik,v_seisund,DATE '2000-01-01','Mart');
             RAISE EXCEPTION USING ERRCODE = 'XX000', MESSAGE = 'Tõstuvariant võeti vastu',
                 DETAIL = 'Sama e-posti aadressi teine tõstuvariant peab olema keelatud.',
                 HINT = 'Kontrolli lower(e_meil) unikaalset indeksit.';
@@ -59,7 +59,7 @@ BEGIN
             END IF;
         END;
         INSERT INTO public.isik (isikukood,e_meil,riik_id,isiku_seisundi_liik_id,synni_kp,eesnimi)
-            VALUES ('kontroll-c','mart@example.invalid',v_riik,v_seisund,DATE '2000-01-01','Mart');
+            VALUES ('kontroll-c','index-mart@example.invalid',v_riik,v_seisund,DATE '2000-01-01','Mart');
         RAISE EXCEPTION USING ERRCODE = 'ZT001', MESSAGE = 'Kontrollandmete eemaldamine',
             DETAIL = 'Kõik kontrollread eemaldatakse.', HINT = 'See erand püütakse samas plokis.';
     EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;

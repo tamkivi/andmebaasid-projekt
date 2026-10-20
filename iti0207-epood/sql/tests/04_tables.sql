@@ -3,30 +3,52 @@
 DO $kontroll$
 DECLARE
     juht jsonb;
+    v_tabel text;
+    v_ids jsonb;
     tegelik_olek text;
     tegelik_kitsendus text;
 BEGIN
     BEGIN
-        INSERT INTO public.riik (kood,nimetus) VALUES ('EST', 'Eesti');
+        INSERT INTO public.riik (kood,nimetus) VALUES ('QZZ', 'Kontrollriik');
         INSERT INTO public.isiku_seisundi_liik (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.tootaja_seisundi_liik (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.kliendi_seisundi_liik (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.tootaja_roll (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
-        INSERT INTO public.kauba_seisundi_liik (kood,nimetus) VALUES (1, 'Ootel');
+        INSERT INTO public.kauba_seisundi_liik (kood,nimetus) VALUES (99, 'Kontrollseisund');
         INSERT INTO public.brand (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
-        INSERT INTO public.diagonaal (kood,nimetus) VALUES (6.1, 'Kuus koma üks');
+        INSERT INTO public.diagonaal (kood,nimetus) VALUES (99.1, 'Kontrolldiagonaal');
         INSERT INTO public.ekraani_resolutsioon (kood,nimetus,horisontaalne,vertikaalne) VALUES ('FHD','Täis-HD',1080,1920);
-        INSERT INTO public.kaamera (kood,nimetus) VALUES (12.0, 'Kaksteist megapikslit');
+        INSERT INTO public.kaamera (kood,nimetus) VALUES (999.1, 'Kontrollkaamera');
         INSERT INTO public.protsessor (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
-        INSERT INTO public.sisemalu (kood,nimetus) VALUES (128, 'Sada kakskümmend kaheksa');
+        INSERT INTO public.sisemalu (kood,nimetus) VALUES (9999, 'Kontrollmälu');
         INSERT INTO public.varv (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.kauba_kategooria_tyyp (kood,nimetus) VALUES ('TEST', 'Kontrollväärtus');
         INSERT INTO public.kauba_kategooria (kood,nimetus,kauba_kategooria_tyyp_id) SELECT 'TEST','Kontrollkategooria',kauba_kategooria_tyyp_id FROM public.kauba_kategooria_tyyp WHERE kood='TEST';
-        INSERT INTO public.isik (isikukood,e_meil,riik_id,isiku_seisundi_liik_id,synni_kp,reg_aeg,viimase_muutm_aeg,eesnimi) SELECT '12345678901','fixture@example.invalid',r.riik_id,s.isiku_seisundi_liik_id,DATE '2000-01-01',TIMESTAMPTZ '2026-10-01 12:00:00+03',TIMESTAMPTZ '2026-10-01 12:00:00+03','Mari' FROM public.riik r CROSS JOIN public.isiku_seisundi_liik s;
+        INSERT INTO public.isik (isikukood,e_meil,riik_id,isiku_seisundi_liik_id,synni_kp,reg_aeg,viimase_muutm_aeg,eesnimi) SELECT '12345678901','fixture@example.invalid',r.riik_id,s.isiku_seisundi_liik_id,DATE '2000-01-01',TIMESTAMPTZ '2026-10-01 12:00:00+03',TIMESTAMPTZ '2026-10-01 12:00:00+03','Mari' FROM public.riik r CROSS JOIN public.isiku_seisundi_liik s WHERE r.kood='QZZ' AND s.kood='TEST';
         INSERT INTO public.kasutajakonto (isik_id,parool) SELECT isik_id,repeat('x',60) FROM public.isik WHERE e_meil='fixture@example.invalid';
-        INSERT INTO public.tootaja (isik_id,tootaja_seisundi_liik_id) SELECT i.isik_id,s.tootaja_seisundi_liik_id FROM public.isik i CROSS JOIN public.tootaja_seisundi_liik s;
-        INSERT INTO public.tootaja_rolli_omamine (tootaja_id,tootaja_roll_id,alguse_aeg) SELECT t.tootaja_id,r.tootaja_roll_id,TIMESTAMPTZ '2026-10-01 12:00:00+03' FROM public.tootaja t CROSS JOIN public.tootaja_roll r;
-        INSERT INTO public.kaup (kauba_kood,nimetus,kauba_seisundi_liik_id,brand_id,registreerija_id,viimase_muutja_id,hind,kirjeldus,reg_aeg,viimase_muutm_aeg) SELECT 'ABC123','Kontrolltelefon',s.kauba_seisundi_liik_id,b.brand_id,t.tootaja_id,t.tootaja_id,1000,'Telefoni kirjeldus',TIMESTAMPTZ '2026-10-01 12:00:00+03',TIMESTAMPTZ '2026-10-01 12:00:00+03' FROM public.kauba_seisundi_liik s CROSS JOIN public.brand b CROSS JOIN public.tootaja t;
+        INSERT INTO public.tootaja (isik_id,tootaja_seisundi_liik_id) SELECT i.isik_id,s.tootaja_seisundi_liik_id FROM public.isik i CROSS JOIN public.tootaja_seisundi_liik s WHERE i.e_meil='fixture@example.invalid' AND s.kood='TEST';
+        INSERT INTO public.tootaja_rolli_omamine (tootaja_id,tootaja_roll_id,alguse_aeg) SELECT t.tootaja_id,r.tootaja_roll_id,TIMESTAMPTZ '2026-10-01 12:00:00+03' FROM public.tootaja t INNER JOIN public.isik i USING (isik_id) CROSS JOIN public.tootaja_roll r WHERE i.e_meil='fixture@example.invalid' AND r.kood='TEST';
+        INSERT INTO public.kaup (kauba_kood,nimetus,kauba_seisundi_liik_id,brand_id,registreerija_id,viimase_muutja_id,hind,kirjeldus,reg_aeg,viimase_muutm_aeg) SELECT 'ABC123','Kontrolltelefon',s.kauba_seisundi_liik_id,b.brand_id,t.tootaja_id,t.tootaja_id,1000,'Telefoni kirjeldus',TIMESTAMPTZ '2026-10-01 12:00:00+03',TIMESTAMPTZ '2026-10-01 12:00:00+03' FROM public.kauba_seisundi_liik s CROSS JOIN public.brand b CROSS JOIN public.tootaja t INNER JOIN public.isik i USING (isik_id) WHERE s.kood=99 AND b.kood='TEST' AND i.e_meil='fixture@example.invalid';
+        v_ids:=jsonb_build_object(
+            'riik',(SELECT riik_id FROM public.riik WHERE kood='QZZ'),
+            'isiku_seisundi_liik',(SELECT isiku_seisundi_liik_id FROM public.isiku_seisundi_liik WHERE kood='TEST'),
+            'tootaja_seisundi_liik',(SELECT tootaja_seisundi_liik_id FROM public.tootaja_seisundi_liik WHERE kood='TEST'),
+            'kliendi_seisundi_liik',(SELECT kliendi_seisundi_liik_id FROM public.kliendi_seisundi_liik WHERE kood='TEST'),
+            'tootaja_roll',(SELECT tootaja_roll_id FROM public.tootaja_roll WHERE kood='TEST'),
+            'kauba_seisundi_liik',(SELECT kauba_seisundi_liik_id FROM public.kauba_seisundi_liik WHERE kood=99),
+            'brand',(SELECT brand_id FROM public.brand WHERE kood='TEST'),
+            'diagonaal',(SELECT diagonaal_id FROM public.diagonaal WHERE kood=99.1),
+            'ekraani_resolutsioon',(SELECT ekraani_resolutsioon_id FROM public.ekraani_resolutsioon WHERE kood='FHD'),
+            'kaamera',(SELECT kaamera_id FROM public.kaamera WHERE kood=999.1),
+            'protsessor',(SELECT protsessor_id FROM public.protsessor WHERE kood='TEST'),
+            'sisemalu',(SELECT sisemalu_id FROM public.sisemalu WHERE kood=9999),
+            'varv',(SELECT varv_id FROM public.varv WHERE kood='TEST'),
+            'kauba_kategooria_tyyp',(SELECT kauba_kategooria_tyyp_id FROM public.kauba_kategooria_tyyp WHERE kood='TEST'),
+            'kauba_kategooria',(SELECT kauba_kategooria_id FROM public.kauba_kategooria WHERE kood='TEST'),
+            'isik',(SELECT isik_id FROM public.isik WHERE e_meil='fixture@example.invalid'),
+            'kasutajakonto',(SELECT isik_id FROM public.kasutajakonto WHERE isik_id=(SELECT isik_id FROM isik WHERE e_meil='fixture@example.invalid')),
+            'tootaja_rolli_omamine',(SELECT tootaja_rolli_omamine_id FROM public.tootaja_rolli_omamine WHERE tootaja_id=(SELECT tootaja_id FROM tootaja INNER JOIN isik USING (isik_id) WHERE e_meil='fixture@example.invalid')),
+            'kaup',(SELECT kaup_id FROM public.kaup WHERE kauba_kood='ABC123'));
         FOR juht IN SELECT value FROM jsonb_array_elements($sobivad$[
   "UPDATE public.riik SET nimetus='Õige nimetus'",
   "UPDATE public.isiku_seisundi_liik SET nimetus='Õige nimetus'",
@@ -53,7 +75,7 @@ BEGIN
   "UPDATE public.kauba_kategooria_tyyp SET kood='A'",
   "UPDATE public.kauba_kategooria SET nimetus='Õige nimetus'",
   "UPDATE public.kauba_kategooria SET kood='A'",
-  "UPDATE public.riik SET kood='USA'",
+  "UPDATE public.riik SET kood='QZY'",
   "UPDATE public.diagonaal SET kood=1",
   "UPDATE public.kaamera SET kood=1",
   "UPDATE public.sisemalu SET kood=1",
@@ -80,7 +102,10 @@ BEGIN
 ]$sobivad$::jsonb)
         LOOP
             BEGIN
-                EXECUTE juht #>> '{}';
+                v_tabel:=substring((juht #>> '{}') from '^UPDATE public[.]([a-z_]+) ');
+                EXECUTE (juht #>> '{}')||format(' WHERE %I=%s',
+                    CASE WHEN v_tabel='kasutajakonto' THEN 'isik_id' ELSE v_tabel||'_id' END,
+                    v_ids->>v_tabel);
                 RAISE EXCEPTION USING ERRCODE = 'ZP001', MESSAGE = 'Sobiva piirjuhu tagasipööramine', DETAIL = 'Kontrollrida ei jää andmebaasi.', HINT = 'See erand püütakse samas plokis.';
             EXCEPTION WHEN SQLSTATE 'ZP001' THEN NULL;
             END;
@@ -409,7 +434,10 @@ BEGIN
 ]$vigased$::jsonb)
         LOOP
             BEGIN
-                EXECUTE juht->>'sql';
+                v_tabel:=substring((juht->>'sql') from '^UPDATE public[.]([a-z_]+) ');
+                EXECUTE (juht->>'sql')||format(' WHERE %I=%s',
+                    CASE WHEN v_tabel='kasutajakonto' THEN 'isik_id' ELSE v_tabel||'_id' END,
+                    v_ids->>v_tabel);
                 RAISE EXCEPTION USING ERRCODE = 'XX000', MESSAGE = 'Vigane väärtus võeti vastu', DETAIL = juht->>'constraint', HINT = 'Kontrolli vastava väärtusreegli jõustamist.';
             EXCEPTION WHEN OTHERS THEN
                 GET STACKED DIAGNOSTICS tegelik_olek = RETURNED_SQLSTATE, tegelik_kitsendus = CONSTRAINT_NAME;
