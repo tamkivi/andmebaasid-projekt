@@ -43,13 +43,23 @@ DROP TABLE tootaja_seisundi_liik;
 DROP TABLE isiku_seisundi_liik;
 DROP TABLE riik;
 
+-- Väliste andmete ühenduse eemaldamine ei muuda lähteandmebaasi.
+DROP FOREIGN TABLE valine.Riik_sisend;
+DROP FOREIGN TABLE valine.Isik_sisend;
+DROP USER MAPPING FOR CURRENT_USER SERVER minu_testandmete_server_apex;
+DROP SERVER minu_testandmete_server_apex;
+
 -- Domeenist sõltuvad vaated ja nende reeglid on juba eemaldatud.
 DROP VIEW IF EXISTS v_kaubad_muutmiseks;
 DROP VIEW IF EXISTS v_kaubad;
 DROP VIEW IF EXISTS v_kauba_kategooriad;
 DROP VIEW IF EXISTS v_kauba_variandid;
 
--- Projekt ei loo väliseid tabeleid, rutiine, trigereid ega laiendusi.
+-- Projekt ei loo trigereid ega trigerifunktsioone.
 DROP ROLE epood_rakendus;
+
+DROP EXTENSION postgres_fdw;
+DROP SCHEMA valine;
+DROP SCHEMA laiendused;
 
 COMMIT;

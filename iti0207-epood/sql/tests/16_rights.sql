@@ -1,6 +1,13 @@
 -- Rakenduse õiguste positiivsed ja keelatud juurdepääsu kontrollid.
 DO $kontroll$
 BEGIN
+    IF has_schema_privilege('epood_rakendus','valine','USAGE,CREATE')
+        OR has_schema_privilege('epood_rakendus','laiendused','USAGE,CREATE')
+        OR has_server_privilege('epood_rakendus','minu_testandmete_server_apex','USAGE')
+        OR has_table_privilege('epood_rakendus','valine.riik_sisend','SELECT,INSERT,UPDATE,DELETE')
+        OR has_table_privilege('epood_rakendus','valine.isik_sisend','SELECT,INSERT,UPDATE,DELETE') THEN
+        RAISE EXCEPTION 'Rakenduseroll ei tohi kasutada välise allika objekte';
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname='epood_rakendus'
         AND NOT rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole
         AND NOT rolreplication AND NOT rolbypassrls) THEN
@@ -44,6 +51,9 @@ DECLARE
     v_ridu bigint;
 BEGIN
     FOR v_lause IN SELECT unnest(ARRAY[
+        'SELECT count(*) FROM valine.riik_sisend',
+        'SELECT count(*) FROM valine.isik_sisend',
+        'CREATE TABLE valine.keelatud (kood integer)',
         'SELECT count(*) FROM public.isik',
         'SELECT count(*) FROM public.kasutajakonto',
         'INSERT INTO public.brand (kood,nimetus) VALUES (''TEST'',''Katse'')',

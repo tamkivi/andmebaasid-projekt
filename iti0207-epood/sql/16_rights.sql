@@ -3,6 +3,10 @@ CREATE ROLE epood_rakendus NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
     NOINHERIT NOREPLICATION NOBYPASSRLS;
 COMMENT ON ROLE epood_rakendus IS 'Kaupade halduri rakenduse nelja lugemisvaate minimaalsed õigused.';
 
+REVOKE ALL ON SCHEMA valine,laiendused FROM PUBLIC,epood_rakendus;
+REVOKE ALL ON ALL TABLES IN SCHEMA valine FROM PUBLIC,epood_rakendus;
+REVOKE ALL ON FOREIGN SERVER minu_testandmete_server_apex FROM PUBLIC,epood_rakendus;
+
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
