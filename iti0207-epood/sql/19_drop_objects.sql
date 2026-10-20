@@ -2,6 +2,7 @@
 START TRANSACTION;
 
 -- Õigused.
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM epood_rakendus;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM epood_rakendus;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM epood_rakendus;
 REVOKE ALL ON SCHEMA public FROM epood_rakendus;
@@ -12,6 +13,49 @@ END;
 $oigused$;
 ALTER DEFAULT PRIVILEGES GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 ALTER DEFAULT PRIVILEGES GRANT USAGE ON TYPES TO PUBLIC;
+
+-- Rutiinid eemaldatakse enne nende kasutatavaid tabeleid ja domeeni.
+DROP FUNCTION f_aktiveeri_kaup(character varying, character varying);
+DROP FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying);
+DROP FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying);
+DROP FUNCTION f_lisa_kauba_variant(character varying, character varying, character varying);
+DROP FUNCTION f_lisa_kaup_kategooriasse(character varying, character varying, character varying);
+DROP FUNCTION f_lopeta_kaup(character varying, character varying);
+DROP FUNCTION f_muuda_kaup(text,
+    character varying,
+    character varying,
+    character varying,
+    numeric,
+    text,
+    character varying,
+    character varying,
+    character varying,
+    boolean,
+    boolean,
+    numeric,
+    numeric,
+    integer,
+    numeric,
+    character varying,
+    character varying);
+DROP FUNCTION f_muuda_kaup_mitteaktiivseks(character varying, character varying);
+DROP FUNCTION f_registreeri_nutitelefon(character varying,
+    character varying,
+    numeric,
+    text,
+    character varying,
+    character varying,
+    character varying,
+    boolean,
+    boolean,
+    numeric,
+    numeric,
+    integer,
+    numeric,
+    character varying,
+    character varying);
+DROP FUNCTION f_unusta_kaup(character varying);
+DROP FUNCTION f_leia_tootaja(character varying);
 
 -- Domeen ja sellest sõltuvad veerud ning vaated eemaldatakse koos.
 DROP DOMAIN klassifikaatori_nimetus CASCADE;
