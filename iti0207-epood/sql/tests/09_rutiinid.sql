@@ -576,3 +576,203 @@ BEGIN
     END;
 END;
 $telefon$;
+
+-- Kategooriate ja variantide tegelik muutus peab uuendama ka kauba rida.
+DO $seosed$
+DECLARE
+    v_e_meil varchar;
+    v_muutja integer;
+    v_id integer;
+    v_tulemus varchar;
+    v_enne jsonb;
+    v_seosed jsonb;
+    v_nimi text;
+    v_param text;
+    v_kood text;
+    v_seisund smallint;
+    v_kategooriad text[];
+BEGIN
+    IF (SELECT count(*) FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
+        INNER JOIN pg_language AS l ON l.oid=p.prolang
+        WHERE n.nspname='public' AND p.proname IN ('f_leia_tootaja',
+            'f_lisa_kaup_kategooriasse','f_eemalda_kaup_kategooriast',
+            'f_lisa_kauba_variant','f_eemalda_kauba_variant')
+          AND p.prosqlbody IS NOT NULL AND l.lanname='sql' AND p.provolatile='v'
+          AND p.prosecdef AND NOT p.proisstrict
+          AND p.proconfig @> ARRAY['search_path=public, pg_temp']
+          AND obj_description(p.oid,'pg_proc') IS NOT NULL)<>5 THEN
+        RAISE EXCEPTION 'Seoste funktsioonide või ühise otsingu omadused on puudulikud';
+    END IF;
+    BEGIN
+        SELECT i.e_meil,t.tootaja_id INTO v_e_meil,v_muutja
+        FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+        ORDER BY t.tootaja_id DESC FETCH FIRST 1 ROW ONLY;
+        IF (SELECT count(*) FROM f_leia_tootaja(p_e_meil:=upper(v_e_meil)))<>1
+            OR EXISTS (SELECT 1 FROM f_leia_tootaja(p_e_meil:='puuduv@example.invalid')) THEN
+            RAISE EXCEPTION 'Ühine töötajaotsing ei vasta e-posti unikaalsusele';
+        END IF;
+        SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
+        UPDATE kaup SET reg_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02',
+            viimase_muutm_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02' WHERE kaup_id=v_id;
+        SELECT f_lisa_kaup_kategooriasse(p_kauba_kood:='APL001',
+            p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
+            SELECT 1 FROM kauba_kategooria_omamine AS o
+            INNER JOIN kauba_kategooria AS c USING (kauba_kategooria_id)
+            INNER JOIN kaup AS k USING (kaup_id)
+            WHERE o.kaup_id=v_id AND c.kood='MEESTELEFONID'
+                AND k.viimase_muutja_id=v_muutja AND k.viimase_muutm_aeg>k.reg_aeg) THEN
+            RAISE EXCEPTION 'OP7 ei loonud seost ega uuendanud kauba muutjat ja aega';
+        END IF;
+        SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+        INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_lisa_kaup_kategooriasse(p_kauba_kood:='APL001',
+            p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+            SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+            FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'OP7 korduv paar muutis kauba rida';
+        END IF;
+        UPDATE kauba_kategooria SET on_aktiivne=FALSE WHERE kood='MEESTELEFONID';
+        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        SELECT f_eemalda_kaup_kategooriast(p_kauba_kood:='APL001',
+            p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS DISTINCT FROM 'APL001' OR EXISTS (
+            SELECT 1 FROM kauba_kategooria_omamine AS o
+            INNER JOIN kauba_kategooria AS c USING (kauba_kategooria_id)
+            WHERE o.kaup_id=v_id AND c.kood='MEESTELEFONID')
+            OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id
+                AND viimase_muutja_id=v_muutja AND viimase_muutm_aeg>reg_aeg) THEN
+            RAISE EXCEPTION 'OP8 ei eemaldanud ka mitteaktiivse kategooria seost';
+        END IF;
+        UPDATE kauba_kategooria SET on_aktiivne=TRUE WHERE kood='MEESTELEFONID';
+        SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+        INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_eemalda_kaup_kategooriast(p_kauba_kood:='APL001',
+            p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+            SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+            FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'OP8 puuduva seose korral muutis kauba rida';
+        END IF;
+        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        SELECT f_lisa_kauba_variant(p_kauba_kood:='APL001',
+            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
+            SELECT 1 FROM kauba_variant AS o INNER JOIN varv AS c USING (varv_id)
+            INNER JOIN kaup AS k USING (kaup_id)
+            WHERE o.kaup_id=v_id AND c.kood='WHITE'
+                AND k.viimase_muutja_id=v_muutja AND k.viimase_muutm_aeg>k.reg_aeg) THEN
+            RAISE EXCEPTION 'OP9 ei loonud varianti ega uuendanud kauba muutjat ja aega';
+        END IF;
+        SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+        INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_lisa_kauba_variant(p_kauba_kood:='APL001',
+            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+            SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+            FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'OP9 korduv paar muutis kauba rida';
+        END IF;
+        UPDATE varv SET on_aktiivne=FALSE WHERE kood='WHITE';
+        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        SELECT f_eemalda_kauba_variant(p_kauba_kood:='APL001',
+            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS DISTINCT FROM 'APL001' OR EXISTS (
+            SELECT 1 FROM kauba_variant AS o INNER JOIN varv AS c USING (varv_id)
+            WHERE o.kaup_id=v_id AND c.kood='WHITE')
+            OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id
+                AND viimase_muutja_id=v_muutja AND viimase_muutm_aeg>reg_aeg) THEN
+            RAISE EXCEPTION 'OP10 ei eemaldanud ka mitteaktiivse värvi varianti';
+        END IF;
+        UPDATE varv SET on_aktiivne=TRUE WHERE kood='WHITE';
+        SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+        INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_eemalda_kauba_variant(p_kauba_kood:='APL001',
+            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+            SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+            FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'OP10 puuduva variandi korral muutis kauba rida';
+        END IF;
+
+        FOR v_nimi,v_param,v_kood IN SELECT a.nimi,a.param,a.kood FROM (VALUES
+            ('f_lisa_kaup_kategooriasse','p_kauba_kategooria_kood','MEESTELEFONID'),
+            ('f_eemalda_kaup_kategooriast','p_kauba_kategooria_kood','NAISTELEFONID'),
+            ('f_lisa_kauba_variant','p_varv_kood','WHITE'),
+            ('f_eemalda_kauba_variant','p_varv_kood','BLACK')
+        ) AS a(nimi,param,kood)
+        LOOP
+            SELECT jsonb_build_object('k',to_jsonb(k),'c',(
+                SELECT jsonb_agg(to_jsonb(o) ORDER BY kauba_kategooria_id)
+                FROM kauba_kategooria_omamine AS o WHERE kaup_id=v_id),'v',(
+                SELECT jsonb_agg(to_jsonb(o) ORDER BY varv_id)
+                FROM kauba_variant AS o WHERE kaup_id=v_id))
+            INTO v_seosed FROM kaup AS k WHERE kaup_id=v_id;
+            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,%I:=$2,p_e_meil:=$3)',v_nimi,v_param)
+                INTO v_tulemus USING 'APL001',v_kood,'puuduv@example.invalid';
+            IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION '% lubas puuduva töötaja',v_nimi; END IF;
+            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,%I:=$2,p_e_meil:=$3)',v_nimi,v_param)
+                INTO v_tulemus USING 'PUUDUV',v_kood,v_e_meil;
+            IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION '% leidis olematu kauba',v_nimi; END IF;
+            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,%I:=$2,p_e_meil:=$3)',v_nimi,v_param)
+                INTO v_tulemus USING 'APL001','PUUDUV',v_e_meil;
+            IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION '% leidis olematu klassifikaatori',v_nimi; END IF;
+            IF v_seosed IS DISTINCT FROM (
+                SELECT jsonb_build_object('k',to_jsonb(k),'c',(
+                    SELECT jsonb_agg(to_jsonb(o) ORDER BY kauba_kategooria_id)
+                    FROM kauba_kategooria_omamine AS o WHERE kaup_id=v_id),'v',(
+                    SELECT jsonb_agg(to_jsonb(o) ORDER BY varv_id)
+                    FROM kauba_variant AS o WHERE kaup_id=v_id)) FROM kaup AS k WHERE kaup_id=v_id) THEN
+                RAISE EXCEPTION '% muutis puuduvate eeltingimustega andmeid',v_nimi;
+            END IF;
+            FOR v_seisund IN SELECT unnest(ARRAY[2,4]::smallint[])
+            LOOP
+                UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
+                    FROM kauba_seisundi_liik WHERE kood=v_seisund) WHERE kaup_id=v_id;
+                SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+                INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+                EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,%I:=$2,p_e_meil:=$3)',v_nimi,v_param)
+                    INTO v_tulemus USING 'APL001',v_kood,v_e_meil;
+                IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+                    SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+                    FROM kaup AS k WHERE kaup_id=v_id) THEN
+                    RAISE EXCEPTION '% lubas keelatud seisundi %',v_nimi,v_seisund;
+                END IF;
+            END LOOP;
+            UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
+                FROM kauba_seisundi_liik WHERE kood=1) WHERE kaup_id=v_id;
+        END LOOP;
+        UPDATE kauba_kategooria SET on_aktiivne=FALSE WHERE kood='MEESTELEFONID';
+        SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+        INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_lisa_kaup_kategooriasse(p_kauba_kood:='APL001',
+            p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION 'OP7 kasutas mitteaktiivset kategooriat'; END IF;
+        SELECT f_lisa_kauba_variant(p_kauba_kood:='APL001',
+            p_varv_kood:='BLUE',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+            SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
+            FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'Mitteaktiivse klassifikaatori lisamine muutis kauba rida';
+        END IF;
+        SELECT array_agg(c.kood::text ORDER BY c.kood) INTO v_kategooriad
+        FROM kauba_kategooria_omamine AS o
+        INNER JOIN kauba_kategooria AS c USING (kauba_kategooria_id) WHERE o.kaup_id=v_id;
+        FOREACH v_kood IN ARRAY v_kategooriad
+        LOOP
+            SELECT f_eemalda_kaup_kategooriast(p_kauba_kood:='APL001',
+                p_kauba_kategooria_kood:=v_kood,p_e_meil:=v_e_meil) INTO v_tulemus;
+            IF v_tulemus IS DISTINCT FROM 'APL001' THEN RAISE EXCEPTION 'OP8 ei eemaldanud viimast kategooriat'; END IF;
+        END LOOP;
+        SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+        SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+        IF v_tulemus IS NOT NULL OR EXISTS (SELECT 1 FROM kauba_kategooria_omamine WHERE kaup_id=v_id)
+            OR v_enne IS DISTINCT FROM (SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'Viimase kategooria eemaldamine rikkus aktiveerimise eeltingimust';
+        END IF;
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Kontrollmuudatuste eemaldamine';
+    EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
+    END;
+END;
+$seosed$;

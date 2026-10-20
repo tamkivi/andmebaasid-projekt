@@ -1,6 +1,20 @@
 -- Kaupade andmemuudatuste lepingulised funktsioonid.
 START TRANSACTION;
 
+CREATE FUNCTION f_leia_tootaja(p_e_meil isik.e_meil%TYPE)
+RETURNS SETOF tootaja.tootaja_id%TYPE
+LANGUAGE SQL VOLATILE SECURITY DEFINER
+ROWS 1
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+SELECT t.tootaja_id FROM public.tootaja AS t
+INNER JOIN public.isik AS i USING (isik_id)
+WHERE lower(i.e_meil)=lower(p_e_meil)
+FOR SHARE OF t,i;
+END;
+COMMENT ON FUNCTION f_leia_tootaja(character varying) IS
+    'OP1 ja OP3-OP10 ühine abifunktsioon: leiab registreeritud töötaja tõstutundetu unikaalse e-posti järgi ja kaitseb töötaja ning isiku rida FOR SHARE lukuga. Unikaalsed võtmed tagavad kuni ühe tulemuse; puuduv töötaja annab tühja hulga. Sisselogimise lubatavust see otsing ei määra.';
+
 CREATE FUNCTION f_registreeri_nutitelefon(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_nimetus kaup.nimetus%TYPE,
@@ -25,11 +39,7 @@ WITH sisend AS MATERIALIZED (
     SELECT tegija.tootaja_id,b.brand_id,e.kaamera_id AS eesmine_id,
            t.kaamera_id AS tagumine_id,m.sisemalu_id,d.diagonaal_id,
            p.protsessor_id,r.ekraani_resolutsioon_id
-    FROM (SELECT t.tootaja_id
-      FROM public.tootaja AS t
-      INNER JOIN public.isik AS i USING (isik_id)
-      WHERE lower(i.e_meil)=lower(p_e_meil)
-      FOR SHARE OF t,i) AS tegija
+    FROM public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
     CROSS JOIN (SELECT brand_id FROM public.brand
         WHERE (kood=p_brandi_kood) AND on_aktiivne FOR SHARE) AS b
     CROSS JOIN (SELECT kaamera_id FROM public.kaamera
@@ -97,11 +107,7 @@ SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
     viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE (s.kood=2) AND s.on_aktiivne FOR SHARE) AS uus
-CROSS JOIN (SELECT t.tootaja_id
-      FROM public.tootaja AS t
-      INNER JOIN public.isik AS i USING (isik_id)
-      WHERE lower(i.e_meil)=lower(p_e_meil)
-      FOR SHARE OF t,i) AS tegija
+CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
     AND k.kauba_seisundi_liik_id IN (
         SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
@@ -124,11 +130,7 @@ SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
     viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE (s.kood=3) AND s.on_aktiivne FOR SHARE) AS uus
-CROSS JOIN (SELECT t.tootaja_id
-      FROM public.tootaja AS t
-      INNER JOIN public.isik AS i USING (isik_id)
-      WHERE lower(i.e_meil)=lower(p_e_meil)
-      FOR SHARE OF t,i) AS tegija
+CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
     AND k.kauba_seisundi_liik_id IN (
         SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
@@ -149,11 +151,7 @@ SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
     viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE (s.kood=4) AND s.on_aktiivne FOR SHARE) AS uus
-CROSS JOIN (SELECT t.tootaja_id
-      FROM public.tootaja AS t
-      INNER JOIN public.isik AS i USING (isik_id)
-      WHERE lower(i.e_meil)=lower(p_e_meil)
-      FOR SHARE OF t,i) AS tegija
+CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
     AND k.kauba_seisundi_liik_id IN (
         SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
@@ -189,11 +187,7 @@ WITH sisend AS MATERIALIZED (
     SELECT tegija.tootaja_id,b.brand_id,e.kaamera_id AS eesmine_id,
            t.kaamera_id AS tagumine_id,m.sisemalu_id,d.diagonaal_id,
            p.protsessor_id,r.ekraani_resolutsioon_id
-    FROM (SELECT t.tootaja_id
-      FROM public.tootaja AS t
-      INNER JOIN public.isik AS i USING (isik_id)
-      WHERE lower(i.e_meil)=lower(p_e_meil)
-      FOR SHARE OF t,i) AS tegija
+    FROM public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
     CROSS JOIN (SELECT brand_id FROM public.brand
         WHERE (kood=p_brandi_kood) AND on_aktiivne FOR SHARE) AS b
     CROSS JOIN (SELECT kaamera_id FROM public.kaamera
@@ -237,5 +231,145 @@ COMMENT ON FUNCTION f_muuda_kaup(text,character varying,character varying,charac
     numeric,text,character varying,character varying,character varying,boolean,boolean,
     numeric,numeric,integer,numeric,character varying,character varying) IS
     'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Töötaja ja aktiivsed uued klassifikaatorid ning olemasolev telefon kontrollitakse FOR SHARE kaitsega. Muudab viimase muutja ja aja, säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
+
+CREATE FUNCTION f_lisa_kaup_kategooriasse(
+    p_kauba_kood kaup.kauba_kood%TYPE,
+    p_kauba_kategooria_kood kauba_kategooria.kood%TYPE,p_e_meil isik.e_meil%TYPE)
+RETURNS kaup.kauba_kood%TYPE
+LANGUAGE SQL VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+WITH valik AS MATERIALIZED (
+    SELECT k.kaup_id,tegija.tootaja_id,c.kauba_kategooria_id
+    FROM public.kaup AS k
+    CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
+    CROSS JOIN (SELECT kauba_kategooria_id FROM public.kauba_kategooria
+        WHERE (kood=p_kauba_kategooria_kood) AND on_aktiivne FOR SHARE) AS c
+    WHERE (k.kauba_kood=p_kauba_kood)
+        AND k.kauba_seisundi_liik_id IN (
+            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
+            WHERE s.kood IN (1,3) FOR SHARE)
+    FOR UPDATE OF k
+), seos AS (
+    INSERT INTO public.kauba_kategooria_omamine (kaup_id,kauba_kategooria_id)
+    SELECT v.kaup_id,v.kauba_kategooria_id FROM valik AS v
+    ON CONFLICT (kaup_id,kauba_kategooria_id) DO NOTHING
+    RETURNING kaup_id
+), muudetud AS (
+    UPDATE public.kaup AS k
+    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
+    WHERE k.kaup_id=v.kaup_id
+    RETURNING k.kauba_kood
+)
+SELECT m.kauba_kood FROM muudetud AS m;
+END;
+COMMENT ON FUNCTION f_lisa_kaup_kategooriasse(character varying,character varying,character varying) IS
+    'OP7: lisab kaubale kategooria ainult ootel või mitteaktiivsel kaubal. Töötaja leiab ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+
+CREATE FUNCTION f_eemalda_kaup_kategooriast(
+    p_kauba_kood kaup.kauba_kood%TYPE,
+    p_kauba_kategooria_kood kauba_kategooria.kood%TYPE,p_e_meil isik.e_meil%TYPE)
+RETURNS kaup.kauba_kood%TYPE
+LANGUAGE SQL VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+WITH valik AS MATERIALIZED (
+    SELECT k.kaup_id,tegija.tootaja_id,c.kauba_kategooria_id
+    FROM public.kaup AS k
+    CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
+    CROSS JOIN (SELECT kauba_kategooria_id FROM public.kauba_kategooria
+        WHERE (kood=p_kauba_kategooria_kood) FOR SHARE) AS c
+    WHERE (k.kauba_kood=p_kauba_kood)
+        AND k.kauba_seisundi_liik_id IN (
+            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
+            WHERE s.kood IN (1,3) FOR SHARE)
+    FOR UPDATE OF k
+), seos AS (
+    DELETE FROM public.kauba_kategooria_omamine AS o
+    USING valik AS v
+    WHERE (o.kaup_id=v.kaup_id) AND (o.kauba_kategooria_id=v.kauba_kategooria_id)
+    RETURNING o.kaup_id
+), muudetud AS (
+    UPDATE public.kaup AS k
+    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
+    WHERE k.kaup_id=v.kaup_id
+    RETURNING k.kauba_kood
+)
+SELECT m.kauba_kood FROM muudetud AS m;
+END;
+COMMENT ON FUNCTION f_eemalda_kaup_kategooriast(character varying,character varying,character varying) IS
+    'OP8: eemaldab kaubalt kategooria ainult ootel või mitteaktiivsel kaubal. Töötaja leiab ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+
+CREATE FUNCTION f_lisa_kauba_variant(
+    p_kauba_kood kaup.kauba_kood%TYPE,
+    p_varv_kood varv.kood%TYPE,p_e_meil isik.e_meil%TYPE)
+RETURNS kaup.kauba_kood%TYPE
+LANGUAGE SQL VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+WITH valik AS MATERIALIZED (
+    SELECT k.kaup_id,tegija.tootaja_id,c.varv_id
+    FROM public.kaup AS k
+    CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
+    CROSS JOIN (SELECT varv_id FROM public.varv
+        WHERE (kood=p_varv_kood) AND on_aktiivne FOR SHARE) AS c
+    WHERE (k.kauba_kood=p_kauba_kood)
+        AND k.kauba_seisundi_liik_id IN (
+            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
+            WHERE s.kood IN (1,3) FOR SHARE)
+    FOR UPDATE OF k
+), seos AS (
+    INSERT INTO public.kauba_variant (kaup_id,varv_id)
+    SELECT v.kaup_id,v.varv_id FROM valik AS v
+    ON CONFLICT (kaup_id,varv_id) DO NOTHING
+    RETURNING kaup_id
+), muudetud AS (
+    UPDATE public.kaup AS k
+    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
+    WHERE k.kaup_id=v.kaup_id
+    RETURNING k.kauba_kood
+)
+SELECT m.kauba_kood FROM muudetud AS m;
+END;
+COMMENT ON FUNCTION f_lisa_kauba_variant(character varying,character varying,character varying) IS
+    'OP9: lisab kaubale värvivariandi ainult ootel või mitteaktiivsel kaubal. Töötaja leiab ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+
+CREATE FUNCTION f_eemalda_kauba_variant(
+    p_kauba_kood kaup.kauba_kood%TYPE,
+    p_varv_kood varv.kood%TYPE,p_e_meil isik.e_meil%TYPE)
+RETURNS kaup.kauba_kood%TYPE
+LANGUAGE SQL VOLATILE SECURITY DEFINER
+SET search_path = public, pg_temp
+BEGIN ATOMIC
+WITH valik AS MATERIALIZED (
+    SELECT k.kaup_id,tegija.tootaja_id,c.varv_id
+    FROM public.kaup AS k
+    CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil) AS tegija(tootaja_id)
+    CROSS JOIN (SELECT varv_id FROM public.varv
+        WHERE (kood=p_varv_kood) FOR SHARE) AS c
+    WHERE (k.kauba_kood=p_kauba_kood)
+        AND k.kauba_seisundi_liik_id IN (
+            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
+            WHERE s.kood IN (1,3) FOR SHARE)
+    FOR UPDATE OF k
+), seos AS (
+    DELETE FROM public.kauba_variant AS o
+    USING valik AS v
+    WHERE (o.kaup_id=v.kaup_id) AND (o.varv_id=v.varv_id)
+    RETURNING o.kaup_id
+), muudetud AS (
+    UPDATE public.kaup AS k
+    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
+    WHERE k.kaup_id=v.kaup_id
+    RETURNING k.kauba_kood
+)
+SELECT m.kauba_kood FROM muudetud AS m;
+END;
+COMMENT ON FUNCTION f_eemalda_kauba_variant(character varying,character varying,character varying) IS
+    'OP10: eemaldab kaubalt värvivariandi ainult ootel või mitteaktiivsel kaubal. Töötaja leiab ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
 
 COMMIT;
