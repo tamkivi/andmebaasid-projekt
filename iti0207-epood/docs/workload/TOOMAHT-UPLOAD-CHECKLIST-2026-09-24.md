@@ -67,6 +67,6 @@ Screenshots:
 
 ## Non-goals
 
-- No agent Maurus upload without explicit “upload now”.
+- No Maurus upload without explicit “upload now”.
 - No week 5+ fill for this interim.
 - No Ü2/Ü3 project files in this task.

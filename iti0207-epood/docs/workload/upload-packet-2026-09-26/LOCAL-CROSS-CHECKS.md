@@ -15,8 +15,8 @@ Enne ümberarvutust olid Developer-põhifail ja handoff'i sama nimega koopia bai
 | Koopia | SHA-256 | Tähendus |
 |---|---|---|
 | `/Users/gustav/Developer/andmebaasid-projekt/iti0207-epood/docs/workload/Tamkivi_ITI0207_toomaht_2026_ver1.xlsx` | `95c687f5e623633b89c70902969931e0cb1f5db8115c09d0c548dae6925703fe` | Praegune kanooniline fail, 115 salvestatud valemitulemust |
-| `/Users/gustav/Documents/Codex/2026-09-24/reme/work/iti0207-bonsai/audit-handoff-2026-09-25/E-ARTIFACTS/documentation/workload/Tamkivi_ITI0207_toomaht_2026_ver1.xlsx` | `1dee659a64312c14ae02b95edafa3e854787ad6cbe4eaf807c9f8e85d37e4f1d` | Muutmata handoff; samad sisendid/valemid, puuduvad vahemälutulemused |
+| Üleandmispakett: `documentation/workload/Tamkivi_ITI0207_toomaht_2026_ver1.xlsx` | `1dee659a64312c14ae02b95edafa3e854787ad6cbe4eaf807c9f8e85d37e4f1d` | Muutmata handoff; samad sisendid/valemid, puuduvad vahemälutulemused |
 | `/Users/gustav/Developer/andmebaasid-projekt/iti0207-epood/docs/workload/Tamkivi_ITI0207_toomaht_2026_ver1_backup_2026-09-21-fill.xlsx` | `8b06cf872d981cb223cf7af3e98f6610fabd3a8ecfd2b7b64d2b958dcd8632fe` | Ajalooline 210 minuti varukoopia |
-| `/Users/gustav/Documents/Codex/2026-09-24/reme/work/iti0207-bonsai/audit-handoff-2026-09-25/E-ARTIFACTS/documentation/workload/Tamkivi_ITI0207_toomaht_2026_ver1_backup_2026-09-21-fill.xlsx` | `8b06cf872d981cb223cf7af3e98f6610fabd3a8ecfd2b7b64d2b958dcd8632fe` | Sama ajalooline varukoopia |
+| Üleandmispakett: `documentation/workload/Tamkivi_ITI0207_toomaht_2026_ver1_backup_2026-09-21-fill.xlsx` | `8b06cf872d981cb223cf7af3e98f6610fabd3a8ecfd2b7b64d2b958dcd8632fe` | Sama ajalooline varukoopia |
 
 Handoff'i fail jäi muutmata. Selle räsi erinevus praegusest põhifailist tuleneb ainult käesolevas töös lisatud valemivahemälust, mitte konkureerivast sisulisest versioonist. Esitamiseks kasuta ainult Developer-põhifaili või paketi `READY-FILE/` koopiat.
