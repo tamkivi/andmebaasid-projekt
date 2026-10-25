@@ -66,3 +66,38 @@ BEGIN
     END;
 END;
 $kontroll$;
+
+-- Lõpetamata kaupade nimetuse tingimusliku unikaalsuse kontroll.
+DO $kontroll$
+DECLARE
+    v_kitsendus text;
+BEGIN
+    BEGIN
+        INSERT INTO public.kaup (kauba_kood,nimetus,kauba_seisundi_liik_id,brand_id,registreerija_id,viimase_muutja_id,hind,kirjeldus)
+            SELECT v.kauba_kood,'Kontrollnimi',s.kauba_seisundi_liik_id,b.brand_id,t.tootaja_id,t.tootaja_id,100,'Kontrollkirjeldus'
+            FROM (VALUES ('IDX001',4),('IDX002',4),('IDX003',1)) AS v(kauba_kood,seisund)
+            INNER JOIN public.kauba_seisundi_liik AS s ON s.kood=v.seisund
+            CROSS JOIN (SELECT brand_id FROM public.brand ORDER BY brand_id FETCH FIRST 1 ROW ONLY) AS b
+            CROSS JOIN (SELECT tootaja_id FROM public.tootaja ORDER BY tootaja_id FETCH FIRST 1 ROW ONLY) AS t;
+        BEGIN
+            INSERT INTO public.kaup (kauba_kood,nimetus,kauba_seisundi_liik_id,brand_id,registreerija_id,viimase_muutja_id,hind,kirjeldus)
+                SELECT 'IDX004',k.nimetus,s.kauba_seisundi_liik_id,k.brand_id,k.registreerija_id,k.viimase_muutja_id,k.hind,k.kirjeldus
+                FROM public.kaup AS k CROSS JOIN public.kauba_seisundi_liik AS s
+                WHERE k.kauba_kood='IDX003' AND s.kood=3;
+            RAISE EXCEPTION USING ERRCODE = 'XX000', MESSAGE = 'Korduv nimetus võeti vastu',
+                DETAIL = 'Kahel lõpetamata kaubal ei tohi olla sama nimetust.',
+                HINT = 'Kontrolli osalist unikaalset indeksit.';
+        EXCEPTION WHEN unique_violation THEN
+            GET STACKED DIAGNOSTICS v_kitsendus = CONSTRAINT_NAME;
+            IF v_kitsendus <> 'ux_kaup_nimetus_lopetamata' THEN
+                RAISE EXCEPTION USING ERRCODE = 'XX000', MESSAGE = 'Vale unikaalsuse kontroll',
+                    DETAIL = 'Erandi peab põhjustama ux_kaup_nimetus_lopetamata.',
+                    HINT = 'Kontrolli SQLSTATE-i 23505 ja indeksi nime.';
+            END IF;
+        END;
+        RAISE EXCEPTION USING ERRCODE = 'ZT001', MESSAGE = 'Kontrollandmete eemaldamine',
+            DETAIL = 'Kõik kontrollread eemaldatakse.', HINT = 'See erand püütakse samas plokis.';
+    EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
+    END;
+END;
+$kontroll$;

@@ -23,6 +23,16 @@ INSERT INTO tootaja_roll (kood,nimetus,kirjeldus) VALUES
 INSERT INTO kauba_seisundi_liik (kood,nimetus) VALUES
     (3,'Mitteaktiivne'),(4,'Lõpetatud'),(1,'Ootel'),(2,'Aktiivne');
 
+-- Lõpetamata (ootel, aktiivsete ja mitteaktiivsete) kaupade nimetused on unikaalsed.
+-- Osalise indeksi tingimus vajab Lõpetatud seisundi tehnilist ID-d, mis on teada alles pärast lisamist.
+DO $indeks$
+BEGIN
+    EXECUTE format('CREATE UNIQUE INDEX ux_kaup_nimetus_lopetamata ON kaup (nimetus) '
+        'WHERE kauba_seisundi_liik_id<>%s',
+        (SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=4));
+END;
+$indeks$;
+
 INSERT INTO brand (kood,nimetus) VALUES
     ('APPLE','Apple'),('SAMSUNG','Samsung'),('GOOGLE','Google');
 

@@ -475,6 +475,8 @@ BEGIN
         UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
             FROM kauba_seisundi_liik WHERE kood=3) WHERE kaup_id=v_id;
         SELECT xmin::text INTO v_ver FROM kaup WHERE kaup_id=v_id;
+        -- Registreeritud kontrolltelefon on lõpetamata, seega muudetav kaup vajab teist nimetust.
+        v_nimetus:='Mitteaktiivne kontrolltelefon';
         SELECT f_muuda_kaup(
             p_ver:=v_ver,
             p_kauba_kood_vana:='UPD001',
