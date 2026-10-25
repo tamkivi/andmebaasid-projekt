@@ -8,6 +8,10 @@ FROM (SELECT isik_id FROM isik ORDER BY isik_id FETCH FIRST 2 ROWS ONLY) AS i
 CROSS JOIN tootaja_seisundi_liik AS s
 WHERE s.kood='TO';
 
+-- Teine töötaja (juhataja) on esimese töötaja mentor.
+UPDATE tootaja SET mentor_id=(SELECT tootaja_id FROM tootaja ORDER BY isik_id DESC FETCH FIRST 1 ROW ONLY)
+WHERE tootaja_id=(SELECT tootaja_id FROM tootaja ORDER BY isik_id FETCH FIRST 1 ROW ONLY);
+
 INSERT INTO tootaja_rolli_omamine (tootaja_id,tootaja_roll_id,alguse_aeg)
 SELECT t.tootaja_id,r.tootaja_roll_id,TIMESTAMPTZ '2025-01-01 00:00:00+02'
 FROM (SELECT tootaja_id,row_number() OVER (ORDER BY isik_id) AS jrk FROM tootaja) AS t

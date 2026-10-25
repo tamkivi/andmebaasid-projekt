@@ -14,6 +14,7 @@ CREATE INDEX ix_nutitelefon_protsessor_id ON nutitelefon (protsessor_id);
 CREATE INDEX ix_nutitelefon_sisemalu_id ON nutitelefon (sisemalu_id);
 CREATE INDEX ix_nutitelefon_tagumine_kaamera_id ON nutitelefon (tagumine_kaamera_id);
 CREATE INDEX ix_tootaja_tootaja_seisundi_liik_id ON tootaja (tootaja_seisundi_liik_id);
+CREATE INDEX ix_tootaja_mentor_id ON tootaja (mentor_id);
 CREATE INDEX ix_tootaja_rolli_omamine_tootaja_roll_id ON tootaja_rolli_omamine (tootaja_roll_id);
 
 -- Funktsioonil põhinev indeks tagab e-posti tõstutundetu unikaalsuse.

@@ -47,6 +47,7 @@ BEGIN
             'kauba_kategooria_tyyp',(SELECT kauba_kategooria_tyyp_id FROM public.kauba_kategooria_tyyp WHERE kood='TEST'),
             'kauba_kategooria',(SELECT kauba_kategooria_id FROM public.kauba_kategooria WHERE kood='TEST'),
             'isik',(SELECT isik_id FROM public.isik WHERE e_meil='fixture@example.invalid'),
+            'tootaja',(SELECT tootaja_id FROM public.tootaja INNER JOIN public.isik USING (isik_id) WHERE e_meil='fixture@example.invalid'),
             'kasutajakonto',(SELECT isik_id FROM public.kasutajakonto WHERE isik_id=(SELECT isik_id FROM isik WHERE e_meil='fixture@example.invalid')),
             'tootaja_rolli_omamine',(SELECT tootaja_rolli_omamine_id FROM public.tootaja_rolli_omamine WHERE tootaja_id=(SELECT tootaja_id FROM tootaja INNER JOIN isik USING (isik_id) WHERE e_meil='fixture@example.invalid')),
             'kaup',(SELECT kaup_id FROM public.kaup WHERE kauba_kood='ABC123'));
@@ -348,6 +349,11 @@ BEGIN
     "sql": "UPDATE public.kasutajakonto SET parool='   '",
     "state": "23514",
     "constraint": "ck_kasutajakonto_parool_sisu"
+  },
+  {
+    "sql": "UPDATE public.tootaja SET mentor_id=tootaja_id",
+    "state": "23514",
+    "constraint": "ck_tootaja_mentor_ei_ole_ise"
   },
   {
     "sql": "UPDATE public.tootaja_roll SET kirjeldus=E' \\t\\n'",
