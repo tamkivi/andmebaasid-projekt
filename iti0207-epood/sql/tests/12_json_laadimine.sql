@@ -32,7 +32,8 @@ BEGIN
         WHERE (jt.seisund=1 AND (i.isik_id IS NULL OR s.kood<>'EL'
             OR i.eesnimi IS DISTINCT FROM jt.eesnimi OR i.perenimi IS DISTINCT FROM jt.perenimi
             OR i.e_meil IS DISTINCT FROM jt.email OR i.synni_kp IS DISTINCT FROM jt.synni_aeg
-            OR i.elukoht IS DISTINCT FROM jt.aadress OR k.parool IS DISTINCT FROM jt.parool
+            OR i.elukoht IS DISTINCT FROM jt.aadress OR k.parool !~ '^\$2a\$12\$.{53}$'
+            OR k.parool IS DISTINCT FROM laiendused.crypt(jt.parool,k.parool)
             OR k.on_aktiivne IS DISTINCT FROM TRUE))
            OR (jt.seisund<>1 AND i.isik_id IS NOT NULL)
     ) OR NOT EXISTS (SELECT 1 FROM isik WHERE eesnimi IS NULL AND perenimi IS NOT NULL)
@@ -50,10 +51,17 @@ BEGIN
         RAISE EXCEPTION 'Välisesse tabelisse kirjutamine õnnestus';
     EXCEPTION WHEN object_not_in_prerequisite_state THEN NULL;
     END;
-    IF (SELECT n.nspname FROM pg_extension AS e
+    IF (SELECT count(*) FROM pg_extension AS e
         INNER JOIN pg_namespace AS n ON n.oid=e.extnamespace
-        WHERE e.extname='postgres_fdw')<>'laiendused' THEN
-        RAISE EXCEPTION 'Laiendus peab kuuluma eraldi skeemi';
+        WHERE e.extname IN ('postgres_fdw','pgcrypto') AND n.nspname='laiendused')<>2 THEN
+        RAISE EXCEPTION 'Laiendused peavad kuuluma eraldi skeemi';
+    END IF;
+    IF EXISTS (SELECT 1 FROM kasutajakonto AS k
+        WHERE k.parool IN (SELECT jt.parool FROM valine.Isik_sisend AS a
+            CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
+                parool text PATH '$.parool')) AS jt))
+        OR (SELECT count(DISTINCT parool) FROM kasutajakonto)<>(SELECT count(*) FROM kasutajakonto) THEN
+        RAISE EXCEPTION 'Parool on salvestatud avatekstina või ilma juhusliku soolata';
     END IF;
 END;
 $kontroll$;

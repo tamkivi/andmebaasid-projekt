@@ -1,5 +1,9 @@
 START TRANSACTION;
 
+-- Parooli räsi leitakse funktsiooniga crypt, mille lisamoodul paigutatakse skeemi laiendused.
+CREATE SCHEMA IF NOT EXISTS laiendused;
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA laiendused;
+
 -- Laadin riikide standardkoodid ja nimetused välise tabeli JSON-dokumentidest.
 INSERT INTO riik (kood,nimetus)
 SELECT JSON_VALUE(r.riik,'$."Alpha-3 code"'),
@@ -25,10 +29,11 @@ INNER JOIN riik AS r ON r.kood=JSON_VALUE(a.isik,'$.riik')
 INNER JOIN isiku_seisundi_liik AS s ON s.kood='EL'
 WHERE jt.seisund=1;
 
--- Seon lähteandmete avatekstilise testparooli õige isikuga riigi ja isikukoodi kaudu.
--- Konto aktiivsus saab vaikimisi väärtuse TRUE; räsimine lisandub eraldi.
+-- Seon lähteandmete testparooli õige isikuga riigi ja isikukoodi kaudu.
+-- Avatekstilise parooli asemel salvestatakse bcrypt-räsi (korduste arv 12, sool on räsi osa).
+-- Konto aktiivsus saab vaikimisi väärtuse TRUE.
 INSERT INTO kasutajakonto (isik_id,parool)
-SELECT i.isik_id,jt.parool
+SELECT i.isik_id,laiendused.crypt(jt.parool,laiendused.gen_salt('bf',12))
 FROM valine.Isik_sisend AS a
 CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
     isikukood varchar(50) PATH '$.isikukood',

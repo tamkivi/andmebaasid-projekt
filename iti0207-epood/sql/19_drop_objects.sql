@@ -103,6 +103,7 @@ DROP VIEW IF EXISTS v_kauba_variandid;
 DROP ROLE epood_rakendus;
 
 DROP EXTENSION postgres_fdw;
+DROP EXTENSION pgcrypto;
 DROP SCHEMA valine;
 DROP SCHEMA laiendused;
 
