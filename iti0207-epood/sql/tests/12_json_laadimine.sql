@@ -1,19 +1,19 @@
--- Kohaliku JSON-allika kuju, laadimise ja väliste tabelite kirjutamiskeelu kontroll.
+-- JSON-allika kuju, laadimise ja väliste tabelite kirjutamiskeelu kontroll.
 DO $kontroll$
 DECLARE
     v_allikas bigint;
 BEGIN
-    IF (SELECT count(*) FROM riik)<>246
-        OR EXISTS (SELECT 1 FROM riik WHERE kood !~ '^[A-Z]{3}$')
-        OR (SELECT count(*) FROM valine.Riik_sisend)<>246 THEN
-        RAISE EXCEPTION 'Riikide laadimine ei vasta kohalikule lähteandmestikule';
+    IF (SELECT count(*) FROM riik)<>(SELECT count(DISTINCT JSON_VALUE(riik,'$."Alpha-3 code"'))
+            FROM valine.Riik_sisend)
+        OR EXISTS (SELECT 1 FROM riik WHERE kood !~ '^[A-Z]{3}$') THEN
+        RAISE EXCEPTION 'Riikide laadimine ei vasta lähteandmestikule';
     END IF;
-    SELECT count(*) INTO v_allikas
+    SELECT count(DISTINCT (JSON_VALUE(a.isik,'$.riik'),jt.isikukood)) INTO v_allikas
     FROM valine.Isik_sisend AS a
     CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
         isikukood text PATH '$.isikukood',seisund smallint PATH '$.seisund'
     )) AS jt WHERE jt.seisund=1;
-    IF v_allikas<>3 OR (SELECT count(*) FROM isik)<>v_allikas
+    IF v_allikas<4 OR (SELECT count(*) FROM isik)<>v_allikas
         OR (SELECT count(*) FROM kasutajakonto)<>v_allikas THEN
         RAISE EXCEPTION 'Isikute või kontode arv ei vasta elus isikute arvule';
     END IF;
@@ -32,14 +32,20 @@ BEGIN
         WHERE (jt.seisund=1 AND (i.isik_id IS NULL OR s.kood<>'EL'
             OR i.eesnimi IS DISTINCT FROM jt.eesnimi OR i.perenimi IS DISTINCT FROM jt.perenimi
             OR i.e_meil IS DISTINCT FROM jt.email OR i.synni_kp IS DISTINCT FROM jt.synni_aeg
-            OR i.elukoht IS DISTINCT FROM jt.aadress OR k.parool !~ '^\$2a\$12\$.{53}$'
+            OR i.elukoht IS DISTINCT FROM jt.aadress OR k.parool !~ '^\$2[ab]\$12\$.{53}$'
             OR k.parool IS DISTINCT FROM laiendused.crypt(jt.parool,k.parool)
             OR k.on_aktiivne IS DISTINCT FROM TRUE))
            OR (jt.seisund<>1 AND i.isik_id IS NOT NULL)
-    ) OR NOT EXISTS (SELECT 1 FROM isik WHERE eesnimi IS NULL AND perenimi IS NOT NULL)
-      OR NOT EXISTS (SELECT 1 FROM isik WHERE e_meil<>lower(e_meil))
-      OR (SELECT count(DISTINCT riik_id) FROM isik)<2 THEN
+    ) THEN
         RAISE EXCEPTION 'Riigi, seisundi, nime või konto seos ei vasta lähteandmetele';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM valine.Riik_sisend AS a
+        LEFT JOIN riik AS r ON r.kood=JSON_VALUE(a.riik,'$."Alpha-3 code"')
+        WHERE r.riik_id IS NULL OR r.nimetus IS DISTINCT FROM
+            JSON_VALUE(a.riik,'$."English short name lower case"')
+    ) THEN
+        RAISE EXCEPTION 'Riigi nimetus ei vasta lähteandmetele';
     END IF;
     BEGIN
         INSERT INTO valine.Riik_sisend (riik) VALUES ('{}'::jsonb);

@@ -8,7 +8,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA laiendused;
 INSERT INTO riik (kood,nimetus)
 SELECT JSON_VALUE(r.riik,'$."Alpha-3 code"'),
        JSON_VALUE(r.riik,'$."English short name lower case"')
-FROM valine.Riik_sisend AS r;
+FROM valine.Riik_sisend AS r
+ON CONFLICT (kood) DO NOTHING;
 
 -- Laadin ainult elus isikud ning leian riigi ja seisundi viited sisulise koodi järgi.
 INSERT INTO isik (isikukood,eesnimi,perenimi,e_meil,synni_kp,elukoht,
@@ -27,10 +28,12 @@ CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
 )) AS jt
 INNER JOIN riik AS r ON r.kood=JSON_VALUE(a.isik,'$.riik')
 INNER JOIN isiku_seisundi_liik AS s ON s.kood='EL'
-WHERE jt.seisund=1;
+WHERE jt.seisund=1
+ON CONFLICT (riik_id,isikukood) DO NOTHING;
 
 -- Seon lähteandmete testparooli õige isikuga riigi ja isikukoodi kaudu.
 -- Avatekstilise parooli asemel salvestatakse bcrypt-räsi (korduste arv 12, sool on räsi osa).
+-- Olemasoleva konto parooli uuesti ei räsita ega muudeta.
 -- Konto aktiivsus saab vaikimisi väärtuse TRUE.
 INSERT INTO kasutajakonto (isik_id,parool)
 SELECT i.isik_id,laiendused.crypt(jt.parool,laiendused.gen_salt('bf',12))
@@ -42,6 +45,8 @@ CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
 )) AS jt
 INNER JOIN riik AS r ON r.kood=JSON_VALUE(a.isik,'$.riik')
 INNER JOIN isik AS i ON (i.riik_id=r.riik_id AND i.isikukood=jt.isikukood)
-WHERE jt.seisund=1;
+WHERE jt.seisund=1
+    AND NOT EXISTS (SELECT 1 FROM kasutajakonto AS k WHERE k.isik_id=i.isik_id)
+ON CONFLICT (isik_id) DO NOTHING;
 
 COMMIT;

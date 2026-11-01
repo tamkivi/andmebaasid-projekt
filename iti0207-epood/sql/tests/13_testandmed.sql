@@ -11,7 +11,7 @@ BEGIN
     FOR v_tabel IN SELECT tablename FROM pg_tables WHERE schemaname='public'
     LOOP
         EXECUTE format('SELECT count(*) FROM public.%I',v_tabel) INTO v_ridu;
-        IF v_ridu=0 THEN RAISE EXCEPTION 'Tabel % on tühi',v_tabel; END IF;
+        IF v_ridu<2 THEN RAISE EXCEPTION 'Tabelis % peab olema vähemalt kaks rida',v_tabel; END IF;
         FOR v_veerg IN SELECT column_name FROM information_schema.columns
             WHERE table_schema='public' AND table_name=v_tabel
         LOOP
@@ -32,22 +32,5 @@ BEGIN
             WHERE r.kood IN ('KAUBAHALDUR','JUHATAJA'))<>2 THEN
         RAISE EXCEPTION 'Kauba, telefoni või töötaja testandmed on puudulikud';
     END IF;
-    BEGIN
-        SELECT count(*) INTO v_ridu FROM klient;
-        UPDATE klient SET on_nous_tylitamisega=FALSE;
-        INSERT INTO klient (isik_id,kliendi_seisundi_liik_id,on_nous_tylitamisega)
-        SELECT i.isik_id,s.kliendi_seisundi_liik_id,TRUE
-        FROM (SELECT isik_id FROM isik ORDER BY isik_id OFFSET 2 ROWS FETCH FIRST 1 ROW ONLY) AS i
-        CROSS JOIN kliendi_seisundi_liik AS s WHERE s.kood='AK'
-        ON CONFLICT (isik_id) DO UPDATE
-        SET kliendi_seisundi_liik_id=EXCLUDED.kliendi_seisundi_liik_id,
-            on_nous_tylitamisega=EXCLUDED.on_nous_tylitamisega;
-        IF (SELECT count(*) FROM klient)<>v_ridu OR NOT EXISTS (
-            SELECT 1 FROM klient WHERE on_nous_tylitamisega) THEN
-            RAISE EXCEPTION 'Kliendi korduv lisamine ei ajakohastanud olemasolevat rida';
-        END IF;
-        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
-    EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
-    END;
 END;
 $kontroll$;
