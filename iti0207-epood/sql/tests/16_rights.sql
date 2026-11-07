@@ -62,6 +62,15 @@ $kontroll$;
 SAVEPOINT funktsioonide_kontroll;
 SELECT set_config('epood.kontroll_e_meil',(
     SELECT i.e_meil FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+    INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+    INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+    WHERE r.kood='KAUBAHALDUR' AND o.lopu_aeg='infinity'
+    ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY),true);
+SELECT set_config('epood.kontroll_juhataja',(
+    SELECT i.e_meil FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+    INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+    INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+    WHERE r.kood='JUHATAJA' AND o.lopu_aeg='infinity'
     ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY),true);
 SET LOCAL ROLE epood_rakendus;
 SELECT kauba_kood,nimetus FROM public.v_kaubad;
@@ -74,7 +83,7 @@ DECLARE
     v_ridu bigint;
 BEGIN
     FOR v_lause IN SELECT unnest(ARRAY[
-        'SELECT count(*) FROM public.f_leia_tootaja(p_e_meil:=''puuduv@example.invalid'')',
+        'SELECT count(*) FROM public.f_leia_tootaja(p_e_meil:=''puuduv@example.invalid'',p_rolli_kood:=''KAUBAHALDUR'')',
         'SELECT count(*) FROM valine.riik_sisend',
         'SELECT count(*) FROM valine.isik_sisend',
         'CREATE TABLE valine.keelatud (kood integer)',
@@ -109,6 +118,7 @@ $keelatud$;
 DO $funktsioonid$
 DECLARE
     v_e_meil varchar:=current_setting('epood.kontroll_e_meil');
+    v_juhataja varchar:=current_setting('epood.kontroll_juhataja');
     v_ver text;
 BEGIN
     IF f_registreeri_nutitelefon(p_kauba_kood:='APP001',p_nimetus:='Rakenduse kontrolltelefon',p_hind:=899::numeric,
@@ -145,7 +155,7 @@ BEGIN
             p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001'
         OR f_eemalda_kauba_variant(p_kauba_kood:='APP001',
             p_varv_kood:='WHITE',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001'
-        OR f_lopeta_kaup(p_kauba_kood:='APP001',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001' THEN
+        OR f_lopeta_kaup(p_kauba_kood:='APP001',p_e_meil:=v_juhataja) IS DISTINCT FROM 'APP001' THEN
         RAISE EXCEPTION 'Rakenduseroll ei saanud seoseid eemaldada või kaupa lõpetada';
     END IF;
     IF f_registreeri_nutitelefon(p_kauba_kood:='APP002',p_nimetus:='Rakenduse kontrolltelefon',p_hind:=899::numeric,
@@ -155,7 +165,7 @@ BEGIN
             p_kaamera_kood_eesmine:=12.0::numeric,p_kaamera_kood_tagumine:=48.0::numeric,
             p_sisemalu_kood:=256::integer,p_diagonaali_kood:=6.1::numeric,
             p_protsessori_kood:='A16',p_ekraani_resolutsiooni_kood:='2556x1179') IS DISTINCT FROM 'APP002'
-        OR f_unusta_kaup(p_kauba_kood:='APP002') IS DISTINCT FROM 'APP002' THEN
+        OR f_unusta_kaup(p_kauba_kood:='APP002',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP002' THEN
         RAISE EXCEPTION 'Rakenduseroll ei saanud ootel kaupa unustada';
     END IF;
 END;

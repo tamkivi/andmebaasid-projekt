@@ -4,7 +4,16 @@
 \set ON_ERROR_STOP on
 SET search_path TO public;
 
-SELECT to_regtype('public.klassifikaatori_nimetus') IS NULL AS loo_domeen \gset
+-- Vana skeem tuleb enne laadimist eraldi migreerida; uut kasutamata domeeni ei looda.
+DO $versioon$
+BEGIN
+    IF to_regtype('public.klassifikaatori_nimetus') IS NOT NULL THEN
+        RAISE EXCEPTION 'Käivita enne laadimist migrations/06_domeeni_nimi.sql';
+    END IF;
+END;
+$versioon$;
+
+SELECT to_regtype('public.d_klassifikaatori_nimetus') IS NULL AS loo_domeen \gset
 \if :loo_domeen
 \ir 00_domains.sql
 \endif

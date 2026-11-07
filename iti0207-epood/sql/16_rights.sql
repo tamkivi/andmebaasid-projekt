@@ -10,7 +10,7 @@ REVOKE ALL ON FOREIGN SERVER minu_testandmete_server_apex FROM PUBLIC,epood_rake
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
-REVOKE ALL ON DOMAIN klassifikaatori_nimetus FROM PUBLIC;
+REVOKE ALL ON DOMAIN d_klassifikaatori_nimetus FROM PUBLIC;
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 ALTER DEFAULT PRIVILEGES REVOKE USAGE ON TYPES FROM PUBLIC;
 DO $oigused$
@@ -23,7 +23,7 @@ $oigused$;
 REVOKE ALL ON FUNCTION f_aktiveeri_kaup(character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying) FROM PUBLIC;
-REVOKE ALL ON FUNCTION f_leia_tootaja(character varying) FROM PUBLIC;
+REVOKE ALL ON FUNCTION f_leia_tootaja(character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_lisa_kauba_variant(character varying, character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_lisa_kaup_kategooriasse(character varying, character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_lopeta_kaup(character varying, character varying) FROM PUBLIC;
@@ -60,7 +60,7 @@ REVOKE ALL ON FUNCTION f_registreeri_nutitelefon(character varying,
     numeric,
     character varying,
     character varying) FROM PUBLIC;
-REVOKE ALL ON FUNCTION f_unusta_kaup(character varying) FROM PUBLIC;
+REVOKE ALL ON FUNCTION f_unusta_kaup(character varying, character varying) FROM PUBLIC;
 
 GRANT USAGE ON SCHEMA public TO epood_rakendus;
 GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid
@@ -112,4 +112,4 @@ GRANT EXECUTE ON FUNCTION f_registreeri_nutitelefon(character varying,
     numeric,
     character varying,
     character varying) TO epood_rakendus;
-GRANT EXECUTE ON FUNCTION f_unusta_kaup(character varying) TO epood_rakendus;
+GRANT EXECUTE ON FUNCTION f_unusta_kaup(character varying, character varying) TO epood_rakendus;

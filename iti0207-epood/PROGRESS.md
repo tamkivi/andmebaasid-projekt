@@ -1,10 +1,12 @@
 # ITI0207 e-poe — progress
 
-## Current status — 26.09.2026: Ü2 Not ready (one confirmed model gap)
+## Current status — 07.11.2026: Ü5 ühendatud, Ü6 kohalikult kontrollitud
 
-The rendered source document, figure 8 on page 40, explicitly requires an optional employee mentor relationship. `sql/01_tables_draft.sql` and the physical employee diagram omit it. Earlier text-only conclusions that no required FK was missing are superseded. The detailed review includes an unapplied schema patch and a defense pack. Current counts remain 24 tables / 25 FK; the proposed repair would add one nullable column and one FK. No database was connected to, no schema patch applied, no school submission made, and no commit or push performed during this deep pass. Runtime statements below are historical checks.
+Ü5 korduvlaadimine ja rutiinide/õiguste muudatused on kohalikus harus ühendatud ja kontrollitud. Eraldatud PostgreSQL 17.10 testkeskkonnas läbisid kõik 11 olemasolevat SQL-testikomplekti, Ü5 korduvlaadimine ja Ü6 migratsiooni testid kohaliku JSON-näidisallikaga. Enne migratsiooni tehti loogiline varukoopia ja kontrolliti taastamist. Kooliserveri andmed, PostgreSQL 18, rakendus ja esitamine on kontrollimata.
 
-**Updated:** 2026-09-23 (Europe/Tallinn) · **Tool choice:** PostgreSQL + DBeaver / Graphviz path
+`sql/01_tables_draft.sql` sisaldab nüüd 24 tabelit, 116 veergu ja 26 välisvõtit, sealhulgas `mentor_id` ning selle eneseviite. Domeen `d_klassifikaatori_nimetus` koondab kõigi 15 klassifikaatorinimetuse ühised omadused. Täidetud vana skeemi domeen nimetatakse ümber andmeid ja sõltuvusi säilitades; juhised ning piirangud on [Ü6 tehnilises lisas](docs/u6-domeenid.md). Wordi dokument ja töötajate skeemijoonis vajavad endiselt ajakohastamist; tehniline lisa ei ole veel lõppdokumenti lisatud. Rutiinide edasine turva- ja samaaegsuskontroll ning muud ülesanded jäävad eraldi tööks.
+
+**Tool choice:** PostgreSQL + DBeaver / Graphviz path
 
 ## Historical status — 23.09 preparation for Week 5 / Ü2
 

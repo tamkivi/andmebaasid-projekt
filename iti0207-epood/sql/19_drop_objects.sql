@@ -54,11 +54,14 @@ DROP FUNCTION f_registreeri_nutitelefon(character varying,
     numeric,
     character varying,
     character varying);
-DROP FUNCTION f_unusta_kaup(character varying);
-DROP FUNCTION f_leia_tootaja(character varying);
+DROP FUNCTION f_unusta_kaup(character varying, character varying);
+DROP FUNCTION f_leia_tootaja(character varying, character varying);
 
--- Domeen ja sellest sõltuvad veerud ning vaated eemaldatakse koos.
-DROP DOMAIN klassifikaatori_nimetus CASCADE;
+-- Vaated ja nende reeglid eemaldatakse enne baastabeleid.
+DROP VIEW v_kaubad_muutmiseks;
+DROP VIEW v_kaubad;
+DROP VIEW v_kauba_kategooriad;
+DROP VIEW v_kauba_variandid;
 
 -- Tabelid eemaldatakse viitavatest tabelitest viidatud tabelite suunas.
 -- IDENTITY-generaatorid ja tabeliindeksid kustuvad koos tabeliga.
@@ -93,11 +96,8 @@ DROP FOREIGN TABLE valine.Isik_sisend;
 DROP USER MAPPING FOR CURRENT_USER SERVER minu_testandmete_server_apex;
 DROP SERVER minu_testandmete_server_apex;
 
--- Domeenist sõltuvad vaated ja nende reeglid on juba eemaldatud.
-DROP VIEW IF EXISTS v_kaubad_muutmiseks;
-DROP VIEW IF EXISTS v_kaubad;
-DROP VIEW IF EXISTS v_kauba_kategooriad;
-DROP VIEW IF EXISTS v_kauba_variandid;
+-- Domeen eemaldatakse alles pärast kõiki sellest sõltuvaid objekte.
+DROP DOMAIN d_klassifikaatori_nimetus RESTRICT;
 
 -- Projekt ei loo trigereid ega trigerifunktsioone.
 DROP ROLE epood_rakendus;

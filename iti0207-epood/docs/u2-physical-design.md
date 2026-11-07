@@ -219,7 +219,7 @@ Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärt
 
 ## Klassifikaatori nimetuse domeen
 
-`sql/00_domains.sql` loob domeeni `klassifikaatori_nimetus` tüübiga `varchar(100)`. Domeen sisaldab NOT NULL-i ja sisuka teksti CHECK-kitsendust. Seda kasutavad kõigi 15 klassifikaatoritabeli `nimetus` veerud, mis ei ole välisvõtmed. Veergudel neid reegleid ei korrata. Kauba nimetus on eraldi `varchar(255)` ning sellel on lisaks miinimumpikkuse reegel, mistõttu see ei kasuta sama domeeni. Joonistel näidatakse domeeni nime, baastüüpi ja sellest tulenevat kohustuslikkust. Domeeni täielik deklaratsioon on dokumendi jaotises 4.3.
+`sql/00_domains.sql` loob domeeni `d_klassifikaatori_nimetus` tüübiga `varchar(100)`. Domeen sisaldab NOT NULL-i ja sisuka teksti CHECK-kitsendust. Seda kasutavad kõigi 15 klassifikaatoritabeli `nimetus` veerud, mis ei ole välisvõtmed. Veergudel neid reegleid ei korrata. Kauba nimetus on eraldi `varchar(255)` ning sellel on lisaks miinimumpikkuse reegel, mistõttu see ei kasuta sama domeeni. Joonistel näidatakse veel Ü6-eelset domeeninime `klassifikaatori_nimetus`, baastüüpi ja sellest tulenevat kohustuslikkust. Ajakohane deklaratsioon ja migratsioon on [Ü6 tehnilises lisas](u6-domeenid.md); Wordi jaotis 4.3 vajab veel uuendamist.
 
 ## Lisamata andmebaasiobjektid
 
@@ -250,7 +250,7 @@ Laadi SQL uude tühja kohalikku PostgreSQLi andmebaasi ning käivita `sql/tests/
 
 `sql/16_rights.sql` loob sisselogimisõiguseta rolli `epood_rakendus`, millel on ühendusõigus jooksvale andmebaasile, public-skeemi kasutusõigus ja nelja lugemisvaate SELECT. Baastabelite, arvujadade, muutmise, objektide loomise ega õiguste edasijagamise õigust rollil ei ole. PUBLIC-i liigsed õigused eemaldatakse. See on õiguste koondamise roll; tegelik rakenduse sisselogimiskasutaja ja autentimise teostus vajavad eraldi seadistust.
 
-`sql/19_drop_objects.sql` eemaldab realiseeritud projektiobjektid. Õigused võetakse enne ära; domeeni kustutamise CASCADE eemaldab sellest sõltuvad veerud ja vaated; seejärel kustutatakse ülejäänud tabelid ning roll. Tabelitega kustuvad nende identiteedijadad ja indeksid, vaadetega nende reeglid. Avalik skeem on andmebaasi vaikimisi skeem ning seda ei kustutata. Tegeliku projektiandmebaasi kustutamislauset ei määrata enne selle nime kinnitamist.
+`sql/19_drop_objects.sql` eemaldab realiseeritud projektiobjektid. Õigused võetakse enne ära; seejärel kustutatakse rutiinid, vaated, baastabelid, välised tabelid, kasutajaseos, välisserver, domeen käsuga `DROP DOMAIN d_klassifikaatori_nimetus RESTRICT`, roll, laiendused ja skeemid, kasutamata `CASCADE`-i. Tabelitega kustuvad nende identiteedijadad ja indeksid, vaadetega nende reeglid. Avalik skeem on andmebaasi vaikimisi skeem ning seda ei kustutata. Tegeliku projektiandmebaasi kustutamislauset ei määrata enne selle nime kinnitamist.
 
 ## Statistika ja täitmisplaan
 

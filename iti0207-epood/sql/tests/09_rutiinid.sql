@@ -3,6 +3,8 @@ DO $kontroll$
 DECLARE
     v_e_meil varchar;
     v_muutja integer;
+    v_juhataja varchar;
+    v_juhataja_id integer;
     v_id integer;
     v_tulemus varchar;
     v_nimi text;
@@ -26,7 +28,16 @@ BEGIN
     BEGIN
         SELECT i.e_meil,t.tootaja_id INTO v_e_meil,v_muutja
         FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
-        ORDER BY t.tootaja_id DESC FETCH FIRST 1 ROW ONLY;
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='KAUBAHALDUR' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
+        SELECT i.e_meil,t.tootaja_id INTO v_juhataja,v_juhataja_id
+        FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='JUHATAJA' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
         SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
         UPDATE kaup SET reg_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02',
             viimase_muutm_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02' WHERE kaup_id=v_id;
@@ -46,10 +57,10 @@ BEGIN
         END IF;
         SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' THEN RAISE EXCEPTION 'OP3 peab lubama ka seisundit 3'; END IF;
-        SELECT f_lopeta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+        SELECT f_lopeta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_juhataja) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
             SELECT 1 FROM kaup AS k INNER JOIN kauba_seisundi_liik AS s USING (kauba_seisundi_liik_id)
-            WHERE k.kaup_id=v_id AND s.kood=4 AND k.viimase_muutja_id=v_muutja) THEN
+            WHERE k.kaup_id=v_id AND s.kood=4 AND k.viimase_muutja_id=v_juhataja_id) THEN
             RAISE EXCEPTION 'OP5 ei lõpetanud kaupa';
         END IF;
 
@@ -71,17 +82,17 @@ BEGIN
             END IF;
             UPDATE kauba_seisundi_liik SET on_aktiivne=FALSE WHERE kood=v_uus;
             EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'APL001',v_e_meil;
+                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                 SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION '% kasutas mitteaktiivset sihtseisundit',v_nimi;
             END IF;
             UPDATE kauba_seisundi_liik SET on_aktiivne=TRUE WHERE kood=v_uus;
             EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'PUUDUV',v_e_meil;
+                INTO v_tulemus USING 'PUUDUV',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
             IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION '% leidis olematu kauba',v_nimi; END IF;
             EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'APL001',v_e_meil;
+                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
             IF v_tulemus IS DISTINCT FROM 'APL001' THEN RAISE EXCEPTION '% keeldus lubatud muutusest',v_nimi; END IF;
         END LOOP;
 
@@ -98,7 +109,7 @@ BEGIN
             WHERE kaup_id=v_id;
             SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
             EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'APL001',v_e_meil;
+                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                 SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION '% lubas keelatud lähteoleku %',v_nimi,v_vana;
@@ -123,12 +134,12 @@ BEGIN
             UPDATE kaup SET kauba_seisundi_liik_id=(
                 SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=v_vana)
             WHERE kaup_id=v_id;
-            SELECT f_unusta_kaup(p_kauba_kood:='APL001') INTO v_tulemus;
+            SELECT f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
             IF v_tulemus IS NOT NULL OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION 'OP2 kustutas mitteootel kauba';
             END IF;
         END LOOP;
-        SELECT f_unusta_kaup(p_kauba_kood:='PUUDUV') INTO v_tulemus;
+        SELECT f_unusta_kaup(p_kauba_kood:='PUUDUV',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION 'OP2 tagastas olematu kauba'; END IF;
         UPDATE kaup SET kauba_seisundi_liik_id=(
             SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=1)
@@ -138,7 +149,7 @@ BEGIN
             OR NOT EXISTS (SELECT 1 FROM kauba_kategooria_omamine WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'Kustutamise kontroll vajab kõiki sõltuvaid ridu';
         END IF;
-        SELECT f_unusta_kaup(p_kauba_kood:='APL001') INTO v_tulemus;
+        SELECT f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id)
             OR EXISTS (SELECT 1 FROM nutitelefon WHERE kaup_id=v_id)
             OR EXISTS (SELECT 1 FROM kauba_variant WHERE kaup_id=v_id)
@@ -185,7 +196,10 @@ BEGIN
     BEGIN
         SELECT i.e_meil,t.tootaja_id INTO v_e_meil,v_muutja
         FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
-        ORDER BY t.tootaja_id DESC FETCH FIRST 1 ROW ONLY;
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='KAUBAHALDUR' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
         v_oige_e_meil:=v_e_meil;
         SELECT k.kaup_id,to_jsonb(k) INTO v_id,v_algne FROM kaup AS k WHERE kauba_kood='APL001';
         SELECT xmin::text INTO v_ver FROM v_kaubad_muutmiseks WHERE kauba_kood='APL001';
@@ -608,9 +622,12 @@ BEGIN
     BEGIN
         SELECT i.e_meil,t.tootaja_id INTO v_e_meil,v_muutja
         FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
-        ORDER BY t.tootaja_id DESC FETCH FIRST 1 ROW ONLY;
-        IF (SELECT count(*) FROM f_leia_tootaja(p_e_meil:=upper(v_e_meil)))<>1
-            OR EXISTS (SELECT 1 FROM f_leia_tootaja(p_e_meil:='puuduv@example.invalid')) THEN
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='KAUBAHALDUR' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
+        IF (SELECT count(*) FROM f_leia_tootaja(p_e_meil:=upper(v_e_meil),p_rolli_kood:='KAUBAHALDUR'))<>1
+            OR EXISTS (SELECT 1 FROM f_leia_tootaja(p_e_meil:='puuduv@example.invalid',p_rolli_kood:='KAUBAHALDUR')) THEN
             RAISE EXCEPTION 'Ühine töötajaotsing ei vasta e-posti unikaalsusele';
         END IF;
         SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
@@ -778,3 +795,78 @@ BEGIN
     END;
 END;
 $seosed$;
+
+-- Töötaja rolli, töösuhte seisundi, rolli kehtivuse ja isiku seisundi kontroll.
+DO $volitus$
+DECLARE
+    v_e_meil varchar;
+    v_muutja integer;
+    v_juhataja varchar;
+    v_id integer;
+    v_tulemus varchar;
+    v_lause text;
+    v_lubatud boolean;
+BEGIN
+    BEGIN
+        SELECT i.e_meil,t.tootaja_id INTO v_e_meil,v_muutja
+        FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='KAUBAHALDUR' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
+        SELECT i.e_meil INTO v_juhataja
+        FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
+        INNER JOIN tootaja_rolli_omamine AS o USING (tootaja_id)
+        INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
+        WHERE r.kood='JUHATAJA' AND o.lopu_aeg='infinity'
+        ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
+        SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
+        IF v_e_meil IS NULL OR v_juhataja IS NULL OR lower(v_e_meil)=lower(v_juhataja) THEN
+            RAISE EXCEPTION 'Kontroll vajab eraldi kauba haldurit ja juhatajat';
+        END IF;
+        IF EXISTS (SELECT 1 FROM f_leia_tootaja(p_e_meil:=v_e_meil,p_rolli_kood:='JUHATAJA'))
+            OR EXISTS (SELECT 1 FROM f_leia_tootaja(p_e_meil:=v_juhataja,p_rolli_kood:='KAUBAHALDUR')) THEN
+            RAISE EXCEPTION 'Töötajaotsing ei arvesta rolli';
+        END IF;
+
+        UPDATE kaup SET kauba_seisundi_liik_id=(
+            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=2) WHERE kaup_id=v_id;
+        IF f_lopeta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) IS NOT NULL
+            OR f_muuda_kaup_mitteaktiivseks(p_kauba_kood:='APL001',p_e_meil:=v_juhataja) IS NOT NULL
+            OR NOT EXISTS (SELECT 1 FROM kaup AS k INNER JOIN kauba_seisundi_liik AS s
+                USING (kauba_seisundi_liik_id) WHERE k.kaup_id=v_id AND s.kood=2) THEN
+            RAISE EXCEPTION 'Kauba haldur lõpetas kauba või juhataja muutis selle mitteaktiivseks';
+        END IF;
+        UPDATE kaup SET kauba_seisundi_liik_id=(
+            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=1) WHERE kaup_id=v_id;
+        IF f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_juhataja) IS NOT NULL
+            OR f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:='puuduv@example.invalid') IS NOT NULL
+            OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id) THEN
+            RAISE EXCEPTION 'OP2 kustutas kauba ilma kauba halduri volituseta';
+        END IF;
+
+        FOR v_lause,v_lubatud IN SELECT a.lause,a.lubatud FROM (VALUES
+            ('UPDATE tootaja SET tootaja_seisundi_liik_id=(SELECT tootaja_seisundi_liik_id FROM tootaja_seisundi_liik WHERE kood=''KA'') WHERE tootaja_id=%s',TRUE),
+            ('UPDATE tootaja SET tootaja_seisundi_liik_id=(SELECT tootaja_seisundi_liik_id FROM tootaja_seisundi_liik WHERE kood=''PU'') WHERE tootaja_id=%s',TRUE),
+            ('UPDATE tootaja SET tootaja_seisundi_liik_id=(SELECT tootaja_seisundi_liik_id FROM tootaja_seisundi_liik WHERE kood=''PE'') WHERE tootaja_id=%s',FALSE),
+            ('UPDATE tootaja SET tootaja_seisundi_liik_id=(SELECT tootaja_seisundi_liik_id FROM tootaja_seisundi_liik WHERE kood=''LO'') WHERE tootaja_id=%s',FALSE),
+            ('UPDATE tootaja_rolli_omamine SET lopu_aeg=CURRENT_TIMESTAMP-INTERVAL ''1 minute'' WHERE tootaja_id=%s AND lopu_aeg=''infinity''',FALSE),
+            ('UPDATE tootaja_rolli_omamine SET alguse_aeg=CURRENT_TIMESTAMP+INTERVAL ''1 day'' WHERE tootaja_id=%s AND lopu_aeg=''infinity''',FALSE),
+            ('UPDATE isik SET isiku_seisundi_liik_id=(SELECT isiku_seisundi_liik_id FROM isiku_seisundi_liik WHERE kood=''SU'') WHERE isik_id=(SELECT isik_id FROM tootaja WHERE tootaja_id=%s)',FALSE)
+        ) AS a(lause,lubatud)
+        LOOP
+            BEGIN
+                EXECUTE format(v_lause,v_muutja);
+                SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+                IF (v_tulemus IS NOT DISTINCT FROM 'APL001')<>v_lubatud THEN
+                    RAISE EXCEPTION 'Volituse kontroll ei vastanud olukorrale: %',v_lause;
+                END IF;
+                RAISE EXCEPTION USING ERRCODE='ZT002',MESSAGE='Olukorra eemaldamine';
+            EXCEPTION WHEN SQLSTATE 'ZT002' THEN NULL;
+            END;
+        END LOOP;
+        RAISE EXCEPTION USING ERRCODE='ZT001',MESSAGE='Katsemuudatuste eemaldamine';
+    EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL;
+    END;
+END;
+$volitus$;
