@@ -81,7 +81,27 @@ DO $keelatud$
 DECLARE
     v_lause text;
     v_ridu bigint;
+    v_vaade record;
+    v_veerg name;
 BEGIN
+    FOR v_vaade IN SELECT c.oid,c.relname FROM pg_class AS c
+        INNER JOIN pg_namespace AS n ON n.oid=c.relnamespace
+        WHERE n.nspname='public' AND c.relkind='v'
+    LOOP
+        EXECUTE format('SELECT count(*) FROM public.%I',v_vaade.relname) INTO v_ridu;
+        IF v_ridu<1 THEN RAISE EXCEPTION 'Rakenduseroll ei saa lugeda vaadet %',v_vaade.relname; END IF;
+        SELECT attname INTO STRICT v_veerg FROM pg_attribute
+            WHERE attrelid=v_vaade.oid AND attnum=1 AND NOT attisdropped;
+        FOREACH v_lause IN ARRAY ARRAY[
+            format('INSERT INTO public.%I DEFAULT VALUES',v_vaade.relname),
+            format('UPDATE public.%I SET %I=%I',v_vaade.relname,v_veerg,v_veerg),
+            format('DELETE FROM public.%I',v_vaade.relname)]
+        LOOP
+            EXECUTE v_lause;
+            GET DIAGNOSTICS v_ridu=ROW_COUNT;
+            IF v_ridu<>0 THEN RAISE EXCEPTION 'Rakenduseroll muutis vaadet %',v_vaade.relname; END IF;
+        END LOOP;
+    END LOOP;
     FOR v_lause IN SELECT unnest(ARRAY[
         'SELECT count(*) FROM public.f_leia_tootaja(p_e_meil:=''puuduv@example.invalid'',p_rolli_kood:=''KAUBAHALDUR'')',
         'SELECT count(*) FROM valine.riik_sisend',

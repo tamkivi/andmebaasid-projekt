@@ -18,3 +18,6 @@ START TRANSACTION;
 ROLLBACK;
 -- Laadimisskriptid sisaldavad oma tehinguid; neid ei tohi pakkida välise tehingu sisse.
 \ir run_u5.sql
+
+-- Korduvlaadimine peab säilitama ka kõigi lugemisvaadete lepingud.
+\ir 05_views.sql
