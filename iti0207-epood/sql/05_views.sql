@@ -127,6 +127,62 @@ ORDER BY v.nimetus,v.kood;
 COMMENT ON VIEW v_varvide_valikud IS
     'Kasutusjuhud Registreeri nutitelefon ja Muuda kaupa, OP2.3: uue kaubavariandi värvi valimiseks näidatakse ainult aktiivseid värvinimetusi koos seose salvestamiseks vajaliku sisulise koodiga. Olemasolevad variandid jäävad nähtavaks eraldi variandivaates ka värvi sulgemisel. Ainult lugemiseks.';
 
+-- Kategooriate koondkujud säilitavad ka ühegi kategooriata kaubad.
+CREATE VIEW v_kaupade_kategooriate_loendid
+    (kauba_kood,nimetus,kategooriad)
+    WITH (security_barrier=true) AS
+SELECT k.kauba_kood,k.nimetus,
+    coalesce(string_agg(c.nimetus || ' (' || t.nimetus || ')',', '
+        ORDER BY t.nimetus,c.nimetus,c.kood)
+        FILTER (WHERE c.kauba_kategooria_id IS NOT NULL),'')
+FROM kaup AS k
+LEFT JOIN kauba_kategooria_omamine AS o USING (kaup_id)
+LEFT JOIN kauba_kategooria AS c USING (kauba_kategooria_id)
+LEFT JOIN kauba_kategooria_tyyp AS t USING (kauba_kategooria_tyyp_id)
+GROUP BY k.kaup_id,k.kauba_kood,k.nimetus
+ORDER BY k.nimetus,k.kauba_kood;
+COMMENT ON VIEW v_kaupade_kategooriate_loendid IS
+    'Halduri ülevaade: üks rida iga kauba kohta, mille kategooriate ja nende tüüpide nimetused on koondatud ühte järjestatud stringi kujul kategooria (tüüp). Kategooriata kauba loend on tühi string. Koondkuju võimaldab näidata kategooriaid kaupade ridu paljundamata. Ainult lugemiseks.';
+
+CREATE VIEW v_kaupade_kategooriate_pingeread
+    (kauba_kood,kategooriate_arv,hore_koht,tihe_koht)
+    WITH (security_barrier=true) AS
+WITH kategooriate_arvud AS (
+    SELECT k.kauba_kood,count(o.kauba_kategooria_id) AS kategooriate_arv
+    FROM kaup AS k
+    LEFT JOIN kauba_kategooria_omamine AS o USING (kaup_id)
+    GROUP BY k.kaup_id,k.kauba_kood
+)
+SELECT kauba_kood,kategooriate_arv,
+    rank() OVER (ORDER BY kategooriate_arv DESC),
+    dense_rank() OVER (ORDER BY kategooriate_arv DESC)
+FROM kategooriate_arvud
+ORDER BY kategooriate_arv DESC,kauba_kood;
+COMMENT ON VIEW v_kaupade_kategooriate_pingeread IS
+    'Halduri kategooriaseoste võrdlus: iga kauba kood, kategooriate arv ning koht hõredas ja tihedas pingereas. Suurima kategooriate arvuga kaup on esimene; võrdse arvuga kaubad jagavad kohta. Kategooriata kaup osaleb arvuga null. Lõplik koodijärjestus ei lõhu viike. Ainult lugemiseks.';
+
+CREATE VIEW v_kaupade_json
+    (kauba_json)
+    WITH (security_barrier=true) AS
+SELECT jsonb_build_object(
+    'kauba_kood',k.kauba_kood,'nimetus',k.nimetus,
+    'brand',b.nimetus,'seisund',s.nimetus,
+    'hind',k.hind,'kirjeldus',k.kirjeldus,
+    'kategooriad',coalesce(
+        jsonb_agg(jsonb_build_object('kategooria',c.nimetus,'tyyp',t.nimetus)
+            ORDER BY t.nimetus,c.nimetus,c.kood)
+            FILTER (WHERE c.kauba_kategooria_id IS NOT NULL),'[]'::jsonb))
+FROM kaup AS k
+INNER JOIN brand AS b USING (brand_id)
+INNER JOIN kauba_seisundi_liik AS s USING (kauba_seisundi_liik_id)
+LEFT JOIN kauba_kategooria_omamine AS o USING (kaup_id)
+LEFT JOIN kauba_kategooria AS c USING (kauba_kategooria_id)
+LEFT JOIN kauba_kategooria_tyyp AS t USING (kauba_kategooria_tyyp_id)
+GROUP BY k.kaup_id,k.kauba_kood,k.nimetus,b.nimetus,s.nimetus,k.hind,k.kirjeldus
+ORDER BY k.nimetus,k.kauba_kood;
+COMMENT ON VIEW v_kaupade_json IS
+    'Kaupade hierarhiline lugemismudel: täpselt üks JSONB-veerg ja üks rida iga kauba kohta. Kauba objekti sees on kategooriate objektide massiiv, mille liikmed esitavad kategooria ja tüübi nimetuse. Kategooriata kaubal on tühi massiiv, mitte üks nullväärtustega objekt. Sobib struktuurseks andmevahetuseks. Ainult lugemiseks.';
+
 -- Lugemisvaadete kaudu tehtavad muutmiskatsed ei muuda baastabeleid.
 CREATE RULE r_v_kaubad_muutmiseks_insert AS
     ON INSERT TO v_kaubad_muutmiseks DO INSTEAD NOTHING;
@@ -200,3 +256,30 @@ CREATE RULE r_v_varvide_valikud_update AS
 
 CREATE RULE r_v_varvide_valikud_delete AS
     ON DELETE TO v_varvide_valikud DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_loendid_insert AS
+    ON INSERT TO v_kaupade_kategooriate_loendid DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_loendid_update AS
+    ON UPDATE TO v_kaupade_kategooriate_loendid DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_loendid_delete AS
+    ON DELETE TO v_kaupade_kategooriate_loendid DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_pingeread_insert AS
+    ON INSERT TO v_kaupade_kategooriate_pingeread DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_pingeread_update AS
+    ON UPDATE TO v_kaupade_kategooriate_pingeread DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_kategooriate_pingeread_delete AS
+    ON DELETE TO v_kaupade_kategooriate_pingeread DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_json_insert AS
+    ON INSERT TO v_kaupade_json DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_json_update AS
+    ON UPDATE TO v_kaupade_json DO INSTEAD NOTHING;
+
+CREATE RULE r_v_kaupade_json_delete AS
+    ON DELETE TO v_kaupade_json DO INSTEAD NOTHING;
