@@ -58,6 +58,11 @@ DROP FUNCTION f_unusta_kaup(character varying, character varying);
 DROP FUNCTION f_leia_tootaja(character varying, character varying);
 
 -- Vaated ja nende reeglid eemaldatakse enne baastabeleid.
+DROP VIEW v_kaupade_detailid;
+DROP VIEW v_kaupade_koondaruanne;
+DROP VIEW v_aktiivsed_kaubad;
+DROP VIEW v_kategooriate_valikud;
+DROP VIEW v_varvide_valikud;
 DROP VIEW v_kaubad_muutmiseks;
 DROP VIEW v_kaubad;
 DROP VIEW v_kauba_kategooriad;

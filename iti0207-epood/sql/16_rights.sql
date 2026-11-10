@@ -63,7 +63,9 @@ REVOKE ALL ON FUNCTION f_registreeri_nutitelefon(character varying,
 REVOKE ALL ON FUNCTION f_unusta_kaup(character varying, character varying) FROM PUBLIC;
 
 GRANT USAGE ON SCHEMA public TO epood_rakendus;
-GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid
+GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid,
+    v_kaupade_detailid,v_kaupade_koondaruanne,v_aktiivsed_kaubad,
+    v_kategooriate_valikud,v_varvide_valikud
     TO epood_rakendus;
 
 DO $yhendus$
