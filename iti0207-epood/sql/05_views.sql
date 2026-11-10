@@ -77,7 +77,7 @@ LEFT JOIN protsessor AS p USING (protsessor_id)
 LEFT JOIN ekraani_resolutsioon AS r USING (ekraani_resolutsioon_id)
 ORDER BY k.nimetus,k.kauba_kood;
 COMMENT ON VIEW v_kaupade_detailid IS
-    'Kasutusjuhud Muuda kaupa (OP4.1) ja Vaata kõiki kaupu (OP8.2): üks rida iga kauba kohta koos brändi, seisundi ja telefoni tehniliste näitajate nimetustega. Telefonialaliigita kaup säilib tühjade tehniliste väljadega. Registreerija ja viimase muutja nimi koos meiliaadressiga eristab samanimelisi töötajaid; ajad on Eesti ajas kujul DD.MM.YYYY HH24:MI:SS. Seisundikoodiga filtreeritakse OP3.1 (1), OP6.1 (2) ja OP9.1 (2,3) nimekirju. Ainult lugemiseks.';
+    'Kasutusjuhud Muuda kaupa (OP4.1) ja Vaata kõiki kaupu (OP8.2): üks rida iga kauba kohta koos brändi, seisundi ja telefoni tehniliste näitajate nimetustega. Kaup, millel puudub nutitelefoni kirje, säilib tühjade tehniliste väljadega. Registreerija ja viimase muutja nimi koos meiliaadressiga eristab samanimelisi töötajaid; ajad on Eesti ajas kujul DD.MM.YYYY HH24:MI:SS. Seisundikoodiga filtreeritakse OP3.1 (1), OP6.1 (2) ja OP9.1 (2,3) nimekirju. Ainult lugemiseks.';
 
 CREATE VIEW v_kaupade_koondaruanne
     (seisundi_kood,seisundi_nimetus,kaupade_arv)
@@ -88,7 +88,7 @@ LEFT JOIN kaup AS k USING (kauba_seisundi_liik_id)
 GROUP BY s.kauba_seisundi_liik_id,s.kood,s.nimetus
 ORDER BY kaupade_arv DESC,upper(s.nimetus),s.kood;
 COMMENT ON VIEW v_kaupade_koondaruanne IS
-    'Kasutusjuht Vaata kaupade koondaruannet, OP10.1: juhataja näeb iga registreeritud seisundi koodi, suurtähtedega nimetust ja kaupade arvu, ka tühja seisundi korral nulli. Esmalt kuvatakse suurima kaupade arvuga seisundid; viigid lahendatakse nimetuse järgi tähestiku järjekorras. Ainult lugemiseks.';
+    'Kasutusjuht Vaata kaupade koondaruannet, OP10.1: juhataja näeb iga registreeritud seisundi koodi, suurtähtedega nimetust ja kaupade arvu; kaubata seisundi korral on arv 0. Esmalt kuvatakse suurima kaupade arvuga seisundid; viigid lahendatakse nimetuse järgi tähestiku järjekorras. Ainult lugemiseks.';
 
 CREATE VIEW v_aktiivsed_kaubad
     (kauba_kood,nimetus,kategooria_kood,kategooria_nimetus,
@@ -159,7 +159,7 @@ SELECT kauba_kood,kategooriate_arv,
 FROM kategooriate_arvud
 ORDER BY kategooriate_arv DESC,kauba_kood;
 COMMENT ON VIEW v_kaupade_kategooriate_pingeread IS
-    'Halduri kategooriaseoste võrdlus: iga kauba kood, kategooriate arv ning koht hõredas ja tihedas pingereas. Suurima kategooriate arvuga kaup on esimene; võrdse arvuga kaubad jagavad kohta. Kategooriata kaup osaleb arvuga null. Lõplik koodijärjestus ei lõhu viike. Ainult lugemiseks.';
+    'Halduri kategooriaseoste võrdlus: iga kauba kood, kategooriate arv ning koht hõredas ja tihedas pingereas. Suurima kategooriate arvuga kaup on esimene; võrdse arvuga kaubad jagavad kohta. Kategooriata kaup osaleb arvuga null. Kauba koodi järgi järjestamine ei muuda jagatud kohti. Ainult lugemiseks.';
 
 CREATE VIEW v_kaupade_json
     (kauba_json)
