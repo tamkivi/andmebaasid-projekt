@@ -1,10 +1,30 @@
 # ITI0207 e-poe — progress
 
-## Current status — 07.11.2026: Ü5 ühendatud, Ü6 kohalikult kontrollitud
+## Current status — 10.11.2026: Ü7 lugemisliides kohalikult kontrollitud
 
-Ü5 korduvlaadimine ja rutiinide/õiguste muudatused on kohalikus harus ühendatud ja kontrollitud. Eraldatud PostgreSQL 17.10 testkeskkonnas läbisid kõik 11 olemasolevat SQL-testikomplekti, Ü5 korduvlaadimine ja Ü6 migratsiooni testid kohaliku JSON-näidisallikaga. Enne migratsiooni tehti loogiline varukoopia ja kontrolliti taastamist. Kooliserveri andmed, PostgreSQL 18, rakendus ja esitamine on kontrollimata.
+Ü5 laadimine, Ü6 domeen ja ühendatud rutiinide/õiguste muudatused on säilinud.
+Ü7 jaoks on 12 kommenteeritud turvabarjääriga lugemisvaadet ning 36 vaadete kaudu
+muutmist blokeerivat reeglit. Lisandusid kaupade detailid, seisundite koondaruanne,
+aktiivsete kaupade kataloog, kaks vajalikku valikut ning kategooriate loendi,
+pingerea ja JSON-esituse vaated. Kõik vaated on pgApexi jaoks järjestatud;
+ajatempleid näidatakse Eesti ajas nõutud vormingus. `xmin` on endiselt tüüpi `xid`.
+Lugemisoperatsioonide vastavus ja täielik SQL on [Ü7 tehnilises lisas](docs/u7-vaated.md).
 
-`sql/01_tables_draft.sql` sisaldab nüüd 24 tabelit, 116 veergu ja 26 välisvõtit, sealhulgas `mentor_id` ning selle eneseviite. Domeen `d_klassifikaatori_nimetus` koondab kõigi 15 klassifikaatorinimetuse ühised omadused. Täidetud vana skeemi domeen nimetatakse ümber andmeid ja sõltuvusi säilitades; juhised ning piirangud on [Ü6 tehnilises lisas](docs/u6-domeenid.md). Wordi dokument ja töötajate skeemijoonis vajavad endiselt ajakohastamist; tehniline lisa ei ole veel lõppdokumenti lisatud. Rutiinide edasine turva- ja samaaegsuskontroll ning muud ülesanded jäävad eraldi tööks.
+Eraldatud PostgreSQL 17.10 klastris läbisid kõik 11 integreeritud SQL-testikomplekti,
+Ü5 korduvlaadimine ja eraldi Ü6 migratsioonikomplekt kohaliku JSON-näidisallikaga.
+Vaateid kontrolliti ka pärast korduvlaadimist ning muutmiskatsed säilitasid kõigi
+24 baastabeli sisu. Eemaldamine, null projektiobjekti kontroll, uuesti ehitamine ja
+samad integreeritud testid läbisid kontrolli. Kõik 12 vaadet tagastasid ridu.
+
+`sql/01_tables_draft.sql` sisaldab 24 tabelit, 116 veergu ja 26 välisvõtit, sealhulgas
+`mentor_id` eneseviidet. Domeen `d_klassifikaatori_nimetus` koondab 15 klassifikaatori
+nimetuse ühised omadused; migratsiooni piirangud on [Ü6 lisas](docs/u6-domeenid.md).
+Wordi dokumenti ei muudetud: Ü6 ja Ü7 lisade ülekanne ning sisukorra ajakohastamine
+on veel tegemata. Töötajate skeemijoonis, peatüki 5 nõutud lisad ning varasemate
+rutiiniallkirjade uuendus jäävad eraldi tööks. `reg_aeg` esitusmuutus vajaks olemasolevas
+paigalduses eraldi vaateuuendust. Kooliserveri PostgreSQL 18, tegelik JSON-allikas,
+üliõpilase õigused, ärireeglite trigerid, kasutajatuvastamine, pgApexi rakendus ja
+esitamine on endiselt kontrollimata. Ü7 kohaliku kontrolli põhjal ei saa nende valmimist kinnitada.
 
 **Tool choice:** PostgreSQL + DBeaver / Graphviz path
 
