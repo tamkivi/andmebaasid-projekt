@@ -13,7 +13,7 @@ Neid reegleid ei arvestata kauba seisundimuudatusi jõustavate reeglitena.
 
 | Vaade | Kasutusjuht või eesmärk | Ühe rea tähendus |
 |---|---|---|
-| `v_kaubad_muutmiseks` | 5 ja 7, OP7.1; OP6 versioonikontroll | Ootel või mitteaktiivne kaup; sisaldab tegelikku `xmin` väärtust |
+| `v_kaubad_muutmiseks` | 4, 5 ja 7, OP7.1; OP6 versioonikontroll | Ootel või mitteaktiivne kaup; sisaldab tegelikku `xmin` väärtust |
 | `v_kaubad` | 8, OP8.1 | Iga kaup, ka lõpetatud; kategooriad ja variandid ei paljunda ridu |
 | `v_kauba_kategooriad` | 2, 4 ja 8, OP2.2 | Kauba ja kategooria seos koos kategooria tüübi nimetusega |
 | `v_kauba_variandid` | 2, 4 ja 8, OP2.4 | Kauba ja värvi seos |
@@ -42,10 +42,15 @@ Koondaruande aluseks on seisundite tabel ning kaupade arv leitakse `count(k.kaup
 abil. Seetõttu ei muutu kaubata seisundi arv üheks. Aruanne järjestatakse arvu järgi
 kahanevalt ja võrdse arvu korral suurtähtedega seisundinimetuse järgi kasvavalt.
 Kataloogi seisund valitakse sisulise koodiga 2, mitte tehnilise identifikaatoriga.
+Kaup viitab seisundile tehnilise identifikaatori kaudu. Seetõttu on seisundi koodi
+järgi filtreerimiseks vaja ühendada ka seisundite tabel.
 Kategooriafiltriga leitakse soovitud seosed; ilma filtrita säilib ka kategooriata aktiivne kaup.
 Suletud klassifikaatorite nimetused säilivad olemasolevate kaupade ja seoste juures,
-kuigi neid ei pakuta uue seose valikus. Samanimeliste ühendamisveergude korral on
-kasutatud USING-ut; eri rollides viiteveergude korral ON-i.
+kuigi neid ei pakuta uue seose valikus. Kataloogi filtri allikas on samuti
+`v_kategooriate_valikud`: suletud kategooriat filtris ei pakuta, kuid selle nimetus
+jääb kataloogi ridadel nähtavaks.
+Samanimeliste ühendamisveergude korral on kasutatud USING-ut; eri rollides
+viiteveergude korral ON-i.
 
 Ü7 juhendi järgi peab pgApexi aruanne koos detailivaatega kasutama sama andmebaasivaadet.
 Kõigi kaupade lehe jaoks on selleks `v_kaupade_detailid`; aruanne kuvab selle veergudest
@@ -56,15 +61,19 @@ kauba koodiga filtreeritavate alamaruannete allikad. Rakendust ennast ei ole vee
 OP3.1 ootel kaupade nimekiri, OP6.1 aktiivsete kaupade nimekiri ja OP9.1 lõpetatavate
 kaupade nimekiri kasutavad detailvaate `seisundi_kood` veergu vastavalt tingimustega
 `= 1`, `= 2` ja `IN (2,3)`. Muutmisvorm loeb versioonitunnuse sama kauba kohta
-vaatest `v_kaubad_muutmiseks`; `xmin` on endiselt tüüpi `xid`. Selle olemasolu ei
-muuda lugemisvaadet kirjutusliideseks: muudatused tehakse lepinguliste rutiinidega.
+vaatest `v_kaubad_muutmiseks`; `xmin` on endiselt tüüpi `xid`. Versioonitunnus tuleb
+lugeda enne detailandmeid: kui kaupa vahepeal muudetakse, lükkab OP6 salvestamise
+tagasi ega kirjuta teise kasutaja muudatust üle. Veeru olemasolu ei muuda
+lugemisvaadet kirjutusliideseks: muudatused tehakse lepinguliste rutiinidega.
 
 Lähteprojekti §1.2.4 järgi esitatakse ajatemplid kujul `DD.MM.YYYY HH24:MI:SS`.
 Vaated vormindavad need sõnaselgelt Eesti ajas, arvestades suve- ja talveaega.
 Seetõttu on `v_kaubad_muutmiseks.reg_aeg` nüüd `text`, mitte `timestamptz`.
-Olemasolevas paigalduses ei saa seda tüüpi vahetada CREATE OR REPLACE VIEW abil;
-vajalik oleks eraldi sõltuvusi ja õigusi arvestav uuendus. Siinne skript on uue
-paigalduse jaoks ega ole andmeid säilitav uuendusskript.
+Olemasolevas paigalduses ei saa seda tüüpi vahetada CREATE OR REPLACE VIEW abil
+(PostgreSQL ei luba vaate veeru andmetüüpi muuta): vaade tuleb kustutada ja uuesti
+luua ning seejärel taastada selle kommentaar, kolm reeglit ja lugemisõigus. Sellist
+uuendusskripti siin ei ole; `05_views.sql` on mõeldud uue paigalduse jaoks.
+Tekstina esitatud aeg järjestub tähemärkide, mitte ajalise järgnevuse alusel.
 
 Kategoorialoend kasutab järjestatud `string_agg`-i ja tagastab kategooriata kaubal
 tühja stringi. Pingereas on täpselt neli veergu; `rank()` ja `dense_rank()` arvestavad
@@ -458,10 +467,9 @@ rakenduse kasutajatuvastamine ja pgApexi lehed on endiselt kontrollimata.
 
 ## Allikad ja dokumendi seis
 
-Aluseks on Ülesande 7 täistekst (§3–4 ja §7), hindamismudeli v1.2 kõigi töölehtede
-väljavõte (eriti andmebaasi kriteeriumid 5, 59–63 ning lisapunktid 1–4 ja 11),
-lähteprojekti kasutusjuhud 1–11 ja §1.2.4 ning [töökoha juhend](ulesanded/epood-ab2-guide-2026-09-20.md).
-Hindamismudeli eraldi CSV on ainult esimese töölehe väljavõte, mitte kogu mudel.
+Aluseks on Ülesande 7 täistekst (§3–4 ja §7), hindamismudel v1.2 (eriti andmebaasi
+kriteeriumid 2, 5, 14 ja 59–63 ning lisapunktid 1–4 ja 11), lähteprojekti
+kasutusjuhud 1–11 ja §1.2.4 ning [töökoha juhend](ulesanded/epood-ab2-guide-2026-09-20.md).
 Päritolu: [Maurus, aine 391](https://maurus.ttu.ee/aine_index.php?aine=391).
 
 Wordi lõppdokumenti tuleb veel kanda nii [Ü6 domeenilisa](u6-domeenid.md) kui ka
