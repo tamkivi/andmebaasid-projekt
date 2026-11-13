@@ -223,7 +223,7 @@ WITH sisend AS MATERIALIZED (
             SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
             WHERE s.kood IN (1,3) FOR SHARE)
         AND EXISTS (SELECT 1 FROM public.nutitelefon AS n
-                    WHERE n.kaup_id=k.kaup_id FOR SHARE)
+                    WHERE n.kaup_id=k.kaup_id FOR NO KEY UPDATE)
     RETURNING k.kaup_id,k.kauba_kood
 ), telefon AS (
     UPDATE public.nutitelefon AS n
@@ -240,7 +240,7 @@ END;
 COMMENT ON FUNCTION f_muuda_kaup(text,character varying,character varying,character varying,
     numeric,text,character varying,character varying,character varying,boolean,boolean,
     numeric,numeric,integer,numeric,character varying,character varying) IS
-    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba haldur ja aktiivsed uued klassifikaatorid ning olemasolev telefon kontrollitakse FOR SHARE kaitsega. Muudab viimase muutja ja aja, säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
+    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba haldur ja aktiivsed uued klassifikaatorid kontrollitakse FOR SHARE kaitsega. Olemasolev telefon lukustatakse FOR NO KEY UPDATE abil enne kauba muutmist, et vältida jagatud luku tugevdamisel tekkivat ummikseisu. Muudab viimase muutja ja aja, säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
 
 CREATE FUNCTION f_lisa_kaup_kategooriasse(
     p_kauba_kood kaup.kauba_kood%TYPE,
