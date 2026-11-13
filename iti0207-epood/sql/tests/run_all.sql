@@ -7,6 +7,7 @@ SET search_path TO public;
 \ir 04_tables.sql
 \ir 05_views.sql
 \ir 09_rutiinid.sql
+\ir 09_rutiinid_naited.sql
 \ir 10_indexes.sql
 \ir 11_klassifikaatorid.sql
 \ir 12_json_laadimine.sql
