@@ -1,6 +1,26 @@
 # ITI0207 e-poe — progress
 
-## Current status — 10.11.2026: Ü7 lugemisliides kohalikult kontrollitud
+## Current status — 14.11.2026: Ü8 rutiinid ja samaaegsus kohalikult kontrollitud
+
+Ü8 kümme lepingulist funktsiooni ja ühine töötajakontroll olid juba olemas.
+OP6 telefoni olemasolu kontroll kasutab nüüd `FOR NO KEY UPDATE` lukku, mis
+kõrvaldas eraldatud koormuskatses varasema jagatud luku tugevdamise ummikseisu.
+Lisandusid kõigi funktsioonide loetavad nimeliste argumentidega näited, vana `xmin`-i
+katse, kahe seansi SQL-failid ja samaaegsuse kontrolli käivitaja.
+[Ü8 tehniline lisa](docs/u8-rutiinid.md) kirjeldab lepinguid, eeltingimusi ja lukke.
+
+Täielik paigaldus, integreeritud testid koos näidetega, S1–S5 mõlema vajaliku
+järjekorraga, kaks koormustesti, eemaldamine, null projektiobjekti kontroll ja
+uuesti ehitamine läbisid kontrolli eraldi PostgreSQL 17.10 klastris kohaliku
+JSON-näidisallikaga. Parandatud OP6 ja segakoormuse eraldi katsetes oli tõrkeid null.
+See ei välista kõiki võimalikke ummikseise; tehingu kordamise vajadus on lisas kirjas.
+
+Wordi dokumenti kantakse Ü6, Ü7 ja Ü8 sisu eraldi kontrollitava muudatusena.
+Kooliserveri paigaldus, tegelik JSON-allikas, olemasoleva paigalduse vanade allkirjade
+uuendus, pgApex, kasutajatuvastus, seisundimuudatuste trigerid ja esitamine jäävad
+kontrollimata. Kohalik kontroll ei tähenda kooliserveri paigaldust ega esitamist.
+
+## Historical status — 10.11.2026: Ü7 lugemisliides kohalikult kontrollitud
 
 Ü5 laadimine, Ü6 domeen ja ühendatud rutiinide/õiguste muudatused on säilinud.
 Ü7 jaoks on 12 kommenteeritud turvabarjääriga lugemisvaadet ning 36 vaadete kaudu
@@ -49,7 +69,7 @@ esitamine on endiselt kontrollimata. Ü7 kohaliku kontrolli põhjal ei saa nende
 - Rebuilt 11 register diagrams with exact data types/lengths, nullability, defaults and named keys. All PDF content bounds fit portrait A4 at 100%; all pages were visually checked.
 - Read the full 2026 Ü2 brief text and `Dokument.txt`; checked all 24 concrete source entity types and OP1–OP10 against SQL. No missing Ü2 base table or FK was found, so SQL and diagrams needed no further change.
 - Extracted EA names from `.eap` with `strings`. `Kauba_mudel` and a recursive employee FK appear there but are not required by the textual entity/OP contracts; the EA GUI and full visual model remain unverified.
-- Wrote the full brief/conceptual gap checklist and Estonian chapter-3 draft. Assembled it into `Dokument.docx`, replaced the old Access figures, rendered the 84-page file, checked chapter 3 on pages 63–74, and updated the affected contents entries, source entry and AI-use statement. The original DOCX is backed up.
+- Wrote the full brief/conceptual gap checklist and Estonian chapter-3 draft. Assembled it into `Dokument.docx`, replaced the old Access figures, rendered the 84-page file, checked chapter 3 on pages 63–74, and updated the affected contents entries and source entry. The original DOCX is backed up.
 
 ### DBeaver and chapter 3
 Use the presentation DB above. The finished chapter and PNGs are in `docs/lahteprojekt/Dokument.docx`; diagram order and database details remain in `docs/u2-chapter3-handoff.md`. The final document check is in `docs/u2-chapter3-docx-qa-2026-09-23.md`.
