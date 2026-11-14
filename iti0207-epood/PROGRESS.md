@@ -15,7 +15,9 @@ uuesti ehitamine läbisid kontrolli eraldi PostgreSQL 17.10 klastris kohaliku
 JSON-näidisallikaga. Parandatud OP6 ja segakoormuse eraldi katsetes oli tõrkeid null.
 See ei välista kõiki võimalikke ummikseise; tehingu kordamise vajadus on lisas kirjas.
 
-Wordi dokumenti kantakse Ü6, Ü7 ja Ü8 sisu eraldi kontrollitava muudatusena.
+Wordi dokument sisaldab Ü6, Ü7 ja Ü8 sisu ning ajakohaseid lepinguid ja SQL-loendeid.
+Dokumendi struktuur, puutumata osade säilimine ja SQL-i vastavus on kontrollitud;
+lehekülgede paigutust ei renderdatud. Varukoopiad on säilitatud.
 Kooliserveri paigaldus, tegelik JSON-allikas, olemasoleva paigalduse vanade allkirjade
 uuendus, pgApex, kasutajatuvastus, seisundimuudatuste trigerid ja esitamine jäävad
 kontrollimata. Kohalik kontroll ei tähenda kooliserveri paigaldust ega esitamist.
