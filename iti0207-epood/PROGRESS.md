@@ -1,6 +1,20 @@
 # ITI0207 e-poe — progress
 
-## Current status — 14.11.2026: Ü8 rutiinid ja samaaegsus kohalikult kontrollitud
+## Seis 16.11.2026: Ü8 rutiinid ja dokument üle kontrollitud
+
+Ühine töötajakontroll kaitseb nüüd ka rolli omamise ning kontrollitavate seisundi-
+ja rolliklassifikaatorite ridu `FOR SHARE` lukuga. Kahe seansi katsed kinnitasid
+lukuootuse mõlemas järjekorras. Kui rolli lõpetamine kinnitati esimesena,
+tagastas abifunktsioon pärast lukuootust tühja hulga.
+Täielik paigaldus, testid, S1–S5, kaks koormustesti, eemaldamine ja uuesti
+ehitamine läbisid kontrolli eraldi PostgreSQL 17.10 klastris. Tõrkeid ei tekkinud.
+
+Wordi lepingud, eestikeelsed selgitused ning rutiinide, indeksite ja andmete
+laadimise SQL-loendid on ajakohastatud. Dokumendi renderdamine ja parandatud
+lehekülgede visuaalne kontroll on tehtud. Sisukorra leheküljenumbrid vajavad
+värskendamist. Kooliserver ja pgApex on endiselt kontrollimata; töö on esitamata.
+
+## Historical status — 14.11.2026: Ü8 rutiinid ja samaaegsus kohalikult kontrollitud
 
 Ü8 kümme lepingulist funktsiooni ja ühine töötajakontroll olid juba olemas.
 OP6 telefoni olemasolu kontroll kasutab nüüd `FOR NO KEY UPDATE` lukku, mis

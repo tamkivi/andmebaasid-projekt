@@ -215,7 +215,7 @@ Piirjuhud on failis `sql/tests/04_tables.sql`: 49 lubatud ja 64 keelatud väärt
 
 ## Indeksid
 
-`sql/10_indexes.sql` lisab 16 välisvõtmeindeksit veergudele, mida olemasolev PK või UNIQUE indeks algusveeruna ei kata. Kõik 25 välisvõtme veergu on kaetud kehtiva, osalise tingimuseta B-puu indeksi algusveeruga. Primaar- ja alternatiivvõtmete automaatseid indekseid ei korrata. E-posti aadressi unikaalsust kontrollib ainult `lower(e_meil)` unikaalne indeks; eri tõstuvariandid põhjustavad SQLSTATE-i 23505. Kontrollid on failis `sql/tests/10_indexes.sql`.
+`sql/10_indexes.sql` lisab 17 välisvõtmeindeksit veergudele, mida olemasolev PK või UNIQUE indeks algusveeruna ei kata. Kõik 26 välisvõtme veergu on kaetud kehtiva, osalise tingimuseta B-puu indeksi algusveeruga. Primaar- ja alternatiivvõtmete automaatseid indekseid ei korrata. E-posti aadressi unikaalsust kontrollib ainult `lower(e_meil)` unikaalne indeks; eri tõstuvariandid põhjustavad SQLSTATE-i 23505. Kontrollid on failis `sql/tests/10_indexes.sql`.
 
 ## Klassifikaatori nimetuse domeen
 
