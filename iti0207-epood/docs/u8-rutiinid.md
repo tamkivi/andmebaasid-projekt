@@ -42,8 +42,13 @@ see tuleb siduda sisseloginud kasutajaga rakenduse juures.
 
 Ühine töötajakontroll otsib e-posti tõstutundetult. Isik peab olema elus (`EL`),
 töösuhe katseajal (`KA`), tööl (`TO`) või puhkusel (`PU`) ning nõutud roll peab
-kehtima: `alguse_aeg <= CURRENT_TIMESTAMP < lopu_aeg`. Töötaja ja isiku read
-lukustatakse `FOR SHARE` abil. Iga lepinguline funktsioon kasutab seda kontrolli.
+kehtima: `alguse_aeg <= CURRENT_TIMESTAMP < lopu_aeg`. Töötaja, isiku, rolli
+omamise ning kontrollitavate klassifikaatorite read lukustatakse `FOR SHARE` abil.
+Seega ei saa teine tehing kontrolli järel rolli omamist lõpetada ega kontrollitud
+seisundi või rolli koodi muuta enne esimese tehingu lõppu.
+Iga lepinguline funktsioon kasutab seda kontrolli. Kahe seansi katses ootas rolli
+omamise lõpetamine kontrolli teinud tehingu lõppu. Kui rolli lõpetamine kinnitati
+esimesena, ootas abifunktsioon seda muudatust ja tagastas seejärel tühja hulga.
 
 | Funktsioonid | Samas lauses kontrollitavad täiendavad eeltingimused |
 |---|---|
@@ -81,7 +86,7 @@ kas ta soovib muudatust uuesti teha.
 OP2–OP5 lähteseisundi tingimus samas DELETE- või UPDATE-lauses on optimistliku
 lähenemise erijuhus. OP7–OP10 lukustavad kauba rea `FOR UPDATE` abil enne seose
 muutmist ja muudavad ka kauba rida. Seega aegub enne seose muudatust avatud OP6
-vorm. See ei tähenda, et veebivormi täitmise ajal hoitakse pessimistselt lukku.
+vorm. Veebivormi täitmise ajal andmebaasirida lukus ei hoita.
 Iga rakenduskutse peab olema omaette lühike tehing: ühe tehingu sees tehtud
 muudatused võivad jagada sama `xmin`-i.
 

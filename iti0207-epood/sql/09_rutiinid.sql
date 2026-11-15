@@ -17,11 +17,12 @@ WHERE lower(i.e_meil)=lower(p_e_meil)
     AND EXISTS (SELECT 1 FROM public.tootaja_rolli_omamine AS o
         INNER JOIN public.tootaja_roll AS r USING (tootaja_roll_id)
         WHERE o.tootaja_id=t.tootaja_id AND r.kood=p_rolli_kood
-            AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP)
-FOR SHARE OF t,i;
+            AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP
+        FOR SHARE OF o,r)
+FOR SHARE OF t,i,si,st;
 END;
 COMMENT ON FUNCTION f_leia_tootaja(character varying,character varying) IS
-    'OP1-OP10 ühine abifunktsioon: leiab tõstutundetu unikaalse e-posti järgi töötaja, kellel on antud roll hetkel kehtiv, kes on elus ning kelle töösuhe pole peatatud ega lõpetatud (seisund katseajal, tööl või puhkusel). Töötaja ja isiku rida kaitstakse FOR SHARE lukuga. Unikaalsed võtmed tagavad kuni ühe tulemuse; tingimustele mittevastav töötaja annab tühja hulga.';
+    'OP1-OP10 ühine abifunktsioon: leiab tõstutundetu unikaalse e-posti järgi töötaja, kellel on antud roll hetkel kehtiv, kes on elus ning kelle töösuhe pole peatatud ega lõpetatud (seisund katseajal, tööl või puhkusel). Töötaja, isiku, rolli omamise ning kontrollitavate klassifikaatorite ridu kaitstakse FOR SHARE lukuga. Unikaalsed võtmed tagavad kuni ühe tulemuse; tingimustele mittevastav töötaja annab tühja hulga.';
 
 CREATE FUNCTION f_registreeri_nutitelefon(
     p_kauba_kood kaup.kauba_kood%TYPE,
