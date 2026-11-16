@@ -29,8 +29,8 @@ näiteks `p_brandi_kood` ja `p_varv_kood`.
 
 Kümme muutmisfunktsiooni tagastavad õnnestumisel kaubakoodi. Puuduva kauba,
 volituse või vananenud versiooni korral on tulemus NULL. Trigeri või
-deklaratiivse kitsenduse rikkumine annab vea. OP3–OP5 võivad sama seisundi
-tagasi kirjutada ja tagastada kaubakoodi ka korduskutsel. Abifunktsioon
+deklaratiivse kitsenduse rikkumine annab vea. Kui kaup on OP3–OP5 kutsel juba
+sihtseisundis, siis rida ei muudeta ja tulemus on NULL. Abifunktsioon
 annab sobiva töötaja ID üheelemendilise hulgana; sobiva töötaja puudumisel on hulk
 tühi. Funktsiooni skalaarne alampäring annab sel juhul NULL-i.
 
@@ -56,9 +56,9 @@ esimesena, ootas abifunktsioon seda muudatust ja tagastas seejärel tühja hulga
 |---|---|
 | OP1 | Valitakse algseisund koodiga 1; aktiivne bränd ja telefoni klassifikaatorid; korduvat kaubakoodi ei lisata |
 | OP2 | Täiendavat rutiinisisest seisundikontrolli pole |
-| OP3 | Valitakse sihtseisundi kood 2 |
-| OP4 | Valitakse sihtseisundi kood 3 |
-| OP5 | Valitakse sihtseisundi kood 4 |
+| OP3 | Valitakse sihtseisundi kood 2; kaup ei ole veel sihtseisundis |
+| OP4 | Valitakse sihtseisundi kood 3; kaup ei ole veel sihtseisundis |
+| OP5 | Valitakse sihtseisundi kood 4; kaup ei ole veel sihtseisundis |
 | OP6 | Sama `xmin`, olemasolev telefon ning aktiivne uus bränd ja telefoni klassifikaatorid |
 | OP7, OP9 | Aktiivne lisatav kategooria või värv; korduvat seost ei lisata |
 | OP8, OP10 | Eemaldatav klassifikaator on olemas; suletud klassifikaatori seost võib eemaldada |
@@ -87,9 +87,9 @@ muutmise aja avatuna ning pgApex 3 toetab `xmin`-argumendi sidumist. Lisaveergu
 NULL-i. Rakendus peab seejärel kuvama värske rea ning laskma kasutajal otsustada,
 kas ta soovib muudatust uuesti teha.
 
-OP2–OP5 lähteseisundi tingimused eemaldati rutiinidest. Lubatavust kontrollib
-muudetava rea vana ja uue seisundi põhjal triger. Sama seisundi tagasikirjutamine
-on lubatud. OP7–OP10 lukustavad kauba rea `FOR UPDATE` abil enne seose
+OP2–OP5 lubatud lähteseisundite loendid eemaldati rutiinidest. Lubatavust kontrollib
+muudetava rea vana ja uue seisundi põhjal triger. Kui kaup on juba sihtseisundis,
+annab rutiin NULL-i. OP7–OP10 lukustavad kaubarea `FOR UPDATE` abil enne seose
 muutmist ja muudavad ka kauba rida. Seega aegub enne seose muudatust avatud OP6
 vorm. Veebivormi täitmise ajal andmebaasirida lukus ei hoita.
 Iga rakenduskutse peab olema omaette lühike tehing: ühe tehingu sees tehtud
@@ -103,8 +103,8 @@ võtmine enne kauba muutmist kõrvaldas selle katses: mõlemas eraldi korduskats
 oli OP6 ummikseise ja muid tõrkeid null. Teine sama versiooni kasutav seanss ootas
 lukku ning sai seejärel NULL-i.
 
-Ü9 aktiveerimistriger ei lukusta kategooriaseoserida. Lisaandmete triger
-lukustab esmalt kaubarea ja loeb alles seejärel selle seisundikoodi. Nii ei
+Ü9 aktiveerimistriger lukustab leitud kategooriaseose `FOR SHARE` abil.
+Lisaandmete triger lukustab esmalt kaubarea ja loeb alles seejärel selle seisundikoodi. Nii ei
 kasuta ta lukuootuse järel liitpäringust pärit vana seisundit. Mõlemas kohalikus
 versioonis mõõdeti 30-sekundilises segakoormuse katses null ummikseisu;
 see ei tõenda, et neid ei saa kunagi tekkida. Rakendus peab ummikseisu korral terve tehingu
@@ -134,7 +134,7 @@ kontrollid kahe eraldi seansi ning kolmanda vaatlusühenduse abil.
 | S1: kaks OP6 kutset sama versiooniga | B lukuootus nähtav; pärast A kinnitamist B = NULL, A väärtused säilisid |
 | S2: kategooria lisamine ja vana OP6 vorm | A kinnitas lisamise; B = NULL |
 | S3: aktiveerimine ja ainsa kategooria eemaldamine, mõlemad järjekorrad | B lukuootus nähtav ja B sai trigeri vea; aktiivset kategooriata kaupa ei tekkinud |
-| S4: kaks aktiveerimist | B lukuootus nähtav; sama seisundi tagasikirjutamine õnnestus |
+| S4: kaks aktiveerimist | B lukuootus nähtav ja B = NULL |
 | S5: kustutamine ja variandi lisamine, mõlemad järjekorrad | Pärast kustutamist lisamine = NULL; vastupidises järjekorras kustutamine õnnestus ning eemaldas ka variandi |
 
 S6 kontrollib lisaks aktiveerimist ja kategooria eemaldamist otseste SQL-lausetega

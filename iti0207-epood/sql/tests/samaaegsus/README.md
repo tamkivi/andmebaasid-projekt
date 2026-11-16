@@ -22,9 +22,8 @@ Pärast katseid eemalda ainult selleks loodud testandmebaas.
 | S1 | OP6 muudab hinda | OP6 saadab sama vana `xmin`-i ja uue nimetuse | B ootab lukku, siis saab NULL-i; A väärtused säilivad |
 | S2 | OP7 lisab kategooria ja kinnitab tehingu | OP6 kasutab enne lisamist loetud versiooni | B saab NULL-i |
 | S3 mõlemas järjekorras | OP3 aktiveerib või OP8 eemaldab ainsa kategooria | Teine operatsioon | B ootab lukku ja saab trigeri vea; aktiivne kaup ei jää kategooriata |
-| S4 | OP3 aktiveerib | OP3 aktiveerib sama kaupa | B ootab lukku ja kirjutab sama seisundi edukalt tagasi |
+| S4 | OP3 aktiveerib | OP3 aktiveerib sama kaupa | B ootab lukku ja saab NULL-i |
 | S5 mõlemas järjekorras | OP2 kustutab või OP9 lisab variandi | Teine operatsioon | Kustutamine õnnestub; pärast kustutamist lisamist ei toimu ning orvuks jäänud varianti pole |
-
 | S6 mõlemas järjekorras | Otsene aktiveeriv UPDATE või kategooria DELETE | Teine otsene muudatus | B ootab lukku ja saab trigeri vea ka rutiine kasutamata |
 
 `*_a.sql` ja `*_b.sql` on vastavate seansside laused. Need alustavad tehingu,

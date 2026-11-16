@@ -32,7 +32,7 @@ on lausetaseme trigerid. Funktsioonid täidetakse looja õigustes, otsinguteega
 | `trig_kauba_variant_muutmine` | `kauba_variant`, UPDATE | Tegelikul muutusel kontrollitakse vana ja uut seotud kaupa |
 | `trig_kaup_reg_andmed` | `kaup`, registreerimisandmete UPDATE | Registreerija ja registreerimisaeg ei tohi muutuda |
 | `trig_kaup_viimase_muutm_aeg` | `kaup`, UPDATE | Määrab viimase muutmise aja |
-| `trig_isik_viimase_muutm_aeg` | `isik`, UPDATE | Määrab viimase muutmise aja |
+| `trig_isik_viimase_muutm_aeg` | `isik`, UPDATE | Määrab viimase muutmise aja ainult rea tegelikul muutumisel |
 | `trig_kaup_aktiivne_algseisund` | `kaup`, INSERT | Algseisundiliik peab olema aktiivne |
 | `trig_kaup_aktiivne_uus_seisund` | `kaup`, seisundiveeru UPDATE | Tegelikult valitav uus seisundiliik peab olema aktiivne |
 | `trig_kaup_truncate` | `kaup`, TRUNCATE | Keelab tabeli tühjendamise |
@@ -65,7 +65,9 @@ Registreerimisaeg ja esimene muutmisaeg saavad lisamisel endiselt tabeli
 vaikeväärtuse. Ajatriger töötab ainult UPDATE korral ja määrab
 `CURRENT_TIMESTAMP`-i ehk tehingu algusaja. Veerg on sekunditäpsusega, seega ei
 pea järjestikuste muudatuste ajatemplid erinema. Triger käivitub ka siis, kui
-sama töötaja lisab seose ja kaubareal muutja tunnus ei muutu.
+sama töötaja lisab seose ja kaubareal muutja tunnus ei muutu. Kauba ajatriger
+käivitub seetõttu iga UPDATE korral. Isiku ajatrigeril on seevastu tingimus
+`OLD.* IS DISTINCT FROM NEW.*`: muutmata isikurida säilitab senise aja.
 
 TRUNCATE ei käivita DELETE-reatrigereid. Valisin selle keelamise kaupade ja
 lisaandmete tabelites. Lubatud kaupade kustutamiseks saab kasutada DELETE-lauset.
@@ -96,7 +98,7 @@ Rutiin määrab viimase muutja, sest triger ei tea rakenduses sisse loginud tö�
 Puuduva kauba, volituse või vananenud versiooni korral on tulemus endiselt NULL.
 Muudetaval kaubal annab korduv seose lisamine või puuduva seose eemaldamine samuti
 NULL-i. Kui triger keelab tegeliku muudatuse, annab kutse nüüd vea, mitte NULL-i.
-OP3–OP5 korduskutse samasse seisundisse võib õnnestuda ja uuendab auditandmeid.
+OP3–OP5 korduskutse juba sihtseisundis kaubale rida ei muuda ja annab NULL-i.
 Aktiivsele kaubale seose lisamise katse võib anda vea ka `ON CONFLICT DO NOTHING`
 korral, sest BEFORE INSERT-triger käivitub enne konflikti lahendamist.
 
@@ -111,8 +113,11 @@ Kahe kauba vahel teisaldamisel kontrollitakse mõlemat kasvava tunnuse järjekor
 
 Aktiveeriv UPDATE hoiab kaubarea muutmislukku. Seose lisamine, muutmine või
 kustutamine peab saama samale reale jagatud luku. Seetõttu ei saa aktiveerimine
-ja ainsa kategooria eemaldamine korraga läbi minna. Aktiveerimise triger loeb
-kategooriaseost eraldi seoserida lukustamata; see väldib vastupidist lukustusjärjekorda.
+ja ainsa kategooria eemaldamine korraga läbi minna. Aktiveerimise triger lukustab
+lisaks leitud kategooriaseose `FOR SHARE` abil. Rutiinid ja triger võtavad lukud
+samas järjekorras: enne kaubarida, siis seos. Otsene seose kustutamine võtab lukud
+vastupidises järjekorras ja võib lõppeda ummikseisuga, mille PostgreSQL ühe tehingu
+katkestamisega lahendab.
 Kontrollisin mõlemat järjekorda nii rutiinide kui ka otseste SQL-lausetega.
 
 Lisaandmete triger ei tee kaubareale UPDATE-lauset. OP7–OP10 muudavad kaubarea
@@ -133,14 +138,19 @@ Keelatud lausetel võrreldakse ka veakoodi, sõnumit ja struktureeritud lisainfo
 
 [08_trigerid_naited.sql](../sql/tests/08_trigerid_naited.sql) annab iga trigeri
 kohta loetava tehinguploki ja „Tulemus:” selgituse. Seal on 18 oodatud viga;
-väljundis kontrolliti kõigi sõnumite vastavust. Ajatrigeri puhul kontrollitakse
-vale etteantud aja automaatset asendamist. Näidete ja kontrolltestide muudatused
+väljundis kontrolliti kõigi sõnumite vastavust. Ajatrigerite puhul kontrollitakse
+vale etteantud aja automaatset asendamist ning muutmata isikurea aja säilimist.
+Näidete ja kontrolltestide muudatused
 võetakse ROLLBACK-iga tagasi.
 
 [run_all.sql](../sql/tests/run_all.sql) sisaldab uusi ja olemasolevaid komplekte,
 õiguste kontrolli ning Ü5 korduvlaadimist. Kitsenduste ja vaadete katsetes on
 trigerid peatatud ainult tagasipööratava katse ajaks. Rutiinikutsed ja trigerite
-kontrollid käivad sisselülitatud trigeritega.
+kontrollid käivad sisselülitatud trigeritega. OP3–OP5 korduskutsete puhul
+kontrollitakse nii NULL-tulemust kui ka kaubarea ja selle füüsilise asukoha säilimist.
+Muudetavuse veateates peab veeru nimi vastama tegelikult muudetud väljale.
+Kui REPEATABLE READ tehingu hetkeseis sisaldab juba kustutatud kategooriaseost,
+katkeb aktiveerimine serialiseerimisveaga; aktiivset kategooriata kaupa ei teki.
 
 Mõlemas PostgreSQL-i versioonis läbisid kontrolli värske paigaldus, Ü8 paigalduse
 uuendus, täielik SQL-komplekt, eraldi domeenimigratsiooni katsed, eemaldamine,

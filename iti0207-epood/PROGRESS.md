@@ -7,7 +7,11 @@ PL/pgSQL-trigerifunktsiooni. Need kontrollivad kauba loomist, seisundiülemineku
 aktiveerimise kategoorianõuet, kustutamist, põhi- ja lisaandmete muudetavust,
 registreerimisandmete säilimist ning uue seisundiliigi aktiivsust. Lisaks määravad
 trigerid viimase muutmise aja ja keelavad TRUNCATE-i. Sama seisundi ja muutmata
-andmete tagasikirjutamine on lubatud. Rutiinidest eemaldati korduvad kontrollid.
+andmete tagasikirjutamine on lubatud. OP3–OP5 korduskutsed juba sihtseisundis
+kaubale annavad NULL-i ega muuda auditandmeid. Aktiveerimistriger lukustab leitud
+kategooriaseose `FOR SHARE` abil. Isiku ajatriger käivitub ainult rea tegelikul
+muutumisel; muudetavuse viga nimetab tegelikult muudetud veeru. Rutiinidest
+eemaldati korduvad kontrollid.
 
 Täielik SQL-komplekt, Ü8 paigalduse uuendus, domeenimigratsioon, eemaldamine,
 null projektiobjekti kontroll ja uuesti ehitamine läbisid kontrolli eraldi kohalikes
