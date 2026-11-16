@@ -4,9 +4,10 @@ Käivita käsud projekti `iti0207-epood` kataloogis. Kontroll on mõeldud eraldi
 projektiandmebaasile. Varasema paigalduse uuendamist ei ole katsetatud.
 
 1. Lülita FortiClient VPN sisse ja määra ühendus. Kasuta olemasolevat
-   `~/.pgpass` faili või sisesta parool `psql` küsimise peale. Ära kirjuta
-   parooli käsureale ega logisse. Vali igaks kontrolliks uus logikataloog
-   väljaspool repositooriumi.
+   `~/.pgpass` faili või sisesta parool `psql` küsimise peale. Ilma `~/.pgpass`
+   failita küsib skript parooli iga ühenduse jaoks eraldi ehk ühe käsu jooksul
+   mitu korda. Ära kirjuta parooli käsureale ega logisse. Vali igaks kontrolliks
+   uus logikataloog väljaspool repositooriumi.
 
    ```sh
    export PGHOST='<HOST>' PGPORT=5432 PGDATABASE='<ANDMEBAAS>' PGUSER='<KASUTAJA>'
@@ -36,8 +37,10 @@ projektiandmebaasile. Varasema paigalduse uuendamist ei ole katsetatud.
    Järjekord on `sql/run_u5.sql`, `sql/05_views.sql`, `sql/09_rutiinid.sql`,
    `sql/14_statistics.sql`, `sql/16_rights.sql`. Laadimise muutujad on
    `apex_kasutaja` ja `apex_parool`; skript annab need `psql` keskkonna kaudu
-   `\getenv` abil. Parooli sisaldada võivat paigalduse veaväljundit ei salvestata.
-   Katkemisel peatu ja vaata osaline paigaldus üle; automaatset eemaldamist pole.
+   `\getenv` abil. Faili `run_u5.sql` veaväljundit ei salvestata, sest see võib
+   sisaldada JSON-allika parooli. Ülejäänud nelja faili väljund salvestatakse
+   faili `$U8_LOGID/paigalda/paigalda.log`. Katkemisel peatu ja vaata osaline
+   paigaldus üle; automaatset eemaldamist pole.
 
 3. Kontrolli kataloogi ja käivita andmesisu säilitavad testid.
 
@@ -48,8 +51,9 @@ projektiandmebaasile. Varasema paigalduse uuendamist ei ole katsetatud.
 
    Oodatav kokkuvõte: `Kataloogikontroll läbitud: 11 funktsiooni, 10 avalikku
    käivitusõigust, 12 vaadet.` ning `Testid läbitud: kõigi 24 tabeli reaarv ja
-   sisu säilisid.` Ühine abifunktsioon `f_leia_tootaja` jääb rakenduserollile
-   suletuks. Testid kasutavad tagasipööramist või alamtehinguid; enne ja pärast
+   sisu säilisid.` Kui testid katkevad, on veateade failis
+   `$U8_LOGID/testi/testi.log`. Ühine abifunktsioon `f_leia_tootaja` jääb
+   rakenduserollile suletuks. Testid kasutavad tagasipööramist või alamtehinguid; enne ja pärast
    võrreldakse iga tabeli reaarvu ning sisu räsi. Identiteedijadade väärtused võivad
    katsete käigus edasi liikuda. `sql/tests/run_all.sql` laadib andmeid uuesti
    ning sobib ainult eraldi testandmebaasi.
@@ -120,7 +124,9 @@ projektiandmebaasile. Varasema paigalduse uuendamist ei ole katsetatud.
 
    Funktsiooni tulemus peab olema `CON008`. `SET ROLE` vajab vastavat õigust;
    kui see puudub, jääb rollivahetuse katse tegemata, kuni õigus on eraldi
-   lahendatud. Ära lisa selleks õigusi kontrollimatult. Kaks järgnevat käsku
+   lahendatud. Sama õigus on vajalik režiimis `testi` käivitatavale failile
+   `sql/tests/16_rights.sql`; selle puudumisel katkeb testimine rollivahetuse
+   veaga. Ära lisa selleks õigusi kontrollimatult. Kaks järgnevat käsku
    käivita käsureal eraldi: mõlemad peavad lõppema baastabeli juurdepääsuveaga.
 
    ```sh

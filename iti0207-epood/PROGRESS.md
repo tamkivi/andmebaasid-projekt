@@ -4,18 +4,20 @@
 
 Tiitellehel on nimi, matriklinumber, õppeaine ja aasta ning autorideklaratsioonis
 autori nimi. Õpperühma ja e-posti aadressi jaoks on kaks esiletõstetud välja
-`[TÄITA]`. Sisukorra kõik 132 kirjet vastavad 135-leheküljelise PDF-i pealkirjadele
+`[TÄITA]`. Sisukorra kõik 131 kirjet vastavad 135-leheküljelise PDF-i pealkirjadele
 ja lehekülgedele. Numbrid arvutati LibreOffice'iga; Wordis tuleb enne esitamist
 värskendada kogu sisukord. Wordi failipääsu tõrke tõttu ei saanud selle paigutust
 Wordis kinnitada. SQL-loendid vastavad versioonihalduses olevale SQL-ile;
-ülejäänud pealkirjad, tabelid, pildid ja SQL-loendid säilisid.
+pealkirjade kirjapilt on üle kontrollitud, tabelid, pildid ja SQL-loendid säilisid.
 
 [Kooliserveri kontrolli juhend](docs/u8-kooliserveri-kontroll.md) ning
 `scripts/kontrolli_kooliserverit.sh` annavad eraldi uurimise, värske paigalduse,
 kataloogikontrolli ja andmesisu säilitavate testide käsud. Paigaldus vajab
 kinnitussõna ning keeldub olemasolevate objektide või rakenduserolli korral.
 Abifunktsioon jääb privaatseks; rakenduseroll saab käivitada kümmet avalikku
-funktsiooni. Testirežiim kontrollib kõigi 24 tabeli reaarvu ja sisu räsi.
+funktsiooni. Testirežiim kontrollib kõigi 24 tabeli reaarvu ja sisu räsi. Katkenud testimise
+korral näitab skript vealogi asukohta. Andmete laadimisele järgnevate
+paigaldusfailide vead salvestatakse eraldi logisse.
 
 Eraldi ajutises PostgreSQL 18.6 andmebaasis läbisid värske paigaldus, täielik
 testikomplekt, S1–S5 ning mõlemad koormustestid kontrolli; tõrkeid oli null.
