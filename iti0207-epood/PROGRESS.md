@@ -1,5 +1,28 @@
 # ITI0207 e-poe — progress
 
+## Seis 16.11.2026: tiitelleht, sisukord ja kooliserveri kontrolli juhend
+
+Tiitellehel on nimi, matriklinumber, õppeaine ja aasta ning autorideklaratsioonis
+autori nimi. Õpperühma ja e-posti aadressi jaoks on kaks esiletõstetud välja
+`[TÄITA]`. Sisukorra kõik 132 kirjet vastavad 135-leheküljelise PDF-i pealkirjadele
+ja lehekülgedele. Numbrid arvutati LibreOffice'iga; Wordis tuleb enne esitamist
+värskendada kogu sisukord. Wordi failipääsu tõrke tõttu ei saanud selle paigutust
+Wordis kinnitada. SQL-loendid vastavad versioonihalduses olevale SQL-ile;
+ülejäänud pealkirjad, tabelid, pildid ja SQL-loendid säilisid.
+
+[Kooliserveri kontrolli juhend](docs/u8-kooliserveri-kontroll.md) ning
+`scripts/kontrolli_kooliserverit.sh` annavad eraldi uurimise, värske paigalduse,
+kataloogikontrolli ja andmesisu säilitavate testide käsud. Paigaldus vajab
+kinnitussõna ning keeldub olemasolevate objektide või rakenduserolli korral.
+Abifunktsioon jääb privaatseks; rakenduseroll saab käivitada kümmet avalikku
+funktsiooni. Testirežiim kontrollib kõigi 24 tabeli reaarvu ja sisu räsi.
+
+Eraldi ajutises PostgreSQL 18.6 andmebaasis läbisid värske paigaldus, täielik
+testikomplekt, S1–S5 ning mõlemad koormustestid kontrolli; tõrkeid oli null.
+Kooliserveri ühenduseproov ei saanud vastust. Sinna paigaldamist, tegelikku
+JSON-allikat, kasutaja õigusi ega pgApexi ei kontrollitud. Sissejuhatuse tabel 1
+ootab tegeliku paigalduse andmeid. Töö on esitamata.
+
 ## Seis 16.11.2026: Ü8 rutiinid ja dokument üle kontrollitud
 
 Ühine töötajakontroll kaitseb nüüd ka rolli omamise ning kontrollitavate seisundi-
