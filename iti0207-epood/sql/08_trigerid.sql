@@ -150,6 +150,7 @@ DECLARE
     v_id integer;
     v_kood smallint;
     v_kauba_kood varchar;
+    v_seisundi_id smallint;
 BEGIN
     IF TG_OP='INSERT' THEN v_ids:=ARRAY[NEW.kaup_id];
     ELSIF TG_OP='DELETE' THEN v_ids:=ARRAY[OLD.kaup_id];
@@ -158,10 +159,12 @@ BEGIN
     -- Kahe kauba vahel tõstmisel kontrollitakse mõlemat kasvava tunnuse järjekorras.
     FOR v_id IN SELECT DISTINCT a.id FROM unnest(v_ids) AS a(id) ORDER BY a.id
     LOOP
-        SELECT s.kood,k.kauba_kood INTO v_kood,v_kauba_kood
-        FROM public.kaup AS k INNER JOIN public.kauba_seisundi_liik AS s
-            USING (kauba_seisundi_liik_id)
-        WHERE k.kaup_id=v_id FOR SHARE OF k,s;
+        -- Kõigepealt lukustatakse kaubarida ja loetakse selle värske seisundiviide.
+        -- Üks liitpäring võib lukuootuse järel anda klassifikaatori vana liidetud rea.
+        SELECT k.kauba_seisundi_liik_id,k.kauba_kood INTO v_seisundi_id,v_kauba_kood
+        FROM public.kaup AS k WHERE k.kaup_id=v_id FOR SHARE;
+        SELECT s.kood INTO v_kood FROM public.kauba_seisundi_liik AS s
+        WHERE s.kauba_seisundi_liik_id=v_seisundi_id FOR SHARE;
         -- Puuduv vanem võib olla sama lause lisandus või kaskaadkustutus; viidet kontrollib FK.
         IF v_kood NOT IN (1,3) THEN
             RAISE EXCEPTION 'Kauba lisaandmeid saab muuta ainult ootel või mitteaktiivses seisundis.' USING
@@ -175,7 +178,7 @@ BEGIN
     RETURN NEW;
 END;
 $keha$;
-COMMENT ON FUNCTION public.f_trig_kauba_osa_muudetavus() IS 'Telefoni, kategooriaseose ja variandi lisamine, tegelik muutmine või kustutamine nõuab kauba seisundikoodi 1 või 3. FOR SHARE kaitseb mõlemat seotud kaubarea seisundit; funktsioon kaubarida ise ei uuenda.';
+COMMENT ON FUNCTION public.f_trig_kauba_osa_muudetavus() IS 'Telefoni, kategooriaseose ja variandi lisamine, tegelik muutmine või kustutamine nõuab kauba seisundikoodi 1 või 3. FOR SHARE kaitseb seotud kaubaridu; funktsioon kaubarida ise ei uuenda.';
 
 CREATE OR REPLACE TRIGGER trig_nutitelefon_kauba_muudetavus
 BEFORE INSERT OR DELETE ON public.nutitelefon

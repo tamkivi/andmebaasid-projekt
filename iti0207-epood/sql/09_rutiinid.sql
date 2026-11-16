@@ -88,7 +88,7 @@ END;
 COMMENT ON FUNCTION f_registreeri_nutitelefon(character varying,character varying,numeric,text,
     character varying,character varying,character varying,boolean,boolean,numeric,numeric,
     integer,numeric,character varying,character varying) IS
-    'OP1: registreerib ühe lausega ootel kauba ja selle nutitelefoni. Töötaja volitust kontrollib ühine otsing; aktiivne bränd ja telefoni klassifikaatorid leitakse koodide järgi FOR SHARE kaitsega. Algseisundi aktiivsust kontrollib triger. Kaamerad seotakse vastavalt eesmiseks ja tagumiseks. Mõlemad muutja viited saavad töötaja ID; korduva kaubakoodi korral ei lisata kumbagi rida ja tulemus on NULL.';
+    'OP1: registreerib ühe lausega ootel kauba ja selle nutitelefoni. Töötaja volitust kontrollib ühine otsing; aktiivne bränd ja telefoni klassifikaatorid leitakse koodide järgi FOR SHARE kaitsega. Algseisundi aktiivsust kontrollib triger. Kaamerad seotakse vastavalt eesmiseks ja tagumiseks. Registreerija ja viimase muutja viited saavad töötaja ID; korduva kaubakoodi korral ei lisata kumbagi rida ja tulemus on NULL.';
 
 CREATE OR REPLACE FUNCTION f_unusta_kaup(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
@@ -224,7 +224,7 @@ END;
 COMMENT ON FUNCTION f_muuda_kaup(text,character varying,character varying,character varying,
     numeric,text,character varying,character varying,character varying,boolean,boolean,
     numeric,numeric,integer,numeric,character varying,character varying) IS
-    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba haldur ja aktiivsed uued brändi ja telefoni klassifikaatorid kontrollitakse FOR SHARE kaitsega. Olemasolev telefon lukustatakse FOR NO KEY UPDATE abil enne kauba muutmist, et vältida jagatud luku tugevdamisel tekkivat ummikseisu. Määrab viimase muutja; aja ja muudetavuse kontrolli teeb triger. säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
+    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba halduri volitust ning uue brändi ja telefoni klassifikaatorite aktiivsust kontrollitakse FOR SHARE kaitsega. Olemasolev telefon lukustatakse FOR NO KEY UPDATE abil enne kauba muutmist, et vältida jagatud luku tugevdamisel tekkivat ummikseisu. Määrab viimase muutja; aja ja muudetavuse kontrolli teeb triger. Säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
 
 CREATE OR REPLACE FUNCTION f_lisa_kaup_kategooriasse(
     p_kauba_kood kaup.kauba_kood%TYPE,
