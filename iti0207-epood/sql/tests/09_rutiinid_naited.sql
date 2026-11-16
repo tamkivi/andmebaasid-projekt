@@ -207,3 +207,44 @@ SELECT f_unusta_kaup(p_kauba_kood:='APL001',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR')) AS tulemus;
 
 ROLLBACK;
+
+-- OP2: aktiivset kaupa ei kustutata.
+START TRANSACTION;
+-- Tulemus: ebaõnnestub veateatega "Kustutada saab ainult ootel kaupa.".
+\set ON_ERROR_STOP off
+SELECT f_unusta_kaup(p_kauba_kood:='APL002',p_e_meil:=(SELECT i.e_meil FROM isik i JOIN tootaja t USING(isik_id) JOIN tootaja_rolli_omamine o USING(tootaja_id) JOIN tootaja_roll r USING(tootaja_roll_id) WHERE r.kood='KAUBAHALDUR' AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY));
+\set ON_ERROR_STOP on
+ROLLBACK;
+
+-- OP3: lõpetatud kaupa ei aktiveerita.
+START TRANSACTION;
+-- Tulemus: ebaõnnestub veateatega "Kauba seisundimuudatus ei ole lubatud.".
+\set ON_ERROR_STOP off
+SELECT f_aktiveeri_kaup(p_kauba_kood:='APL004',p_e_meil:=(SELECT i.e_meil FROM isik i JOIN tootaja t USING(isik_id) JOIN tootaja_rolli_omamine o USING(tootaja_id) JOIN tootaja_roll r USING(tootaja_roll_id) WHERE r.kood='KAUBAHALDUR' AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY));
+\set ON_ERROR_STOP on
+ROLLBACK;
+
+-- OP4: ootel kaupa ei muudeta otse mitteaktiivseks.
+START TRANSACTION;
+-- Tulemus: ebaõnnestub veateatega "Kauba seisundimuudatus ei ole lubatud.".
+\set ON_ERROR_STOP off
+SELECT f_muuda_kaup_mitteaktiivseks(p_kauba_kood:='APL001',p_e_meil:=(SELECT i.e_meil FROM isik i JOIN tootaja t USING(isik_id) JOIN tootaja_rolli_omamine o USING(tootaja_id) JOIN tootaja_roll r USING(tootaja_roll_id) WHERE r.kood='KAUBAHALDUR' AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY));
+\set ON_ERROR_STOP on
+ROLLBACK;
+
+-- OP5: ootel kaupa ei lõpetata.
+START TRANSACTION;
+-- Tulemus: ebaõnnestub veateatega "Kauba seisundimuudatus ei ole lubatud.".
+\set ON_ERROR_STOP off
+SELECT f_lopeta_kaup(p_kauba_kood:='APL001',p_e_meil:=(SELECT i.e_meil FROM isik i JOIN tootaja t USING(isik_id) JOIN tootaja_rolli_omamine o USING(tootaja_id) JOIN tootaja_roll r USING(tootaja_roll_id) WHERE r.kood='JUHATAJA' AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY));
+\set ON_ERROR_STOP on
+ROLLBACK;
+
+-- OP3: kategooriata kaupa ei aktiveerita.
+START TRANSACTION;
+DELETE FROM kauba_kategooria_omamine WHERE kaup_id=(SELECT kaup_id FROM kaup WHERE kauba_kood='APL001');
+-- Tulemus: ebaõnnestub veateatega "Kauba aktiveerimiseks peab sellel olema vähemalt üks kategooria.".
+\set ON_ERROR_STOP off
+SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=(SELECT i.e_meil FROM isik i JOIN tootaja t USING(isik_id) JOIN tootaja_rolli_omamine o USING(tootaja_id) JOIN tootaja_roll r USING(tootaja_roll_id) WHERE r.kood='KAUBAHALDUR' AND o.alguse_aeg<=CURRENT_TIMESTAMP AND o.lopu_aeg>CURRENT_TIMESTAMP ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY));
+\set ON_ERROR_STOP on
+ROLLBACK;

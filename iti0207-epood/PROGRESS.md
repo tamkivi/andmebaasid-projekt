@@ -1,6 +1,28 @@
 # ITI0207 e-poe — progress
 
-## Seis 16.11.2026: Ü8 rutiinid ja dokument üle kontrollitud
+## Seis 16.11.2026: Ü9 trigerid kohalikult kontrollitud
+
+Ü9 juhendi versiooni 3 järgi lisandusid 20 trigerit ja 10 kommenteeritud
+PL/pgSQL-trigerifunktsiooni. Need kontrollivad kauba loomist, seisundiüleminekuid,
+aktiveerimise kategoorianõuet, kustutamist, põhi- ja lisaandmete muudetavust,
+registreerimisandmete säilimist ning uue seisundiliigi aktiivsust. Lisaks määravad
+trigerid viimase muutmise aja ja keelavad TRUNCATE-i. Sama seisundi ja muutmata
+andmete tagasikirjutamine on lubatud. Rutiinidest eemaldati korduvad kontrollid.
+
+Täielik SQL-komplekt, Ü8 paigalduse uuendus, domeenimigratsioon, eemaldamine,
+null projektiobjekti kontroll ja uuesti ehitamine läbisid kontrolli eraldi kohalikes
+PostgreSQL 17.12 ja 18.6 andmebaasides. Mõlemas versioonis läbisid kontrolli
+üheksa kahe seansi katset ning kaks 30-sekundilist koormustesti; tõrkeid ja
+ummikseise oli null. Otsese SQL-i katses leitud vana seisundi lugemine parandati:
+lisaandmete triger lukustab kaubarea enne klassifikaatorikoodi lugemist.
+Testikonteinerid koos oma andmefailidega on eemaldatud.
+
+[Ü9 tehniline lisa](docs/u9-trigerid.md) kirjeldab reegleid, vigu, paigaldust ja
+piire. Wordi dokumenti ei muudetud; Ü9 sisu ja muudetud SQL-loendid tuleb sinna
+hiljem üle kanda ning sisukord värskendada. Kooliserver, tegelik JSON-allikas,
+pgApexi veakuvamine ja kasutajatuvastus on kontrollimata. Töö on esitamata.
+
+## Varasem seis 16.11.2026: Ü8 rutiinid ja dokument üle kontrollitud
 
 Ühine töötajakontroll kaitseb nüüd ka rolli omamise ning kontrollitavate seisundi-
 ja rolliklassifikaatorite ridu `FOR SHARE` lukuga. Kahe seansi katsed kinnitasid
