@@ -1,5 +1,5 @@
 -- Näited täidetakse eraldi testandmebaasis pärast 13_testandmed.sql laadimist.
--- Tagasilükatud lepinguline muudatus annab NULL-i; kitsenduse rikkumine võib anda vea.
+-- Puuduvate andmete või volituse korral on tulemus NULL; trigeri keeld annab vea.
 START TRANSACTION;
 CREATE TEMP TABLE u8_osalised ON COMMIT DROP AS
 SELECT DISTINCT ON (r.kood) r.kood AS roll,i.e_meil
@@ -166,7 +166,7 @@ SELECT f_lisa_kaup_kategooriasse(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR'),
     p_kauba_kategooria_kood:='KLASSIKALINE') AS tulemus;
 
--- OP3: lubatud seisundimuudatus ja sama kutse kordamine.
+-- OP3: lubatud seisundimuudatus; korduskutse kirjutab sama seisundi tagasi.
 
 SELECT f_aktiveeri_kaup(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR')) AS tulemus;
@@ -176,7 +176,7 @@ SELECT k.kauba_kood,k.nimetus,k.hind,s.kood AS seisund,k.viimase_muutja_id FROM 
 SELECT f_aktiveeri_kaup(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR')) AS tulemus;
 
--- OP4: lubatud seisundimuudatus ja sama kutse kordamine.
+-- OP4: lubatud seisundimuudatus; korduskutse kirjutab sama seisundi tagasi.
 
 SELECT f_muuda_kaup_mitteaktiivseks(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR')) AS tulemus;
@@ -186,7 +186,7 @@ SELECT k.kauba_kood,k.nimetus,k.hind,s.kood AS seisund,k.viimase_muutja_id FROM 
 SELECT f_muuda_kaup_mitteaktiivseks(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='KAUBAHALDUR')) AS tulemus;
 
--- OP5: lubatud seisundimuudatus ja sama kutse kordamine.
+-- OP5: lubatud seisundimuudatus; korduskutse kirjutab sama seisundi tagasi.
 
 SELECT f_lopeta_kaup(p_kauba_kood:='DEM008',
     p_e_meil:=(SELECT e_meil FROM u8_osalised WHERE roll='JUHATAJA')) AS tulemus;

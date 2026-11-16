@@ -1,3 +1,10 @@
+-- Trigerid peatatakse ainult selle tagasipööratava kitsenduse- või vaatekatse ajaks.
+START TRANSACTION;
+ALTER TABLE public.kaup DISABLE TRIGGER USER;
+ALTER TABLE public.isik DISABLE TRIGGER USER;
+ALTER TABLE public.nutitelefon DISABLE TRIGGER USER;
+ALTER TABLE public.kauba_variant DISABLE TRIGGER USER;
+ALTER TABLE public.kauba_kategooria_omamine DISABLE TRIGGER USER;
 -- Kaupade halduri lugemisvaadete sisu ja muutmiskeelu kontroll.
 DO $kontroll$
 DECLARE
@@ -363,3 +370,5 @@ $sisu$;
 
 -- Üheveeruline koodipäring hierarhilise esituse põhjal.
 SELECT kauba_json->>'kauba_kood' AS kauba_kood FROM public.v_kaupade_json ORDER BY kauba_kood;
+
+ROLLBACK;

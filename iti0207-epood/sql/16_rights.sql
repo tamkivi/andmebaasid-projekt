@@ -19,7 +19,17 @@ BEGIN
 END;
 $oigused$;
 
--- Lepinguliste funktsioonide käivitamine ei kuulu PUBLIC-i õigustesse.
+-- Trigerifunktsioone ei anta rakendusele; lepingulised funktsioonid ei kuulu PUBLIC-ile.
+REVOKE ALL ON FUNCTION public.f_trig_kaup_algseisund() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_seisundimuudatus() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_aktiveerimine() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_kustutamine() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_muudetavus() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kauba_osa_muudetavus() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_reg_andmed() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_viimase_muutm_aeg() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_kaup_aktiivne_seisund() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.f_trig_keela_truncate() FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_aktiveeri_kaup(character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying) FROM PUBLIC;

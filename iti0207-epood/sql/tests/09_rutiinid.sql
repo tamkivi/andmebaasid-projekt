@@ -1,3 +1,5 @@
+START TRANSACTION;
+\ir 08_testiabi.sql
 -- Andmemuudatuste funktsioonide lepingute ja kõrvalmõjude kontroll.
 DO $kontroll$
 DECLARE
@@ -39,8 +41,7 @@ BEGIN
         WHERE r.kood='JUHATAJA' AND o.lopu_aeg='infinity'
         ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY;
         SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
-        UPDATE kaup SET reg_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02',
-            viimase_muutm_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02' WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_aeg(v_id);
 
         SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=upper(v_e_meil)) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
@@ -70,9 +71,7 @@ BEGIN
             ('f_lopeta_kaup',3::smallint,4::smallint)
         ) AS a(nimi,vana,uus)
         LOOP
-            UPDATE kaup SET kauba_seisundi_liik_id=(
-                SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=v_vana)
-            WHERE kaup_id=v_id;
+            PERFORM pg_temp.u9_seisund(v_id,v_vana);
             SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
             EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
                 INTO v_tulemus USING 'APL001','puuduv@example.invalid';
@@ -81,8 +80,10 @@ BEGIN
                 RAISE EXCEPTION '% muutis kaupa puuduva töötajaga',v_nimi;
             END IF;
             UPDATE kauba_seisundi_liik SET on_aktiivne=FALSE WHERE kood=v_uus;
-            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
+            PERFORM pg_temp.u9_viga(format('SELECT public.%I(p_kauba_kood:=%L,p_e_meil:=%L)',
+                v_nimi,'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END),
+                'kaup_aktiivne_seisund');
+            v_tulemus:=NULL;
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                 SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION '% kasutas mitteaktiivset sihtseisundit',v_nimi;
@@ -97,32 +98,30 @@ BEGIN
         END LOOP;
 
         FOR v_nimi,v_vana IN SELECT a.nimi,a.vana FROM (VALUES
-            ('f_aktiveeri_kaup',2::smallint),('f_aktiveeri_kaup',4::smallint),
+            ('f_aktiveeri_kaup',4::smallint),
             ('f_muuda_kaup_mitteaktiivseks',1::smallint),
-            ('f_muuda_kaup_mitteaktiivseks',3::smallint),
             ('f_muuda_kaup_mitteaktiivseks',4::smallint),
-            ('f_lopeta_kaup',1::smallint),('f_lopeta_kaup',4::smallint)
+            ('f_lopeta_kaup',1::smallint)
         ) AS a(nimi,vana)
         LOOP
-            UPDATE kaup SET kauba_seisundi_liik_id=(
-                SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=v_vana)
-            WHERE kaup_id=v_id;
+            PERFORM pg_temp.u9_seisund(v_id,v_vana);
             SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
-            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
-                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
+            PERFORM pg_temp.u9_viga(format('SELECT public.%I(p_kauba_kood:=%L,p_e_meil:=%L)',
+                v_nimi,'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END),
+                'kaup_seisundimuudatus');
+            v_tulemus:=NULL;
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                 SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION '% lubas keelatud lähteoleku %',v_nimi,v_vana;
             END IF;
         END LOOP;
-        UPDATE kaup SET kauba_seisundi_liik_id=(
-            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=1)
-        WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_seisund(v_id,1);
         SELECT array_agg(kauba_kategooria_id) INTO v_kategooriad
         FROM kauba_kategooria_omamine WHERE kaup_id=v_id;
         DELETE FROM kauba_kategooria_omamine WHERE kaup_id=v_id;
         SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
-        SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+        PERFORM pg_temp.u9_viga(format('SELECT f_aktiveeri_kaup(%L,%L)','APL001',v_e_meil),'kaup_aktiveerimine');
+        v_tulemus:=NULL;
         IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
             SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'OP3 aktiveeris kategooriata kauba';
@@ -131,19 +130,16 @@ BEGIN
         SELECT v_id,a.kood FROM unnest(v_kategooriad) AS a(kood);
         FOR v_vana IN SELECT unnest(ARRAY[2,3,4]::smallint[])
         LOOP
-            UPDATE kaup SET kauba_seisundi_liik_id=(
-                SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=v_vana)
-            WHERE kaup_id=v_id;
-            SELECT f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+            PERFORM pg_temp.u9_seisund(v_id,v_vana);
+            PERFORM pg_temp.u9_viga(format('SELECT f_unusta_kaup(%L,%L)','APL001',v_e_meil),'kaup_kustutamine');
+            v_tulemus:=NULL;
             IF v_tulemus IS NOT NULL OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION 'OP2 kustutas mitteootel kauba';
             END IF;
         END LOOP;
         SELECT f_unusta_kaup(p_kauba_kood:='PUUDUV',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION 'OP2 tagastas olematu kauba'; END IF;
-        UPDATE kaup SET kauba_seisundi_liik_id=(
-            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=1)
-        WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_seisund(v_id,1);
         IF NOT EXISTS (SELECT 1 FROM nutitelefon WHERE kaup_id=v_id)
             OR NOT EXISTS (SELECT 1 FROM kauba_variant WHERE kaup_id=v_id)
             OR NOT EXISTS (SELECT 1 FROM kauba_kategooria_omamine WHERE kaup_id=v_id) THEN
@@ -403,7 +399,8 @@ BEGIN
             EXECUTE format('UPDATE public.%I SET on_aktiivne=TRUE WHERE kood::text=$1',v_tabel) USING v_kood_tekst;
         END LOOP;
         UPDATE kauba_seisundi_liik SET on_aktiivne=FALSE WHERE kood=1;
-        SELECT f_registreeri_nutitelefon(
+        BEGIN
+            PERFORM f_registreeri_nutitelefon(
             p_kauba_kood:=v_kood,
             p_nimetus:=v_nimetus,
             p_hind:=v_hind::numeric,
@@ -418,7 +415,13 @@ BEGIN
             p_sisemalu_kood:=256::integer,
             p_diagonaali_kood:=6.1::numeric,
             p_protsessori_kood:='A16',
-            p_ekraani_resolutsiooni_kood:='2556x1179') INTO v_tulemus;
+            p_ekraani_resolutsiooni_kood:='2556x1179');
+            RAISE EXCEPTION 'Suletud algseisund lubati';
+        EXCEPTION WHEN check_violation THEN
+            GET STACKED DIAGNOSTICS v_kitsendus=CONSTRAINT_NAME;
+            IF v_kitsendus<>'kaup_aktiivne_seisund' THEN RAISE; END IF;
+        END;
+        v_tulemus:=NULL;
         IF v_tulemus IS NOT NULL THEN RAISE EXCEPTION 'OP1 kasutas mitteaktiivset algseisundit'; END IF;
         UPDATE kauba_seisundi_liik SET on_aktiivne=TRUE WHERE kood=1;
         v_brand:='PUUDUV';
@@ -461,15 +464,15 @@ BEGIN
         v_brand:='APPLE';
         FOR v_seisund IN SELECT unnest(ARRAY[2,4]::smallint[])
         LOOP
-            UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
-                FROM kauba_seisundi_liik WHERE kood=v_seisund) WHERE kaup_id=v_id;
+            PERFORM pg_temp.u9_seisund(v_id,v_seisund);
             SELECT xmin::text,to_jsonb(k) INTO v_ver,v_enne FROM kaup AS k WHERE kaup_id=v_id;
-            SELECT f_muuda_kaup(
+            BEGIN
+                PERFORM f_muuda_kaup(
             p_ver:=v_ver,
             p_kauba_kood_vana:='UPD001',
             p_kauba_kood_uus:='UPD001',
             p_nimetus:=v_nimetus,
-            p_hind:=v_hind::numeric,
+            p_hind:=(v_hind+1)::numeric,
             p_kirjeldus:='Funktsiooniga hallatava telefoni sisuline kontrollkirjeldus.',
             p_pildi_aadress:=NULL::varchar,
             p_e_meil:=v_e_meil,
@@ -481,13 +484,18 @@ BEGIN
             p_sisemalu_kood:=256::integer,
             p_diagonaali_kood:=6.1::numeric,
             p_protsessori_kood:='A16',
-            p_ekraani_resolutsiooni_kood:='2556x1179') INTO v_tulemus;
+            p_ekraani_resolutsiooni_kood:='2556x1179');
+                RAISE EXCEPTION 'OP6 lubas andmete muutmise';
+            EXCEPTION WHEN check_violation THEN
+                GET STACKED DIAGNOSTICS v_kitsendus=CONSTRAINT_NAME;
+                IF v_kitsendus<>'kaup_muudetavus' THEN RAISE; END IF;
+            END;
+            v_tulemus:=NULL;
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION 'OP6 lubas keelatud seisundi %',v_seisund;
             END IF;
         END LOOP;
-        UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
-            FROM kauba_seisundi_liik WHERE kood=3) WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_seisund(v_id,3);
         SELECT xmin::text INTO v_ver FROM kaup WHERE kaup_id=v_id;
         -- Registreeritud kontrolltelefon on lõpetamata, seega muudetav kaup vajab teist nimetust.
         v_nimetus:='Mitteaktiivne kontrolltelefon';
@@ -631,8 +639,7 @@ BEGIN
             RAISE EXCEPTION 'Ühine töötajaotsing ei vasta e-posti unikaalsusele';
         END IF;
         SELECT kaup_id INTO v_id FROM kaup WHERE kauba_kood='APL001';
-        UPDATE kaup SET reg_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02',
-            viimase_muutm_aeg=TIMESTAMPTZ '2026-01-01 00:00:00+02' WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_aeg(v_id);
         SELECT f_lisa_kaup_kategooriasse(p_kauba_kood:='APL001',
             p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
@@ -653,7 +660,7 @@ BEGIN
             RAISE EXCEPTION 'OP7 korduv paar muutis kauba rida';
         END IF;
         UPDATE kauba_kategooria SET on_aktiivne=FALSE WHERE kood='MEESTELEFONID';
-        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_aeg(v_id);
         SELECT f_eemalda_kaup_kategooriast(p_kauba_kood:='APL001',
             p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR EXISTS (
@@ -674,7 +681,7 @@ BEGIN
             FROM kaup AS k WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'OP8 puuduva seose korral muutis kauba rida';
         END IF;
-        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_aeg(v_id);
         SELECT f_lisa_kauba_variant(p_kauba_kood:='APL001',
             p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR NOT EXISTS (
@@ -694,7 +701,7 @@ BEGIN
             RAISE EXCEPTION 'OP9 korduv paar muutis kauba rida';
         END IF;
         UPDATE varv SET on_aktiivne=FALSE WHERE kood='WHITE';
-        UPDATE kaup SET viimase_muutm_aeg=reg_aeg WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_aeg(v_id);
         SELECT f_eemalda_kauba_variant(p_kauba_kood:='APL001',
             p_varv_kood:='WHITE',p_e_meil:=v_e_meil) INTO v_tulemus;
         IF v_tulemus IS DISTINCT FROM 'APL001' OR EXISTS (
@@ -747,20 +754,21 @@ BEGIN
             END IF;
             FOR v_seisund IN SELECT unnest(ARRAY[2,4]::smallint[])
             LOOP
-                UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
-                    FROM kauba_seisundi_liik WHERE kood=v_seisund) WHERE kaup_id=v_id;
+                PERFORM pg_temp.u9_seisund(v_id,v_seisund);
                 SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
                 INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
-                EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,%I:=$2,p_e_meil:=$3)',v_nimi,v_param)
-                    INTO v_tulemus USING 'APL001',v_kood,v_e_meil;
+                PERFORM pg_temp.u9_viga(format('SELECT public.%I(p_kauba_kood:=%L,%I:=%L,p_e_meil:=%L)',
+                    v_nimi,'APL001',v_param,v_kood,v_e_meil),
+                    CASE WHEN v_param='p_varv_kood' THEN 'kauba_variant_kauba_muudetavus'
+                        ELSE 'kauba_kategooria_omamine_kauba_muudetavus' END);
+                v_tulemus:=NULL;
                 IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                     SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
                     FROM kaup AS k WHERE kaup_id=v_id) THEN
                     RAISE EXCEPTION '% lubas keelatud seisundi %',v_nimi,v_seisund;
                 END IF;
             END LOOP;
-            UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id
-                FROM kauba_seisundi_liik WHERE kood=1) WHERE kaup_id=v_id;
+            PERFORM pg_temp.u9_seisund(v_id,1);
         END LOOP;
         UPDATE kauba_kategooria SET on_aktiivne=FALSE WHERE kood='MEESTELEFONID';
         SELECT to_jsonb(k)||jsonb_build_object('xmin',k.xmin::text,'cmin',k.cmin::text)
@@ -785,7 +793,8 @@ BEGIN
             IF v_tulemus IS DISTINCT FROM 'APL001' THEN RAISE EXCEPTION 'OP8 ei eemaldanud viimast kategooriat'; END IF;
         END LOOP;
         SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
-        SELECT f_aktiveeri_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) INTO v_tulemus;
+        PERFORM pg_temp.u9_viga(format('SELECT f_aktiveeri_kaup(%L,%L)','APL001',v_e_meil),'kaup_aktiveerimine');
+        v_tulemus:=NULL;
         IF v_tulemus IS NOT NULL OR EXISTS (SELECT 1 FROM kauba_kategooria_omamine WHERE kaup_id=v_id)
             OR v_enne IS DISTINCT FROM (SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
             RAISE EXCEPTION 'Viimase kategooria eemaldamine rikkus aktiveerimise eeltingimust';
@@ -829,16 +838,14 @@ BEGIN
             RAISE EXCEPTION 'Töötajaotsing ei arvesta rolli';
         END IF;
 
-        UPDATE kaup SET kauba_seisundi_liik_id=(
-            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=2) WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_seisund(v_id,2);
         IF f_lopeta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_e_meil) IS NOT NULL
             OR f_muuda_kaup_mitteaktiivseks(p_kauba_kood:='APL001',p_e_meil:=v_juhataja) IS NOT NULL
             OR NOT EXISTS (SELECT 1 FROM kaup AS k INNER JOIN kauba_seisundi_liik AS s
                 USING (kauba_seisundi_liik_id) WHERE k.kaup_id=v_id AND s.kood=2) THEN
             RAISE EXCEPTION 'Kauba haldur lõpetas kauba või juhataja muutis selle mitteaktiivseks';
         END IF;
-        UPDATE kaup SET kauba_seisundi_liik_id=(
-            SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=1) WHERE kaup_id=v_id;
+        PERFORM pg_temp.u9_seisund(v_id,1);
         IF f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:=v_juhataja) IS NOT NULL
             OR f_unusta_kaup(p_kauba_kood:='APL001',p_e_meil:='puuduv@example.invalid') IS NOT NULL
             OR NOT EXISTS (SELECT 1 FROM kaup WHERE kaup_id=v_id) THEN
@@ -870,3 +877,5 @@ BEGIN
     END;
 END;
 $volitus$;
+
+ROLLBACK;

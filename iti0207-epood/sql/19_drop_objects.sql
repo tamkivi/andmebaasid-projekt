@@ -14,6 +14,39 @@ $oigused$;
 ALTER DEFAULT PRIVILEGES GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 ALTER DEFAULT PRIVILEGES GRANT USAGE ON TYPES TO PUBLIC;
 
+-- Trigerid eemaldatakse enne trigerifunktsioone.
+DROP TRIGGER trig_kaup_algseisund ON public.kaup;
+DROP TRIGGER trig_kaup_seisundimuudatus ON public.kaup;
+DROP TRIGGER trig_kaup_seisundimuudatus_kategooria ON public.kaup;
+DROP TRIGGER trig_kaup_kustutamine ON public.kaup;
+DROP TRIGGER trig_kaup_andmete_muutmine ON public.kaup;
+DROP TRIGGER trig_nutitelefon_kauba_muudetavus ON public.nutitelefon;
+DROP TRIGGER trig_nutitelefon_muutmine ON public.nutitelefon;
+DROP TRIGGER trig_kauba_kategooria_omamine_kauba_muudetavus ON public.kauba_kategooria_omamine;
+DROP TRIGGER trig_kauba_kategooria_omamine_muutmine ON public.kauba_kategooria_omamine;
+DROP TRIGGER trig_kauba_variant_kauba_muudetavus ON public.kauba_variant;
+DROP TRIGGER trig_kauba_variant_muutmine ON public.kauba_variant;
+DROP TRIGGER trig_kaup_reg_andmed ON public.kaup;
+DROP TRIGGER trig_kaup_viimase_muutm_aeg ON public.kaup;
+DROP TRIGGER trig_isik_viimase_muutm_aeg ON public.isik;
+DROP TRIGGER trig_kaup_aktiivne_algseisund ON public.kaup;
+DROP TRIGGER trig_kaup_aktiivne_uus_seisund ON public.kaup;
+DROP TRIGGER trig_kaup_truncate ON public.kaup;
+DROP TRIGGER trig_nutitelefon_truncate ON public.nutitelefon;
+DROP TRIGGER trig_kauba_kategooria_omamine_truncate ON public.kauba_kategooria_omamine;
+DROP TRIGGER trig_kauba_variant_truncate ON public.kauba_variant;
+
+DROP FUNCTION public.f_trig_kaup_algseisund();
+DROP FUNCTION public.f_trig_kaup_seisundimuudatus();
+DROP FUNCTION public.f_trig_kaup_aktiveerimine();
+DROP FUNCTION public.f_trig_kaup_kustutamine();
+DROP FUNCTION public.f_trig_kaup_muudetavus();
+DROP FUNCTION public.f_trig_kauba_osa_muudetavus();
+DROP FUNCTION public.f_trig_kaup_reg_andmed();
+DROP FUNCTION public.f_trig_viimase_muutm_aeg();
+DROP FUNCTION public.f_trig_kaup_aktiivne_seisund();
+DROP FUNCTION public.f_trig_keela_truncate();
+
 -- Rutiinid eemaldatakse enne nende kasutatavaid tabeleid ja domeeni.
 DROP FUNCTION f_aktiveeri_kaup(character varying, character varying);
 DROP FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying);
@@ -107,7 +140,6 @@ DROP SERVER minu_testandmete_server_apex;
 -- Domeen eemaldatakse alles pärast kõiki sellest sõltuvaid objekte.
 DROP DOMAIN d_klassifikaatori_nimetus RESTRICT;
 
--- Projekt ei loo trigereid ega trigerifunktsioone.
 DROP ROLE epood_rakendus;
 
 DROP EXTENSION postgres_fdw;

@@ -4,15 +4,15 @@ DECLARE
     v_funktsioon record;
 BEGIN
     IF (SELECT count(*) FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
-        WHERE n.nspname='public')<>11 THEN
-        RAISE EXCEPTION 'Kontroll eeldab kümmet lepingulist funktsiooni ja üht abifunktsiooni';
+        WHERE n.nspname='public')<>21 THEN
+        RAISE EXCEPTION 'Kontroll eeldab kümmet lepingulist funktsiooni ja üht abifunktsiooni ning kümmet trigerifunktsiooni';
     END IF;
-    FOR v_funktsioon IN SELECT p.oid,p.proname,p.proacl,p.proowner
+    FOR v_funktsioon IN SELECT p.oid,p.proname,p.proacl,p.proowner,p.prorettype
         FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
         WHERE n.nspname='public'
     LOOP
         IF has_function_privilege('epood_rakendus',v_funktsioon.oid,'EXECUTE')
-                IS DISTINCT FROM (v_funktsioon.proname<>'f_leia_tootaja')
+                IS DISTINCT FROM (v_funktsioon.proname<>'f_leia_tootaja' AND v_funktsioon.prorettype<>'trigger'::regtype)
             OR has_function_privilege('epood_rakendus',v_funktsioon.oid,'EXECUTE WITH GRANT OPTION')
             OR EXISTS (SELECT 1 FROM aclexplode(COALESCE(v_funktsioon.proacl,
                 acldefault('f',v_funktsioon.proowner))) AS a

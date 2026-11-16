@@ -1,7 +1,7 @@
 -- Kaupade andmemuudatuste lepingulised funktsioonid.
 START TRANSACTION;
 
-CREATE FUNCTION f_leia_tootaja(p_e_meil isik.e_meil%TYPE,
+CREATE OR REPLACE FUNCTION f_leia_tootaja(p_e_meil isik.e_meil%TYPE,
     p_rolli_kood tootaja_roll.kood%TYPE)
 RETURNS SETOF tootaja.tootaja_id%TYPE
 LANGUAGE SQL VOLATILE SECURITY DEFINER
@@ -24,7 +24,7 @@ END;
 COMMENT ON FUNCTION f_leia_tootaja(character varying,character varying) IS
     'OP1-OP10 ühine abifunktsioon: leiab tõstutundetu unikaalse e-posti järgi töötaja, kellel on antud roll hetkel kehtiv, kes on elus ning kelle töösuhe pole peatatud ega lõpetatud (seisund katseajal, tööl või puhkusel). Töötaja, isiku, rolli omamise ning kontrollitavate klassifikaatorite ridu kaitstakse FOR SHARE lukuga. Unikaalsed võtmed tagavad kuni ühe tulemuse; tingimustele mittevastav töötaja annab tühja hulga.';
 
-CREATE FUNCTION f_registreeri_nutitelefon(
+CREATE OR REPLACE FUNCTION f_registreeri_nutitelefon(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_nimetus kaup.nimetus%TYPE,
     p_hind kaup.hind%TYPE,
@@ -65,7 +65,7 @@ WITH sisend AS MATERIALIZED (
         WHERE (kood=p_ekraani_resolutsiooni_kood) AND on_aktiivne FOR SHARE) AS r
 ), ootel AS MATERIALIZED (
     SELECT kauba_seisundi_liik_id FROM public.kauba_seisundi_liik
-    WHERE (kood=1) AND on_aktiivne FOR SHARE
+    WHERE kood=1 FOR SHARE
 ), lisatud AS (
     INSERT INTO public.kaup (kauba_kood,nimetus,hind,kirjeldus,pildi_aadress,
         kauba_seisundi_liik_id,brand_id,registreerija_id,viimase_muutja_id)
@@ -88,9 +88,9 @@ END;
 COMMENT ON FUNCTION f_registreeri_nutitelefon(character varying,character varying,numeric,text,
     character varying,character varying,character varying,boolean,boolean,numeric,numeric,
     integer,numeric,character varying,character varying) IS
-    'OP1: registreerib ühe lausega ootel kauba ja selle nutitelefoni. Volitatud kauba haldur ning aktiivne algseisund, bränd ja telefoni klassifikaatorid leitakse koodide järgi FOR SHARE kaitsega. Kaamerad seotakse vastavalt eesmiseks ja tagumiseks. Mõlemad muutja viited saavad töötaja ID; korduva kaubakoodi korral ei lisata kumbagi rida ja tulemus on NULL.';
+    'OP1: registreerib ühe lausega ootel kauba ja selle nutitelefoni. Töötaja volitust kontrollib ühine otsing; aktiivne bränd ja telefoni klassifikaatorid leitakse koodide järgi FOR SHARE kaitsega. Algseisundi aktiivsust kontrollib triger. Kaamerad seotakse vastavalt eesmiseks ja tagumiseks. Mõlemad muutja viited saavad töötaja ID; korduva kaubakoodi korral ei lisata kumbagi rida ja tulemus on NULL.';
 
-CREATE FUNCTION f_unusta_kaup(
+CREATE OR REPLACE FUNCTION f_unusta_kaup(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
 LANGUAGE SQL VOLATILE SECURITY DEFINER
@@ -99,15 +99,12 @@ BEGIN ATOMIC
 DELETE FROM public.kaup AS k
 USING public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='KAUBAHALDUR') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
-    AND k.kauba_seisundi_liik_id IN (
-        SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-        WHERE s.kood=1 FOR SHARE)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_unusta_kaup(character varying,character varying) IS
-    'OP2: kauba haldur kustutab ainult ootel kauba. Seisundit ja kauba halduri volitust kontrollib sama DELETE-lause koodi 1 järgi ja FOR SHARE kaitseb klassifikaatorit. Telefon, kategooriaseosed ja variandid kustuvad välisvõtmete ON DELETE CASCADE abil; muutuseta tulemus on NULL.';
+    'OP2: volitatud kauba haldur kustutab kauba. Ootel seisundi nõuet kontrollib triger; telefon ja seosed kustutab ON DELETE CASCADE. Puuduva kauba või volituse korral on tulemus NULL.';
 
-CREATE FUNCTION f_aktiveeri_kaup(
+CREATE OR REPLACE FUNCTION f_aktiveeri_kaup(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
 LANGUAGE SQL VOLATILE SECURITY DEFINER
@@ -115,22 +112,17 @@ SET search_path = public, pg_temp
 BEGIN ATOMIC
 UPDATE public.kaup AS k
 SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
-    viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    viimase_muutja_id=tegija.tootaja_id
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-      WHERE (s.kood=2) AND s.on_aktiivne FOR SHARE) AS uus
+      WHERE s.kood=2 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='KAUBAHALDUR') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
-    AND k.kauba_seisundi_liik_id IN (
-        SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-        WHERE s.kood IN (1,3) FOR SHARE)
-    AND EXISTS (SELECT 1 FROM public.kauba_kategooria_omamine AS o
-                WHERE o.kaup_id=k.kaup_id FOR SHARE)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_aktiveeri_kaup(character varying,character varying) IS
-    'OP3: aktiveerib ootel või mitteaktiivse kauba, millel on vähemalt üks kategooria. Sama UPDATE kontrollib lähte- ja sihtseisundit ning kauba halduri volitust tõstutundetu e-posti järgi. Teiste tabelite eeltingimused on kaitstud FOR SHARE lukuga. Salvestab viimase muutja ja aja ning tagastab koodi ainult õnnestumisel.';
+    'OP3: volitatud kauba haldur valib seisundikoodi 2. Trigerid kontrollivad üleminekut, uue seisundiliigi aktiivsust ja kategooria olemasolu. Rutiin määrab viimase muutja, aja määrab triger. Sama sihtseisundi tagasikirjutamine on lubatud.';
 
-CREATE FUNCTION f_muuda_kaup_mitteaktiivseks(
+CREATE OR REPLACE FUNCTION f_muuda_kaup_mitteaktiivseks(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
 LANGUAGE SQL VOLATILE SECURITY DEFINER
@@ -138,20 +130,17 @@ SET search_path = public, pg_temp
 BEGIN ATOMIC
 UPDATE public.kaup AS k
 SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
-    viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    viimase_muutja_id=tegija.tootaja_id
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-      WHERE (s.kood=3) AND s.on_aktiivne FOR SHARE) AS uus
+      WHERE s.kood=3 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='KAUBAHALDUR') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
-    AND k.kauba_seisundi_liik_id IN (
-        SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-        WHERE s.kood IN (2) FOR SHARE)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_muuda_kaup_mitteaktiivseks(character varying,character varying) IS
-    'OP4: muudab aktiivse kauba mitteaktiivseks. Sama UPDATE kontrollib lähte- ja sihtseisundit ning kauba halduri volitust tõstutundetu e-posti järgi. Teiste tabelite eeltingimused on kaitstud FOR SHARE lukuga. Salvestab viimase muutja ja aja ning tagastab koodi ainult õnnestumisel.';
+    'OP4: volitatud kauba haldur valib seisundikoodi 3. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Sama seisundi tagasikirjutamine on lubatud.';
 
-CREATE FUNCTION f_lopeta_kaup(
+CREATE OR REPLACE FUNCTION f_lopeta_kaup(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
 LANGUAGE SQL VOLATILE SECURITY DEFINER
@@ -159,20 +148,17 @@ SET search_path = public, pg_temp
 BEGIN ATOMIC
 UPDATE public.kaup AS k
 SET kauba_seisundi_liik_id=uus.kauba_seisundi_liik_id,
-    viimase_muutja_id=tegija.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    viimase_muutja_id=tegija.tootaja_id
 FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-      WHERE (s.kood=4) AND s.on_aktiivne FOR SHARE) AS uus
+      WHERE s.kood=4 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='JUHATAJA') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
-    AND k.kauba_seisundi_liik_id IN (
-        SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-        WHERE s.kood IN (2,3) FOR SHARE)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_lopeta_kaup(character varying,character varying) IS
-    'OP5: juhataja lõpetab aktiivse või mitteaktiivse kauba. Sama UPDATE kontrollib lähte- ja sihtseisundit ning juhataja volitust tõstutundetu e-posti järgi. Teiste tabelite eeltingimused on kaitstud FOR SHARE lukuga. Salvestab viimase muutja ja aja ning tagastab koodi ainult õnnestumisel.';
+    'OP5: volitatud juhataja valib seisundikoodi 4. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Sama seisundi tagasikirjutamine on lubatud.';
 
-CREATE FUNCTION f_muuda_kaup(
+CREATE OR REPLACE FUNCTION f_muuda_kaup(
     p_ver text,
     p_kauba_kood_vana kaup.kauba_kood%TYPE,
     p_kauba_kood_uus kaup.kauba_kood%TYPE,
@@ -217,12 +203,9 @@ WITH sisend AS MATERIALIZED (
     UPDATE public.kaup AS k
     SET kauba_kood=p_kauba_kood_uus,nimetus=p_nimetus,hind=p_hind,
         kirjeldus=p_kirjeldus,pildi_aadress=p_pildi_aadress,brand_id=a.brand_id,
-        viimase_muutja_id=a.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+        viimase_muutja_id=a.tootaja_id
     FROM sisend AS a
     WHERE (k.kauba_kood=p_kauba_kood_vana) AND (k.xmin=p_ver::xid)
-        AND k.kauba_seisundi_liik_id IN (
-            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-            WHERE s.kood IN (1,3) FOR SHARE)
         AND EXISTS (SELECT 1 FROM public.nutitelefon AS n
                     WHERE n.kaup_id=k.kaup_id FOR NO KEY UPDATE)
     RETURNING k.kaup_id,k.kauba_kood
@@ -241,9 +224,9 @@ END;
 COMMENT ON FUNCTION f_muuda_kaup(text,character varying,character varying,character varying,
     numeric,text,character varying,character varying,character varying,boolean,boolean,
     numeric,numeric,integer,numeric,character varying,character varying) IS
-    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba haldur ja aktiivsed uued klassifikaatorid kontrollitakse FOR SHARE kaitsega. Olemasolev telefon lukustatakse FOR NO KEY UPDATE abil enne kauba muutmist, et vältida jagatud luku tugevdamisel tekkivat ummikseisu. Muudab viimase muutja ja aja, säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
+    'OP6: muudab ootel või mitteaktiivse kauba ja telefoni ühe lausega. xmin võrdlus välistab vananenud versiooni ülekirjutamise. Kauba haldur ja aktiivsed uued brändi ja telefoni klassifikaatorid kontrollitakse FOR SHARE kaitsega. Olemasolev telefon lukustatakse FOR NO KEY UPDATE abil enne kauba muutmist, et vältida jagatud luku tugevdamisel tekkivat ummikseisu. Määrab viimase muutja; aja ja muudetavuse kontrolli teeb triger. säilitab registreerija, registreerimisaja ja seisundi; õnnestumisel tagastab uue kaubakoodi, muidu NULL.';
 
-CREATE FUNCTION f_lisa_kaup_kategooriasse(
+CREATE OR REPLACE FUNCTION f_lisa_kaup_kategooriasse(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_kauba_kategooria_kood kauba_kategooria.kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
@@ -257,9 +240,6 @@ WITH valik AS MATERIALIZED (
     CROSS JOIN (SELECT kauba_kategooria_id FROM public.kauba_kategooria
         WHERE (kood=p_kauba_kategooria_kood) AND on_aktiivne FOR SHARE) AS c
     WHERE (k.kauba_kood=p_kauba_kood)
-        AND k.kauba_seisundi_liik_id IN (
-            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-            WHERE s.kood IN (1,3) FOR SHARE)
     FOR UPDATE OF k
 ), seos AS (
     INSERT INTO public.kauba_kategooria_omamine (kaup_id,kauba_kategooria_id)
@@ -268,7 +248,7 @@ WITH valik AS MATERIALIZED (
     RETURNING kaup_id
 ), muudetud AS (
     UPDATE public.kaup AS k
-    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    SET viimase_muutja_id=v.tootaja_id
     FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
     WHERE k.kaup_id=v.kaup_id
     RETURNING k.kauba_kood
@@ -276,9 +256,9 @@ WITH valik AS MATERIALIZED (
 SELECT m.kauba_kood FROM muudetud AS m;
 END;
 COMMENT ON FUNCTION f_lisa_kaup_kategooriasse(character varying,character varying,character varying) IS
-    'OP7: lisab kaubale kategooria ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+    'OP7: lisab kaubale kategooria ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; klassifikaatori kontroll on FOR SHARE kaitsega, muudetavust kontrollib triger. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja uuendatakse ja aja määramise triger käivitub ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
 
-CREATE FUNCTION f_eemalda_kaup_kategooriast(
+CREATE OR REPLACE FUNCTION f_eemalda_kaup_kategooriast(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_kauba_kategooria_kood kauba_kategooria.kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
@@ -292,9 +272,6 @@ WITH valik AS MATERIALIZED (
     CROSS JOIN (SELECT kauba_kategooria_id FROM public.kauba_kategooria
         WHERE (kood=p_kauba_kategooria_kood) FOR SHARE) AS c
     WHERE (k.kauba_kood=p_kauba_kood)
-        AND k.kauba_seisundi_liik_id IN (
-            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-            WHERE s.kood IN (1,3) FOR SHARE)
     FOR UPDATE OF k
 ), seos AS (
     DELETE FROM public.kauba_kategooria_omamine AS o
@@ -303,7 +280,7 @@ WITH valik AS MATERIALIZED (
     RETURNING o.kaup_id
 ), muudetud AS (
     UPDATE public.kaup AS k
-    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    SET viimase_muutja_id=v.tootaja_id
     FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
     WHERE k.kaup_id=v.kaup_id
     RETURNING k.kauba_kood
@@ -311,9 +288,9 @@ WITH valik AS MATERIALIZED (
 SELECT m.kauba_kood FROM muudetud AS m;
 END;
 COMMENT ON FUNCTION f_eemalda_kaup_kategooriast(character varying,character varying,character varying) IS
-    'OP8: eemaldab kaubalt kategooria ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+    'OP8: eemaldab kaubalt kategooria ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; klassifikaatori kontroll on FOR SHARE kaitsega, muudetavust kontrollib triger. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja uuendatakse ja aja määramise triger käivitub ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
 
-CREATE FUNCTION f_lisa_kauba_variant(
+CREATE OR REPLACE FUNCTION f_lisa_kauba_variant(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_varv_kood varv.kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
@@ -327,9 +304,6 @@ WITH valik AS MATERIALIZED (
     CROSS JOIN (SELECT varv_id FROM public.varv
         WHERE (kood=p_varv_kood) AND on_aktiivne FOR SHARE) AS c
     WHERE (k.kauba_kood=p_kauba_kood)
-        AND k.kauba_seisundi_liik_id IN (
-            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-            WHERE s.kood IN (1,3) FOR SHARE)
     FOR UPDATE OF k
 ), seos AS (
     INSERT INTO public.kauba_variant (kaup_id,varv_id)
@@ -338,7 +312,7 @@ WITH valik AS MATERIALIZED (
     RETURNING kaup_id
 ), muudetud AS (
     UPDATE public.kaup AS k
-    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    SET viimase_muutja_id=v.tootaja_id
     FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
     WHERE k.kaup_id=v.kaup_id
     RETURNING k.kauba_kood
@@ -346,9 +320,9 @@ WITH valik AS MATERIALIZED (
 SELECT m.kauba_kood FROM muudetud AS m;
 END;
 COMMENT ON FUNCTION f_lisa_kauba_variant(character varying,character varying,character varying) IS
-    'OP9: lisab kaubale värvivariandi ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+    'OP9: lisab kaubale värvivariandi ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; klassifikaatori kontroll on FOR SHARE kaitsega, muudetavust kontrollib triger. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja uuendatakse ja aja määramise triger käivitub ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
 
-CREATE FUNCTION f_eemalda_kauba_variant(
+CREATE OR REPLACE FUNCTION f_eemalda_kauba_variant(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_varv_kood varv.kood%TYPE,p_e_meil isik.e_meil%TYPE)
 RETURNS kaup.kauba_kood%TYPE
@@ -362,9 +336,6 @@ WITH valik AS MATERIALIZED (
     CROSS JOIN (SELECT varv_id FROM public.varv
         WHERE (kood=p_varv_kood) FOR SHARE) AS c
     WHERE (k.kauba_kood=p_kauba_kood)
-        AND k.kauba_seisundi_liik_id IN (
-            SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
-            WHERE s.kood IN (1,3) FOR SHARE)
     FOR UPDATE OF k
 ), seos AS (
     DELETE FROM public.kauba_variant AS o
@@ -373,7 +344,7 @@ WITH valik AS MATERIALIZED (
     RETURNING o.kaup_id
 ), muudetud AS (
     UPDATE public.kaup AS k
-    SET viimase_muutja_id=v.tootaja_id,viimase_muutm_aeg=CURRENT_TIMESTAMP
+    SET viimase_muutja_id=v.tootaja_id
     FROM valik AS v INNER JOIN seos AS s USING (kaup_id)
     WHERE k.kaup_id=v.kaup_id
     RETURNING k.kauba_kood
@@ -381,6 +352,6 @@ WITH valik AS MATERIALIZED (
 SELECT m.kauba_kood FROM muudetud AS m;
 END;
 COMMENT ON FUNCTION f_eemalda_kauba_variant(character varying,character varying,character varying) IS
-    'OP10: eemaldab kaubalt värvivariandi ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; seisundi ja klassifikaatori kontrollid on samuti FOR SHARE kaitsega. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja ja aeg uuenevad ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
+    'OP10: eemaldab kaubalt värvivariandi ainult ootel või mitteaktiivsel kaubal. Kauba halduri volituse kontrollib ühine FOR SHARE lukuga otsing; klassifikaatori kontroll on FOR SHARE kaitsega, muudetavust kontrollib triger. Kauba rida lukustatakse sama lause sees muutmiseks enne seose töötlemist. Muutja uuendatakse ja aja määramise triger käivitub ainult seose tegelikul muutumisel; siis tagastatakse kaubakood, muidu NULL.';
 
 COMMIT;

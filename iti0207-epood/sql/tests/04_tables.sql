@@ -1,3 +1,10 @@
+-- Trigerid peatatakse ainult selle tagasipööratava kitsenduse- või vaatekatse ajaks.
+START TRANSACTION;
+ALTER TABLE public.kaup DISABLE TRIGGER USER;
+ALTER TABLE public.isik DISABLE TRIGGER USER;
+ALTER TABLE public.nutitelefon DISABLE TRIGGER USER;
+ALTER TABLE public.kauba_variant DISABLE TRIGGER USER;
+ALTER TABLE public.kauba_kategooria_omamine DISABLE TRIGGER USER;
 -- Kontseptuaalse andmemudeli väärtusreeglite piirjuhtude kontroll.
 -- Kontrollread eemaldatakse sama anonüümse ploki alatehinguga.
 DO $kontroll$
@@ -460,3 +467,5 @@ BEGIN
     END;
 END;
 $kontroll$;
+
+ROLLBACK;
