@@ -3,7 +3,7 @@
 set -eu
 umask 077
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-repo=$(CDPATH='' cd -- "$root/.." && pwd)
+repo=$(CDPATH='' cd -- "$root/.." && pwd -P)
 usage() {
     echo "Kasutus: $0 [uuri|kontrolli|testi] [LOGIKATALOOG]" >&2
     echo "        $0 paigalda KINNITAN [LOGIKATALOOG]" >&2
@@ -137,16 +137,22 @@ case "$mode" in
                 '\getenv apex_kasutaja U8_ALLIKA_KASUTAJA' '\getenv apex_parool U8_ALLIKA_PAROOL' \
                 '\getenv testandmete_host U8_ALLIKA_HOST' '\getenv testandmete_port U8_ALLIKA_PORT' \
                 '\getenv testandmete_dbname U8_ALLIKA_BAAS'
-            for f in run_u5.sql 05_views.sql 09_rutiinid.sql 14_statistics.sql 16_rights.sql; do
-                printf '\\i %s/sql/%s\n' "'$root'" "$f"
-            done
+            printf '\\i %s/sql/run_u5.sql\n' "'$root'"
         } | psql_run >/dev/null 2>&1 || {
             unset U8_ALLIKA_PAROOL
-            echo 'Paigaldus katkes. Osaline paigaldus tuleb käsitsi üle vaadata. Parooli sisaldada võivat veaväljundit ei salvestatud.' >&2
+            echo 'Andmete laadimine katkes. Osaline paigaldus tuleb käsitsi üle vaadata. Parooli sisaldada võivat veaväljundit ei salvestatud.' >&2
             exit 1
         }
         unset U8_ALLIKA_PAROOL
-        echo 'Paigaldusfailid täideti ettenähtud järjekorras.' >"$logs/paigalda.log"
+        : >"$logs/paigalda.log"
+        for f in 05_views.sql 09_rutiinid.sql 14_statistics.sql 16_rights.sql; do
+            printf 'Fail: %s\n' "$f" >>"$logs/paigalda.log"
+            psql_run -q -f "$root/sql/$f" >>"$logs/paigalda.log" 2>&1 || {
+                echo "Paigaldus katkes. Veateade on failis $logs/paigalda.log. Osaline paigaldus tuleb käsitsi üle vaadata." >&2
+                exit 1
+            }
+        done
+        echo 'Paigaldusfailid täideti ettenähtud järjekorras.' >>"$logs/paigalda.log"
         catalogue
         echo 'Värske paigaldus lõpetatud.' ;;
     testi)
@@ -194,7 +200,10 @@ BEGIN
 END;
 $parast$;
 SQL
-        psql_run -q -f "$sqlfile" >"$logs/testi.log" 2>&1
+        psql_run -q -f "$sqlfile" >"$logs/testi.log" 2>&1 || {
+            echo "Testid katkesid. Veateade on failis $logs/testi.log" >&2
+            exit 1
+        }
         echo 'Testid läbitud: kõigi 24 tabeli reaarv ja sisu säilisid.' ;;
 esac
 echo "Logid: $logs"
