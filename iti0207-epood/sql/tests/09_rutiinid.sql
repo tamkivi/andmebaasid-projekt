@@ -14,6 +14,7 @@ DECLARE
     v_uus smallint;
     v_enne jsonb;
     v_kategooriad smallint[];
+    v_rea_koht text;
 BEGIN
     IF (SELECT count(*) FROM pg_proc AS p
         INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
@@ -113,6 +114,24 @@ BEGIN
             IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
                 SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id) THEN
                 RAISE EXCEPTION '% lubas keelatud lähteoleku %',v_nimi,v_vana;
+            END IF;
+        END LOOP;
+        -- Kaup on juba sihtseisundis: rida ei muudeta ja tulemus on NULL.
+        FOR v_nimi,v_vana IN SELECT a.nimi,a.vana FROM (VALUES
+            ('f_aktiveeri_kaup',2::smallint),
+            ('f_muuda_kaup_mitteaktiivseks',3::smallint),
+            ('f_lopeta_kaup',4::smallint)
+        ) AS a(nimi,vana)
+        LOOP
+            PERFORM pg_temp.u9_seisund(v_id,v_vana);
+            SELECT to_jsonb(k) INTO v_enne FROM kaup AS k WHERE kaup_id=v_id;
+            SELECT ctid::text INTO v_rea_koht FROM kaup WHERE kaup_id=v_id;
+            EXECUTE format('SELECT public.%I(p_kauba_kood:=$1,p_e_meil:=$2)',v_nimi)
+                INTO v_tulemus USING 'APL001',CASE v_nimi WHEN 'f_lopeta_kaup' THEN v_juhataja ELSE v_e_meil END;
+            IF v_tulemus IS NOT NULL OR v_enne IS DISTINCT FROM (
+                SELECT to_jsonb(k) FROM kaup AS k WHERE kaup_id=v_id)
+                OR v_rea_koht IS DISTINCT FROM (SELECT ctid::text FROM kaup WHERE kaup_id=v_id) THEN
+                RAISE EXCEPTION '% muutis juba sihtseisundis kaupa',v_nimi;
             END IF;
         END LOOP;
         PERFORM pg_temp.u9_seisund(v_id,1);

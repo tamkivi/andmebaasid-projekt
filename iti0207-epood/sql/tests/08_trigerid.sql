@@ -171,7 +171,7 @@ BEGIN
                 BEGIN EXECUTE v_lause; RAISE SQLSTATE 'ZT001';
                 EXCEPTION WHEN SQLSTATE 'ZT001' THEN NULL; END;
             ELSE
-                PERFORM pg_temp.u9_viga(v_lause,'kaup_muudetavus');
+                PERFORM pg_temp.u9_viga(v_lause,'kaup_muudetavus',NULL,split_part(v_osa,'=',1));
             END IF;
         END LOOP;
         -- Igas lisatabelis: INSERT, tegelik UPDATE ja DELETE.
@@ -236,7 +236,17 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM kaup WHERE kaup_id=v_id AND reg_aeg=v_reg
         AND viimase_muutm_aeg=CURRENT_TIMESTAMP::timestamptz(0)) THEN RAISE EXCEPTION 'Kauba aja triger ei toimi'; END IF;
     SELECT min(isik_id) INTO v_isik FROM isik;
-    UPDATE isik SET viimase_muutm_aeg=TIMESTAMPTZ '2020-01-01' WHERE isik_id=v_isik;
+    -- Muutmata isikurida säilitab varasema aja; tegelik muudatus saab tehingu aja.
+    ALTER TABLE isik DISABLE TRIGGER trig_isik_viimase_muutm_aeg;
+    UPDATE isik SET reg_aeg=TIMESTAMPTZ '2019-01-01',
+        viimase_muutm_aeg=TIMESTAMPTZ '2020-01-01' WHERE isik_id=v_isik;
+    ALTER TABLE isik ENABLE TRIGGER trig_isik_viimase_muutm_aeg;
+    UPDATE isik SET eesnimi=eesnimi WHERE isik_id=v_isik;
+    IF NOT EXISTS(SELECT 1 FROM isik WHERE isik_id=v_isik
+        AND viimase_muutm_aeg=TIMESTAMPTZ '2020-01-01') THEN
+        RAISE EXCEPTION 'Muutmata isiku ajatempel muutus';
+    END IF;
+    UPDATE isik SET eesnimi=eesnimi || 'x' WHERE isik_id=v_isik;
     IF NOT EXISTS(SELECT 1 FROM isik WHERE isik_id=v_isik
         AND viimase_muutm_aeg=CURRENT_TIMESTAMP::timestamptz(0)) THEN RAISE EXCEPTION 'Isiku aja triger ei toimi'; END IF;
     FOREACH v_tabel IN ARRAY ARRAY['kaup','nutitelefon','kauba_variant','kauba_kategooria_omamine'] LOOP

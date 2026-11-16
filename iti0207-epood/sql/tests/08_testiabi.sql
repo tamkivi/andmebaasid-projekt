@@ -17,7 +17,7 @@ BEGIN
     ALTER TABLE public.kaup ENABLE TRIGGER USER;
 END;
 $abi$;
-CREATE FUNCTION pg_temp.u9_viga(p_lause text,p_reegel text,p_teade text DEFAULT NULL) RETURNS void
+CREATE FUNCTION pg_temp.u9_viga(p_lause text,p_reegel text,p_teade text DEFAULT NULL,p_veerg text DEFAULT NULL) RETURNS void
 LANGUAGE plpgsql AS $abi$
 DECLARE
     v_reegel text; v_teade text; v_skeem text; v_tabel text;
@@ -32,6 +32,7 @@ BEGIN
         IF v_reegel IS DISTINCT FROM p_reegel OR v_skeem<>'public'
             OR v_tabel='' OR v_detail='' OR v_vihje=''
             OR (p_teade IS NOT NULL AND v_teade IS DISTINCT FROM p_teade)
+            OR (p_veerg IS NOT NULL AND v_veerg IS DISTINCT FROM p_veerg)
             OR (p_reegel NOT LIKE '%_kustutamine' AND p_reegel NOT LIKE '%_truncate' AND v_veerg='') THEN
             RAISE EXCEPTION 'Vale veateade: %, %, %, %, %, %, %',
                 v_reegel,v_teade,v_skeem,v_tabel,v_detail,v_vihje,v_veerg;

@@ -67,9 +67,9 @@ DECLARE
 BEGIN
     SELECT kood INTO v_kood FROM public.kauba_seisundi_liik
     WHERE kauba_seisundi_liik_id=NEW.kauba_seisundi_liik_id FOR SHARE;
-    -- Seoste muutmise triger lukustab sama kaubarea; seoseridu siin ei lukustata.
+    -- FOR SHARE ei lase teisel tehingul leitud kategooriaseost samal ajal kustutada.
     IF v_kood=2 AND NOT EXISTS (SELECT 1 FROM public.kauba_kategooria_omamine
-        WHERE kaup_id=NEW.kaup_id) THEN
+        WHERE kaup_id=NEW.kaup_id FOR SHARE) THEN
         RAISE EXCEPTION 'Kauba aktiveerimiseks peab sellel olema vähemalt üks kategooria.' USING
             ERRCODE='check_violation',
             DETAIL=format('Kauba kood %s, kauba tunnus %s.',NEW.kauba_kood,NEW.kaup_id),
@@ -79,7 +79,7 @@ BEGIN
     RETURN NEW;
 END;
 $keha$;
-COMMENT ON FUNCTION public.f_trig_kaup_aktiveerimine() IS 'Aktiivsesse seisundisse viidaval kaubal peab olema kategooria. Samaaegseid seosemuudatusi välistab seosetrigeri FOR SHARE lukk kaubareal.';
+COMMENT ON FUNCTION public.f_trig_kaup_aktiveerimine() IS 'Aktiivsesse seisundisse viidaval kaubal peab olema vähemalt üks kategooria. Leitud kategooriaseos lukustatakse FOR SHARE abil, et teine tehing ei saaks seda aktiveerimise ajal kustutada.';
 
 CREATE OR REPLACE TRIGGER trig_kaup_seisundimuudatus_kategooria
 BEFORE UPDATE OF kauba_seisundi_liik_id ON public.kaup
@@ -128,7 +128,15 @@ BEGIN
             ERRCODE='check_violation',
             DETAIL=format('Kauba kood %s, muudatuseelne seisundi kood %s.',OLD.kauba_kood,v_kood),
             HINT='Muuda aktiivne kaup enne andmete muutmist mitteaktiivseks.', SCHEMA=TG_TABLE_SCHEMA, TABLE=TG_TABLE_NAME,
-            CONSTRAINT=TG_TABLE_NAME || '_muudetavus', COLUMN='kauba_kood';
+            CONSTRAINT=TG_TABLE_NAME || '_muudetavus',
+            COLUMN=CASE
+                WHEN OLD.kauba_kood IS DISTINCT FROM NEW.kauba_kood THEN 'kauba_kood'
+                WHEN OLD.nimetus IS DISTINCT FROM NEW.nimetus THEN 'nimetus'
+                WHEN OLD.hind IS DISTINCT FROM NEW.hind THEN 'hind'
+                WHEN OLD.kirjeldus IS DISTINCT FROM NEW.kirjeldus THEN 'kirjeldus'
+                WHEN OLD.pildi_aadress IS DISTINCT FROM NEW.pildi_aadress THEN 'pildi_aadress'
+                WHEN OLD.brand_id IS DISTINCT FROM NEW.brand_id THEN 'brand_id'
+                ELSE 'kaup_id' END;
     END IF;
     RETURN NEW;
 END;
@@ -248,19 +256,19 @@ BEGIN
     RETURN NEW;
 END;
 $keha$;
-COMMENT ON FUNCTION public.f_trig_viimase_muutm_aeg() IS 'Määrab kauba või isiku iga UPDATE korral viimase muutmise ajaks tehingu algusaja. INSERT vaikeväärtused jäävad tabeli määrata.';
+COMMENT ON FUNCTION public.f_trig_viimase_muutm_aeg() IS 'Määrab kauba või isiku rea muutmisel viimase muutmise ajaks tehingu algusaja. INSERT vaikeväärtused jäävad tabeli määrata.';
 
 CREATE OR REPLACE TRIGGER trig_kaup_viimase_muutm_aeg
 BEFORE UPDATE ON public.kaup
 FOR EACH ROW
 EXECUTE FUNCTION public.f_trig_viimase_muutm_aeg();
-COMMENT ON TRIGGER trig_kaup_viimase_muutm_aeg ON public.kaup IS 'Määrab viimase muutmise aja ka sama töötaja tehtud seosemuudatuse korral.';
+COMMENT ON TRIGGER trig_kaup_viimase_muutm_aeg ON public.kaup IS 'Määrab viimase muutmise aja iga kaubarea UPDATE korral, ka siis, kui sama töötaja muudab kauba seoseid ja kaubarea väärtused ei muutu.';
 
 CREATE OR REPLACE TRIGGER trig_isik_viimase_muutm_aeg
 BEFORE UPDATE ON public.isik
-FOR EACH ROW
+FOR EACH ROW WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE FUNCTION public.f_trig_viimase_muutm_aeg();
-COMMENT ON TRIGGER trig_isik_viimase_muutm_aeg ON public.isik IS 'Määrab viimase muutmise aja ka sama töötaja tehtud seosemuudatuse korral.';
+COMMENT ON TRIGGER trig_isik_viimase_muutm_aeg ON public.isik IS 'Määrab viimase muutmise aja ainult siis, kui isiku andmed tegelikult muutuvad.';
 
 CREATE OR REPLACE FUNCTION public.f_trig_kaup_aktiivne_seisund()
 RETURNS trigger LANGUAGE plpgsql VOLATILE SECURITY DEFINER
@@ -271,7 +279,7 @@ DECLARE
 BEGIN
     SELECT on_aktiivne INTO v_aktiivne FROM public.kauba_seisundi_liik
     WHERE kauba_seisundi_liik_id=NEW.kauba_seisundi_liik_id FOR SHARE;
-    IF v_aktiivne=FALSE THEN
+    IF NOT v_aktiivne THEN
         RAISE EXCEPTION 'Kauba uus seisund peab olema aktiivne klassifikaatoriväärtus.' USING
             ERRCODE='check_violation',
             DETAIL=format('Kauba kood %s, seisundi tunnus %s.',NEW.kauba_kood,NEW.kauba_seisundi_liik_id),

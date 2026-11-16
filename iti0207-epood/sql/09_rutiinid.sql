@@ -117,10 +117,11 @@ FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE s.kood=2 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='KAUBAHALDUR') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
+    AND (k.kauba_seisundi_liik_id<>uus.kauba_seisundi_liik_id)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_aktiveeri_kaup(character varying,character varying) IS
-    'OP3: volitatud kauba haldur valib seisundikoodi 2. Trigerid kontrollivad üleminekut, uue seisundiliigi aktiivsust ja kategooria olemasolu. Rutiin määrab viimase muutja, aja määrab triger. Sama sihtseisundi tagasikirjutamine on lubatud.';
+    'OP3: volitatud kauba haldur valib seisundikoodi 2. Trigerid kontrollivad üleminekut, uue seisundiliigi aktiivsust ja kategooria olemasolu. Rutiin määrab viimase muutja, aja määrab triger. Kui kaup on juba selles seisundis, siis rida ei muudeta ja tulemus on NULL.';
 
 CREATE OR REPLACE FUNCTION f_muuda_kaup_mitteaktiivseks(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
@@ -135,10 +136,11 @@ FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE s.kood=3 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='KAUBAHALDUR') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
+    AND (k.kauba_seisundi_liik_id<>uus.kauba_seisundi_liik_id)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_muuda_kaup_mitteaktiivseks(character varying,character varying) IS
-    'OP4: volitatud kauba haldur valib seisundikoodi 3. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Sama seisundi tagasikirjutamine on lubatud.';
+    'OP4: volitatud kauba haldur valib seisundikoodi 3. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Kui kaup on juba selles seisundis, siis rida ei muudeta ja tulemus on NULL.';
 
 CREATE OR REPLACE FUNCTION f_lopeta_kaup(
     p_kauba_kood kaup.kauba_kood%TYPE,p_e_meil isik.e_meil%TYPE)
@@ -153,10 +155,11 @@ FROM (SELECT s.kauba_seisundi_liik_id FROM public.kauba_seisundi_liik AS s
       WHERE s.kood=4 FOR SHARE) AS uus
 CROSS JOIN public.f_leia_tootaja(p_e_meil:=p_e_meil,p_rolli_kood:='JUHATAJA') AS tegija(tootaja_id)
 WHERE (k.kauba_kood=p_kauba_kood)
+    AND (k.kauba_seisundi_liik_id<>uus.kauba_seisundi_liik_id)
 RETURNING k.kauba_kood;
 END;
 COMMENT ON FUNCTION f_lopeta_kaup(character varying,character varying) IS
-    'OP5: volitatud juhataja valib seisundikoodi 4. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Sama seisundi tagasikirjutamine on lubatud.';
+    'OP5: volitatud juhataja valib seisundikoodi 4. Üleminekut ja uue seisundiliigi aktiivsust kontrollivad trigerid. Rutiin määrab viimase muutja, aja määrab triger. Kui kaup on juba selles seisundis, siis rida ei muudeta ja tulemus on NULL.';
 
 CREATE OR REPLACE FUNCTION f_muuda_kaup(
     p_ver text,

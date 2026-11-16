@@ -98,7 +98,7 @@ for case in ['s1','s2','s3_aktiveeri','s3_eemalda','s4','s5_kustuta','s5_variant
             's3_eemalda':'Kauba aktiveerimiseks peab sellel olema vähemalt üks kategooria.',
             's6_aktiveeri':'Kauba lisaandmeid saab muuta ainult ootel või mitteaktiivses seisundis.',
             's6_eemalda':'Kauba aktiveerimiseks peab sellel olema vähemalt üks kategooria.'}
-    pair(case,'CON008' if case in ('s4','s5_variant') else 'NULL',errors.get(case))
+    pair(case,'CON008' if case=='s5_variant' else 'NULL',errors.get(case))
 for name in ['muuda','seosed']:
     fixture('koormus-'+name)
     workload=out/('pgbench_'+name+'.sql')

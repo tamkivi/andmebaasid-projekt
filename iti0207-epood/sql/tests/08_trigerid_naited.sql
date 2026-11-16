@@ -150,12 +150,18 @@ ROLLBACK;
 
 \echo trig_kaup_aktiivne_algseisund
 START TRANSACTION;
+-- Tulemus: aktiivse seisundiliigiga lisamine õnnestub.
+INSERT INTO kaup (kauba_kood,nimetus,hind,kirjeldus,kauba_seisundi_liik_id,
+    brand_id,registreerija_id,viimase_muutja_id)
+SELECT 'NAT009','Trigeri näidiskaup',100,'Trigeri näite kontrollkirjeldus',s.kauba_seisundi_liik_id,
+    k.brand_id,k.registreerija_id,k.viimase_muutja_id
+FROM kaup k CROSS JOIN kauba_seisundi_liik s WHERE k.kauba_kood='APL001' AND s.kood=1;
 UPDATE kauba_seisundi_liik SET on_aktiivne=FALSE WHERE kood=1;
 -- Tulemus: ebaõnnestub veateatega "Kauba uus seisund peab olema aktiivne klassifikaatoriväärtus.".
 \set ON_ERROR_STOP off
 INSERT INTO kaup (kauba_kood,nimetus,hind,kirjeldus,kauba_seisundi_liik_id,
     brand_id,registreerija_id,viimase_muutja_id)
-SELECT 'NAT009','Trigeri näidiskaup',100,'Trigeri näite kontrollkirjeldus',s.kauba_seisundi_liik_id,
+SELECT 'NAT010','Trigeri teine näidiskaup',100,'Trigeri näite kontrollkirjeldus',s.kauba_seisundi_liik_id,
     k.brand_id,k.registreerija_id,k.viimase_muutja_id
 FROM kaup k CROSS JOIN kauba_seisundi_liik s WHERE k.kauba_kood='APL001' AND s.kood=1;
 \set ON_ERROR_STOP on
@@ -164,6 +170,9 @@ ROLLBACK;
 \echo trig_kaup_aktiivne_uus_seisund
 START TRANSACTION;
 UPDATE kauba_seisundi_liik SET on_aktiivne=FALSE WHERE kood=2;
+-- Tulemus: aktiivse seisundiliigi valimine ja suletud seisundiliigi tagasikirjutamine õnnestuvad.
+UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=3) WHERE kauba_kood='APL002';
+UPDATE kaup SET kauba_seisundi_liik_id=kauba_seisundi_liik_id;
 -- Tulemus: ebaõnnestub veateatega "Kauba uus seisund peab olema aktiivne klassifikaatoriväärtus.".
 \set ON_ERROR_STOP off
 UPDATE kaup SET kauba_seisundi_liik_id=(SELECT kauba_seisundi_liik_id FROM kauba_seisundi_liik WHERE kood=2) WHERE kauba_kood='APL001';
