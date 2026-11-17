@@ -75,11 +75,8 @@ REVOKE ALL ON FUNCTION f_unusta_kaup(character varying, character varying) FROM 
 REVOKE ALL ON FUNCTION public.f_on_kaubahaldur(text, text) FROM PUBLIC;
 
 GRANT USAGE ON SCHEMA public TO epood_rakendus;
-GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid,
-    v_kaupade_detailid,v_kaupade_koondaruanne,v_aktiivsed_kaubad,
-    v_kategooriate_valikud,v_varvide_valikud,v_kaupade_kategooriate_loendid,
-    v_kaupade_kategooriate_pingeread,v_kaupade_json
-    TO epood_rakendus;
+GRANT SELECT ON v_kaubad_muutmiseks,v_kauba_kategooriad,v_kauba_variandid,
+    v_varvide_valikud TO epood_rakendus;
 
 DO $yhendus$
 BEGIN
@@ -87,13 +84,12 @@ BEGIN
 END;
 $yhendus$;
 
--- Rakendus saab käivitada kümmet andmemuudatuse funktsiooni, kaht vormifunktsiooni ja tuvastamisfunktsiooni.
+-- Rakendus saab käivitada üheksat andmemuudatuse funktsiooni, kaht vormifunktsiooni ja tuvastamisfunktsiooni.
 GRANT EXECUTE ON FUNCTION f_aktiveeri_kaup(character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_lisa_kauba_variant(character varying, character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_lisa_kaup_kategooriasse(character varying, character varying, character varying) TO epood_rakendus;
-GRANT EXECUTE ON FUNCTION f_lopeta_kaup(character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_muuda_kaup(text,
     character varying,
     character varying,
@@ -150,3 +146,11 @@ GRANT EXECUTE ON FUNCTION public.f_registreeri_nutitelefon_vormist(character var
 GRANT EXECUTE ON FUNCTION public.f_muuda_kaup_vormist(text,character varying,character varying,character varying,
     numeric,text,character varying,character varying,character varying,boolean,boolean,
     numeric,numeric,integer,numeric,character varying,character varying) TO epood_rakendus;
+
+-- Rakendusele vastav kasutaja ja liigsete õiguste äravõtmine (Ü12).
+REVOKE EXECUTE ON FUNCTION f_lopeta_kaup(character varying, character varying) FROM epood_rakendus;
+REVOKE SELECT ON v_kaubad,v_kaupade_detailid,v_kaupade_koondaruanne,
+    v_aktiivsed_kaubad,v_kategooriate_valikud,v_kaupade_kategooriate_loendid,
+    v_kaupade_kategooriate_pingeread,v_kaupade_json FROM epood_rakendus;
+REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA laiendused FROM PUBLIC;

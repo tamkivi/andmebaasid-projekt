@@ -7,12 +7,15 @@ BEGIN
         WHERE n.nspname='public')<>24 THEN
         RAISE EXCEPTION 'Kontroll eeldab kümmet lepingulist funktsiooni ja üht abifunktsiooni ning kümmet trigerifunktsiooni, kaht vormifunktsiooni ja tuvastamisfunktsiooni';
     END IF;
+    IF has_language_privilege('epood_rakendus','plpgsql','USAGE') THEN
+        RAISE EXCEPTION 'Rakendus ei vaja plpgsql kasutusõigust';
+    END IF;
     FOR v_funktsioon IN SELECT p.oid,p.proname,p.proacl,p.proowner,p.prorettype
         FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
         WHERE n.nspname='public'
     LOOP
         IF has_function_privilege('epood_rakendus',v_funktsioon.oid,'EXECUTE')
-                IS DISTINCT FROM (v_funktsioon.proname<>'f_leia_tootaja' AND v_funktsioon.prorettype<>'trigger'::regtype)
+                IS DISTINCT FROM (v_funktsioon.proname NOT IN ('f_leia_tootaja','f_lopeta_kaup') AND v_funktsioon.prorettype<>'trigger'::regtype)
             OR has_function_privilege('epood_rakendus',v_funktsioon.oid,'EXECUTE WITH GRANT OPTION')
             OR EXISTS (SELECT 1 FROM aclexplode(COALESCE(v_funktsioon.proacl,
                 acldefault('f',v_funktsioon.proowner))) AS a
@@ -49,7 +52,7 @@ BEGIN
         SELECT 1 FROM pg_catalog.pg_class AS t
         INNER JOIN pg_catalog.pg_namespace AS n ON n.oid=t.relnamespace
         WHERE n.nspname='public' AND t.relkind='v'
-          AND (NOT has_table_privilege('epood_rakendus',t.oid,'SELECT')
+          AND (has_table_privilege('epood_rakendus',t.oid,'SELECT') IS DISTINCT FROM (t.relname=ANY(ARRAY['v_kaubad_muutmiseks','v_kauba_kategooriad','v_kauba_variandid','v_varvide_valikud','v_ootel_kaubad','v_aktiivsed_kaubad_haldurile','v_kauba_muutmise_vorm','v_brandide_valikud','v_kaamerate_valikud','v_sisemalude_valikud','v_diagonaalide_valikud','v_protsessorite_valikud','v_ekraani_resolutsioonide_valikud','v_kategooriate_valikud_tyybiga','v_kaupade_detailid_seostega','v_seotud_kategooriate_valikud']))
                OR has_table_privilege('epood_rakendus',t.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
                OR has_table_privilege('epood_rakendus',t.oid,'SELECT WITH GRANT OPTION'))
     ) THEN
@@ -59,6 +62,8 @@ BEGIN
     END IF;
 END;
 $kontroll$;
+-- Ainult tagasivõetava testi DO-plokkide jaoks; rakendus seda õigust ei saa.
+GRANT USAGE ON LANGUAGE plpgsql TO epood_rakendus;
 SAVEPOINT funktsioonide_kontroll;
 SELECT set_config('epood.kontroll_e_meil',(
     SELECT i.e_meil FROM tootaja AS t INNER JOIN isik AS i USING (isik_id)
@@ -98,7 +103,6 @@ BEGIN
     END IF;
 END;
 $tuvastamine$;
-SELECT kauba_kood,nimetus FROM public.v_kaubad;
 SELECT kauba_kood,nimetus FROM public.v_kaubad_muutmiseks;
 SELECT kauba_kood,kategooria_kood FROM public.v_kauba_kategooriad;
 SELECT kauba_kood,varvi_kood FROM public.v_kauba_variandid;
@@ -111,7 +115,7 @@ DECLARE
 BEGIN
     FOR v_vaade IN SELECT c.oid,c.relname FROM pg_class AS c
         INNER JOIN pg_namespace AS n ON n.oid=c.relnamespace
-        WHERE n.nspname='public' AND c.relkind='v'
+        WHERE n.nspname='public' AND c.relkind='v' AND c.relname=ANY(ARRAY['v_kaubad_muutmiseks','v_kauba_kategooriad','v_kauba_variandid','v_varvide_valikud','v_ootel_kaubad','v_aktiivsed_kaubad_haldurile','v_kauba_muutmise_vorm','v_brandide_valikud','v_kaamerate_valikud','v_sisemalude_valikud','v_diagonaalide_valikud','v_protsessorite_valikud','v_ekraani_resolutsioonide_valikud','v_kategooriate_valikud_tyybiga','v_kaupade_detailid_seostega','v_seotud_kategooriate_valikud'])
     LOOP
         EXECUTE format('SELECT count(*) FROM public.%I',v_vaade.relname) INTO v_ridu;
         IF v_ridu<1 THEN RAISE EXCEPTION 'Rakenduseroll ei saa lugeda vaadet %',v_vaade.relname; END IF;
@@ -132,6 +136,15 @@ BEGIN
         'SELECT count(*) FROM valine.riik_sisend',
         'SELECT count(*) FROM valine.isik_sisend',
         'CREATE TABLE valine.keelatud (kood integer)',
+        'SELECT public.f_lopeta_kaup(''APP001'',''puuduv@example.invalid'')',
+        'SELECT count(*) FROM public.v_kaubad',
+        'SELECT count(*) FROM public.v_kaupade_detailid',
+        'SELECT count(*) FROM public.v_kaupade_koondaruanne',
+        'SELECT count(*) FROM public.v_aktiivsed_kaubad',
+        'SELECT count(*) FROM public.v_kategooriate_valikud',
+        'SELECT count(*) FROM public.v_kaupade_kategooriate_loendid',
+        'SELECT count(*) FROM public.v_kaupade_kategooriate_pingeread',
+        'SELECT count(*) FROM public.v_kaupade_json',
         'SELECT count(*) FROM public.isik',
         'SELECT count(*) FROM public.kasutajakonto',
         'SELECT laiendused.crypt(''x'',''y'')',
@@ -148,9 +161,9 @@ BEGIN
     END LOOP;
     -- DO INSTEAD NOTHING reeglid eemaldavad muutmise enne õiguse kontrolli.
     FOR v_lause IN SELECT unnest(ARRAY[
-        'UPDATE public.v_kaubad SET nimetus=''Katse''',
-        'DELETE FROM public.v_kaubad',
-        'INSERT INTO public.v_kaubad (kauba_kood) VALUES (''ABC123'')'])
+        'UPDATE public.v_kaubad_muutmiseks SET nimetus=''Katse''',
+        'DELETE FROM public.v_kaubad_muutmiseks',
+        'INSERT INTO public.v_kaubad_muutmiseks (kauba_kood) VALUES (''ABC123'')'])
     LOOP
         EXECUTE v_lause;
         GET DIAGNOSTICS v_ridu=ROW_COUNT;
@@ -200,11 +213,10 @@ BEGIN
     IF f_eemalda_kaup_kategooriast(p_kauba_kood:='APP001',
             p_kauba_kategooria_kood:='MEESTELEFONID',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001'
         OR f_eemalda_kauba_variant(p_kauba_kood:='APP001',
-            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001'
-        OR f_lopeta_kaup(p_kauba_kood:='APP001',p_e_meil:=v_juhataja) IS DISTINCT FROM 'APP001' THEN
-        RAISE EXCEPTION 'Rakenduseroll ei saanud seoseid eemaldada või kaupa lõpetada';
+            p_varv_kood:='WHITE',p_e_meil:=v_e_meil) IS DISTINCT FROM 'APP001' THEN
+        RAISE EXCEPTION 'Rakenduseroll ei saanud seoseid eemaldada';
     END IF;
-    IF f_registreeri_nutitelefon(p_kauba_kood:='APP002',p_nimetus:='Rakenduse kontrolltelefon',p_hind:=899::numeric,
+    IF f_registreeri_nutitelefon(p_kauba_kood:='APP002',p_nimetus:='Teine kontrolltelefon',p_hind:=899::numeric,
             p_kirjeldus:='Rakenduserolli kaudu hallatav telefoni kontrollkirje.',
             p_pildi_aadress:=NULL::varchar,p_e_meil:=v_e_meil,p_brandi_kood:='APPLE',
             p_on_veekindel:=TRUE,p_on_sormejalelugeja:=FALSE,
@@ -222,7 +234,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM kaup AS k
         INNER JOIN kauba_seisundi_liik AS s USING (kauba_seisundi_liik_id)
         INNER JOIN nutitelefon AS n USING (kaup_id)
-        WHERE k.kauba_kood='APP001' AND s.kood=4)
+        WHERE k.kauba_kood='APP001' AND s.kood=3)
         OR EXISTS (SELECT 1 FROM kaup WHERE kauba_kood='APP002')
         OR EXISTS (SELECT 1 FROM kauba_kategooria_omamine AS o
             INNER JOIN kaup AS k USING (kaup_id) WHERE k.kauba_kood='APP001')

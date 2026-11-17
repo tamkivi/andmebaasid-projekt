@@ -159,6 +159,8 @@ BEGIN
     END IF;
 END;
 $omadused$;
+-- Ainult tagasivõetava testi DO-plokkide jaoks.
+GRANT USAGE ON LANGUAGE plpgsql TO epood_rakendus;
 SET LOCAL ROLE epood_rakendus;
 DO $vormid$
 DECLARE

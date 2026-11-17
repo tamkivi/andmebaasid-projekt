@@ -15,6 +15,8 @@ INSERT INTO public.tootaja_rolli_omamine (tootaja_id,tootaja_roll_id,alguse_aeg)
     SELECT t.tootaja_id,r.tootaja_roll_id,date_trunc('second',CURRENT_TIMESTAMP)
     FROM public.tootaja AS t JOIN public.isik AS i USING (isik_id)
     CROSS JOIN public.tootaja_roll AS r WHERE i.isikukood='U11NAIDE' AND r.kood='KAUBAHALDUR';
+-- Ainult tagasivõetava testi DO-plokkide jaoks.
+GRANT USAGE ON LANGUAGE plpgsql TO epood_rakendus;
 SET LOCAL ROLE epood_rakendus;
 
 -- Sisselogimine: TRUE ning FALSE.
