@@ -12,6 +12,8 @@ SET search_path TO public;
 \ir 08_trigerid_naited.sql
 \ir 09_rutiinid.sql
 \ir 09_rutiinid_naited.sql
+\ir 09_1_rakenduse_liides.sql
+\ir 09_1_rakenduse_liides_naited.sql
 \ir 10_indexes.sql
 \ir 11_klassifikaatorid.sql
 \ir 12_json_laadimine.sql

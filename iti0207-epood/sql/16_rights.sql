@@ -141,7 +141,8 @@ GRANT SELECT ON public.v_ootel_kaubad,
     public.v_protsessorite_valikud,
     public.v_ekraani_resolutsioonide_valikud,
     public.v_kategooriate_valikud_tyybiga,
-    public.v_kaupade_detailid_seostega
+    public.v_kaupade_detailid_seostega,
+    public.v_seotud_kategooriate_valikud
     TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION public.f_registreeri_nutitelefon_vormist(character varying,character varying,numeric,text,
     character varying,character varying,character varying,boolean,boolean,numeric,numeric,

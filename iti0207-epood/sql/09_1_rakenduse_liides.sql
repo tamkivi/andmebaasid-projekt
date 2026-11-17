@@ -243,6 +243,23 @@ CREATE RULE r_v_kaupade_detailid_seostega_update AS
 CREATE RULE r_v_kaupade_detailid_seostega_delete AS
     ON DELETE TO public.v_kaupade_detailid_seostega DO INSTEAD NOTHING;
 
+CREATE VIEW public.v_seotud_kategooriate_valikud
+    (kategooria_kood,valiku_nimetus)
+    WITH (security_barrier=true) AS
+SELECT DISTINCT c.kategooria_kood,
+    c.kategooria_nimetus || ' (' || c.kategooria_tyyp_nimetus || ')'
+FROM public.v_kauba_kategooriad AS c
+ORDER BY c.kategooria_nimetus || ' (' || c.kategooria_tyyp_nimetus || ')',c.kategooria_kood;
+COMMENT ON VIEW public.v_seotud_kategooriate_valikud IS
+    'Kasutusjuhud Registreeri nutitelefon ja Muuda kaupa, OP2.2 ja OP8: olemasoleva kategooriaseose eemaldamise valik koos tüübi nimetusega. Sisaldab ka suletud kategooria või tüübi seost; sama kategooria ei kordu eri kaupade tõttu. Ainult lugemiseks.';
+
+CREATE RULE r_v_seotud_kategooriate_valikud_insert AS
+    ON INSERT TO public.v_seotud_kategooriate_valikud DO INSTEAD NOTHING;
+CREATE RULE r_v_seotud_kategooriate_valikud_update AS
+    ON UPDATE TO public.v_seotud_kategooriate_valikud DO INSTEAD NOTHING;
+CREATE RULE r_v_seotud_kategooriate_valikud_delete AS
+    ON DELETE TO public.v_seotud_kategooriate_valikud DO INSTEAD NOTHING;
+
 CREATE OR REPLACE FUNCTION public.f_registreeri_nutitelefon_vormist(
     p_kauba_kood kaup.kauba_kood%TYPE,
     p_nimetus kaup.nimetus%TYPE,
