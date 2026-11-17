@@ -72,7 +72,32 @@ SELECT set_config('epood.kontroll_juhataja',(
     INNER JOIN tootaja_roll AS r USING (tootaja_roll_id)
     WHERE r.kood='JUHATAJA' AND o.lopu_aeg='infinity'
     ORDER BY t.tootaja_id FETCH FIRST 1 ROW ONLY),true);
+-- Parool seatakse ilma SELECT-väljundita ja ainult selle tehingu ajaks.
+DO $sisend$
+DECLARE
+    v_parool text;
+BEGIN
+    SELECT jt.parool INTO STRICT v_parool
+    FROM valine.Isik_sisend AS a
+    CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
+        isikukood text PATH '$.isikukood',parool text PATH '$.parool')) AS jt
+    JOIN riik AS r ON r.kood=JSON_VALUE(a.isik,'$.riik')
+    JOIN isik AS i ON i.riik_id=r.riik_id AND i.isikukood=jt.isikukood
+    WHERE i.e_meil=current_setting('epood.kontroll_e_meil');
+    PERFORM set_config('epood.kontroll_parool',v_parool,true);
+END;
+$sisend$;
 SET LOCAL ROLE epood_rakendus;
+DO $tuvastamine$
+BEGIN
+    IF public.f_on_kaubahaldur(current_setting('epood.kontroll_e_meil'),
+            current_setting('epood.kontroll_parool')) IS DISTINCT FROM TRUE
+        OR public.f_on_kaubahaldur(current_setting('epood.kontroll_e_meil'),
+            'vale-naidis') IS DISTINCT FROM FALSE THEN
+        RAISE EXCEPTION 'Rakenduseroll peab saama tuvastada õige ja vale parooli';
+    END IF;
+END;
+$tuvastamine$;
 SELECT kauba_kood,nimetus FROM public.v_kaubad;
 SELECT kauba_kood,nimetus FROM public.v_kaubad_muutmiseks;
 SELECT kauba_kood,kategooria_kood FROM public.v_kauba_kategooriad;
@@ -109,6 +134,7 @@ BEGIN
         'CREATE TABLE valine.keelatud (kood integer)',
         'SELECT count(*) FROM public.isik',
         'SELECT count(*) FROM public.kasutajakonto',
+        'SELECT laiendused.crypt(''x'',''y'')',
         'INSERT INTO public.brand (kood,nimetus) VALUES (''TEST'',''Katse'')',
         'CREATE TABLE public.keelatud (kood integer)'])
     LOOP

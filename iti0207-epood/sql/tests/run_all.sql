@@ -6,6 +6,7 @@ SET search_path TO public;
 \ir 04_ddl.sql
 \ir 04_tables.sql
 \ir 05_views.sql
+\ir 07_tuvastamine.sql
 \ir 08_trigerid.sql
 \ir 08_trigerid_naited.sql
 \ir 09_rutiinid.sql
