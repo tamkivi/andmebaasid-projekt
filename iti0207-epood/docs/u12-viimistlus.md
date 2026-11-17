@@ -28,8 +28,9 @@ ka nende kutsutavate registreerimis- ja muutmisfunktsioonide käivitusõiguse.
 | `valine`, `laiendused`, välised tabelid ja välisserver | Juurdepääs keelatud | Laadimine ja laienduste otsekutsed pole rakenduse tegevused. |
 | Keel `plpgsql` ja laienduste funktsioonid | PUBLIC-i vaikeõigused eemaldatud | Rakendus ei loo plokke ega kutsu laiendusi otse. |
 
-Kokku jääb rollile 16 vaate SELECT ja 12 funktsiooni EXECUTE. Detailvaade töötab
-ka pärast selle alusvaadete otseõiguste eemaldamist; kontrollisin seda ühenduskasutajana.
+Kokku jääb rollile 16 vaate lugemisõigus ja 12 funktsiooni käivitusõigus.
+Detailvaade töötab ka pärast selle alusvaadete otseõiguste eemaldamist;
+kontrollisin seda ühenduskasutajana.
 Testide DO-plokkidele antakse keeleõigus ainult tagasivõetava tehingu sees.
 See õigus ei jää rakendusele alles.
 
@@ -49,8 +50,8 @@ selgitan nimekokkupõrke enne SQL-i rakendamist.
 
 ## Paroolide laadimine
 
-Ü12 juhendi §7 järgi lisab JSON-laadimise konto INSERT allika testparooli ning
-vahetult järgnev UPDATE asendab selle bcrypt-räsiga. Mõlemad laused kuuluvad
+Ü12 juhendi §7 järgi lisab INSERT JSON-andmete laadimisel kontole allika testparooli
+ning vahetult järgnev UPDATE asendab selle bcrypt-räsiga. Mõlemad laused kuuluvad
 samasse tehingusse; kinnitamisel on tabelis ainult räsid. Olemasolevaid räsisid
 ei muudeta. Vanema paigalduse jaoks säilib eraldi paroolimigratsioon.
 
@@ -86,17 +87,17 @@ registreerimisvormile süstimise kujuga teksti. Vale sisend ei anna sissepääsu
 nimetus ja kirjeldus säilivad muutmata tekstina ning kõik baastabelid jäävad alles.
 Rutiinid ei koosta kasutaja sisendist dünaamilist SQL-i. Paigalduse dünaamilistes
 lausetes kasutatakse andmebaasinime jaoks `format`-i `%I` vormingut; klassifikaatorite
-laadimisel pannakse indeksi tingimusse kataloogist loetud täisarvuline seisundi ID. Brauseri HTML-i
-varjestamist kohalik SQL-test ei kontrolli. Ü11 peidetud tegijavälja ja vabalt
-valitava sortimise piirangud jäävad samuti kehtima.
+laadimisel pannakse indeksi tingimusse kataloogist loetud täisarvuline seisundi ID.
+Brauseri HTML-i varjestamist kohalik SQL-test ei kontrolli. Ü11 peidetud tegijavälja
+ja vabalt valitava sortimise piirangud jäävad samuti kehtima.
 
 [19_drop_objects.sql](../sql/19_drop_objects.sql) eemaldab kõigepealt sõltuvad
 objektid, siis tabelid ja rollid. IDENTITY-generaatorid kustuvad koos tabelitega.
 Katsetasin skripti nii, et lõpu COMMIT asendati ainult testisisendis ROLLBACK-iga.
-Objektid, rollid ja õigused taastusid. Seejärel kontrollisin päris eemaldamist,
-null allesjäänud projektiobjekti ning uuesti ehitamist. Mõlemas PostgreSQLi
-versioonis kontrollisin ka Ü11 seisust uuendamist, üheksat kahe seansi katset ja
-kaht koormuskatset. Kohalikud konteinerid ning nende andmeköited eemaldati.
+Objektid, rollid ja õigused taastusid. Seejärel kontrollisin, et päris eemaldamise
+järel ei jäänud ühtegi projektiobjekti alles, ning ehitasin andmebaasi uuesti.
+Mõlemas PostgreSQLi versioonis kontrollisin ka Ü11 seisust uuendamist, üheksat
+kahe seansi katset ja kaht koormuskatset. Kohalikud konteinerid ning nende andmeköited eemaldati.
 
 Kohalik kataloogikontroll ei asenda ametlikku Quick testi. Puuduvaid primaarvõtmeid,
 indeksita välisvõtmeid, dubleerivaid indekseid ega fikseerimata otsinguteega
@@ -125,9 +126,17 @@ kommentaarid puuduvad; need tuleb ametliku kontrolli tulemustega koos üle vaada
    Tühi aruanne võib tähendada puuduvat SELECT- või USAGE-õigust. Kui leht kasutab
    eemaldatud vaadet, valin Ü11 tabeli järgi lubatud allika. Vajaduse korral
    põhjendan eraldi konkreetse vaate lisamist, mitte kõigi vanade õiguste taastamist.
-4. Kontrollin iga hinda näitava välja lipikul valuutat. Lehtedel 7–9 on märgitud
-   „The final function parameter expects a value of APP_USER variable”; xmin-i
-   märkeruut on välja lülitatud. Proovin kõik nupud ja veateated uuesti läbi.
+   Kui lõin Ü11 ajal ühenduskasutaja `epood_u11_login`, siis pärast pgApexi
+   ümberseadistamist eemaldan selle: `REVOKE epood_rakendus FROM epood_u11_login;`
+   ja `DROP USER epood_u11_login;`. Enne seda kontrollin, et vana kasutaja kuulub
+   minu projektile ja ükski teine rakendus seda ei kasuta.
+   Kui leht annab veateate „permission denied for language plpgsql”, märgin üles,
+   milline pgApexi tegevus seda vajab, ja annan keele USAGE-õiguse ainult rollile
+   `epood_rakendus`, mitte PUBLIC-ile.
+4. Kontrollin, et iga hinda näitava välja lipikul on valuuta (EUR). Lehtede 7–9
+   tabelivormis peab olema märgitud „The final function parameter expects a value
+   of APP_USER variable” ja xmin-i märkeruut peab jääma märkimata. Proovin kõik
+   nupud ja veateated uuesti läbi.
 5. Proovin sisselogimises, kõigis vormiväljades ja URL-i `kauba_kood` parameetris
    sisendeid `' OR '1'='1`, `'; DROP TABLE kaup; --` ja `<script>alert(1)</script>`.
    Kontrollin valikut „Is text escaped” ning vaatan tulemust aruandes, detailis,
