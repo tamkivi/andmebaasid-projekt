@@ -4,8 +4,8 @@ DECLARE
     v_funktsioon record;
 BEGIN
     IF (SELECT count(*) FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
-        WHERE n.nspname='public')<>21 THEN
-        RAISE EXCEPTION 'Kontroll eeldab kümmet lepingulist funktsiooni ja üht abifunktsiooni ning kümmet trigerifunktsiooni';
+        WHERE n.nspname='public')<>22 THEN
+        RAISE EXCEPTION 'Kontroll eeldab kümmet lepingulist funktsiooni ja üht abifunktsiooni ning kümmet trigerifunktsiooni ja tuvastamisfunktsiooni';
     END IF;
     FOR v_funktsioon IN SELECT p.oid,p.proname,p.proacl,p.proowner,p.prorettype
         FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace

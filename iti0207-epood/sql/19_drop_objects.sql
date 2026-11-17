@@ -48,6 +48,7 @@ DROP FUNCTION public.f_trig_kaup_aktiivne_seisund();
 DROP FUNCTION public.f_trig_keela_truncate();
 
 -- Rutiinid eemaldatakse enne nende kasutatavaid tabeleid ja domeeni.
+DROP FUNCTION public.f_on_kaubahaldur(text, text);
 DROP FUNCTION f_aktiveeri_kaup(character varying, character varying);
 DROP FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying);
 DROP FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying);

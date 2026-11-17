@@ -1,7 +1,7 @@
 -- Rakenduse lugemisõiguste roll; sisselogimist see roll ei võimalda.
 CREATE ROLE epood_rakendus NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE
     NOINHERIT NOREPLICATION NOBYPASSRLS;
-COMMENT ON ROLE epood_rakendus IS 'Kaupade halduri rakenduse lugemisvaadete ja lepinguliste funktsioonide minimaalsed õigused.';
+COMMENT ON ROLE epood_rakendus IS 'Kaupade halduri rakenduse lugemisvaadete, lepinguliste funktsioonide ja tuvastamisfunktsiooni minimaalsed õigused.';
 
 REVOKE ALL ON SCHEMA valine,laiendused FROM PUBLIC,epood_rakendus;
 REVOKE ALL ON ALL TABLES IN SCHEMA valine FROM PUBLIC,epood_rakendus;
@@ -72,6 +72,8 @@ REVOKE ALL ON FUNCTION f_registreeri_nutitelefon(character varying,
     character varying) FROM PUBLIC;
 REVOKE ALL ON FUNCTION f_unusta_kaup(character varying, character varying) FROM PUBLIC;
 
+REVOKE ALL ON FUNCTION public.f_on_kaubahaldur(text, text) FROM PUBLIC;
+
 GRANT USAGE ON SCHEMA public TO epood_rakendus;
 GRANT SELECT ON v_kaubad_muutmiseks,v_kaubad,v_kauba_kategooriad,v_kauba_variandid,
     v_kaupade_detailid,v_kaupade_koondaruanne,v_aktiivsed_kaubad,
@@ -85,7 +87,7 @@ BEGIN
 END;
 $yhendus$;
 
--- Rakendus saab käivitada kümmet andmemuudatuse funktsiooni.
+-- Rakendus saab käivitada kümmet andmemuudatuse funktsiooni ja tuvastamisfunktsiooni.
 GRANT EXECUTE ON FUNCTION f_aktiveeri_kaup(character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying) TO epood_rakendus;
@@ -126,3 +128,4 @@ GRANT EXECUTE ON FUNCTION f_registreeri_nutitelefon(character varying,
     character varying,
     character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_unusta_kaup(character varying, character varying) TO epood_rakendus;
+GRANT EXECUTE ON FUNCTION public.f_on_kaubahaldur(text, text) TO epood_rakendus;
