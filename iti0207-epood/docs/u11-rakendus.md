@@ -28,8 +28,8 @@ Kauba lõpetamine ja kaupade koondaruanne kuuluvad juhatajale. Aktiivsete kaupad
 kataloogi vaatamine kuulub kliendihaldurile, uudistajale ja kliendile. Selle töökoha
 menüüsse neid tegevusi ei lisata. Ühtegi lehte ei seota funktsiooniga
 `public.f_lopeta_kaup` ega vaadetega `public.v_kaupade_koondaruanne` ja
-`public.v_aktiivsed_kaubad`. Seniseid andmebaasiõigusi ei kitsendatud;
-lehtede valik ei muuda ühist ühenduskontot eraldi juhataja- ja haldurikontoks.
+`public.v_aktiivsed_kaubad`. Ü12 õiguste parandusega eemaldatakse nende
+objektide otseõigused; paigaldamise ja ühenduskasutaja järelkontroll on [Ü12 lisas](u12-viimistlus.md).
 
 ## Andmebaasi liides
 
@@ -82,11 +82,12 @@ Need sammud tuleb teha enda projekti andmebaasis. pgApexi metaandmebaasi
 3. Käivita `sql/09_1_rakenduse_liides.sql` objektide omanikuna pärast `09_rutiinid.sql`.
 4. Olemasoleval paigaldusel käivita ainult järgmine Ü11 õiguste plokk.
    Kogu `16_rights.sql` uuesti ei käivitata, sest see loob juba olemasoleva rolli.
-5. Loo kasutajate halduses eraldi piiratud ühenduskasutaja `epood_u11_login`.
-   Luba LOGIN ja INHERIT, anna liikmesus rollis `epood_rakendus`. Ära anna
+5. Loo või kontrolli [Ü12 lisa](u12-viimistlus.md) järgi piiratud ühenduskasutaja
+   `t253787_epood_kaubahaldur`. Sellel on LOGIN, INHERIT ja liikmesus rollis
+   `epood_rakendus`. Ära anna
    SUPERUSER-, CREATEDB-, CREATEROLE-, REPLICATION- ega BYPASSRLS-õigust,
    omandiõigusi ega täiendavaid liikmesusi. Määra parool interaktiivselt psql-is
-   käsuga `\password epood_u11_login`; ära kirjuta seda faili ega käsurea argumenti.
+   käsuga `\password t253787_epood_kaubahaldur`; ära kirjuta seda faili ega käsurea argumenti.
 6. Kontrolli just ühenduskasutajana vaadete lugemist ja funktsioonide käivitamist.
    Baastabelite lugemine ning muutmine ja funktsiooni `f_leia_tootaja` otsekutse
    peavad olema keelatud. Kontrolli ka päringut, mis tagastab null rida.
@@ -126,7 +127,7 @@ Seda skripti kasutati ainult kohaliku testandmebaasi eemaldamiseks.
 
 Ava ise https://apex2.taltech.ee/pgapex3/. Loo rakendus nimega
 „Kaupade haldus – kauba halduri töökoht”; vajaduse korral lisa nimele matriklinumber.
-Vali projekti andmebaas, ühenduskasutajaks `epood_u11_login` ja sisesta selle parool
+Vali projekti andmebaas, ühenduskasutajaks `t253787_epood_kaubahaldur` ja sisesta selle parool
 ainult seadistusvormi. Pärast SQL-i muutmist kasuta „Refresh database objects”.
 
 Autentimise sinise nupu alt vali „User function”, skeem `public`, funktsioon

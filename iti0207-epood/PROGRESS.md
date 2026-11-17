@@ -1,5 +1,19 @@
 # ITI0207 e-poe — progress
 
+## Seis 17.11.2026: Ü12 kohalik lõppkontroll
+
+Lisatud on piiratud LOGIN-kasutaja `t253787_epood_kaubahaldur`, mis pärib
+`epood_rakendus` õigused. Haldurile jäävad 16 vaate lugemine ja 12 funktsiooni
+käivitamine; juhataja tegevuse ja kasutamata vaadete otseõigused eemaldati.
+Loomisfailis parooli pole. Ü7–Ü11 vaadete ning funktsioonide käitumine säilis.
+
+PostgreSQL 17 ja 18 katsed hõlmasid kogu komplekti, päris ühenduskasutajat,
+vale parooli keeldu, testandmete olemasolu, ANALYZE-i ja EXPLAIN-i, süstimise kujuga
+teksti, Ü11 paigalduse uuendamist ning DROP-i tagasivõtmist ja uuesti ehitamist.
+Kooliserveri SQL, pgApexi seadistus, ametlik disainikontroll, Wordi ühendamine,
+lõplikud kooli varukoopiad ja esitamine on veel tegemata.
+[Ü12 järeljuhend](docs/u12-viimistlus.md) kirjeldab neid samme.
+
 ## Seis 17.11.2026: Ü11 andmebaasiliides ja lehtede juhend
 
 Kaupade halduri jaoks lisandusid 12 lugemisvaadet ja kaks õhukest

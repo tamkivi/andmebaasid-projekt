@@ -62,9 +62,9 @@ siia sisse logida.
 Puhkusel töötaja lubasin sisse samamoodi nagu olemasolev `f_leia_tootaja`.
 Seda abifunktsiooni ega Ü8 rutiine ja Ü9 trigereid ei muudetud. Tuvastamine
 kontrollib lisaks rolliliigi aktiivsust, mida `f_leia_tootaja` eraldi ei kontrolli.
-Selle funktsiooniga ei saa juhatajana sisse logida. Kauba lõpetamise ja
-koondaruande senised andmebaasiõigused säilivad; rakenduse lehtede ja toimingute
-pääsu tuleb kontrollida eraldi. Juhataja töökoha lisamine vajab eraldi pääsureeglit.
+Selle funktsiooniga ei saa juhatajana sisse logida. Ü12 õiguste parandusega
+eemaldatakse kauba lõpetamise ja koondaruande otseõigused halduri rollilt; rakenduse lehtede ja toimingute
+pääsu tuleb endiselt kontrollida eraldi. Juhataja töökoha lisamine vajab eraldi pääsureeglit.
 
 ## Näidisräsi ja õigused
 
