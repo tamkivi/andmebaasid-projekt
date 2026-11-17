@@ -47,6 +47,14 @@ DROP FUNCTION public.f_trig_viimase_muutm_aeg();
 DROP FUNCTION public.f_trig_kaup_aktiivne_seisund();
 DROP FUNCTION public.f_trig_keela_truncate();
 
+-- Vormifunktsioonid eemaldatakse enne nende kutsutavaid rutiine.
+DROP FUNCTION public.f_registreeri_nutitelefon_vormist(character varying,character varying,numeric,text,
+    character varying,character varying,character varying,boolean,boolean,numeric,numeric,
+    integer,numeric,character varying,character varying);
+DROP FUNCTION public.f_muuda_kaup_vormist(text,character varying,character varying,character varying,
+    numeric,text,character varying,character varying,character varying,boolean,boolean,
+    numeric,numeric,integer,numeric,character varying,character varying);
+
 -- Rutiinid eemaldatakse enne nende kasutatavaid tabeleid ja domeeni.
 DROP FUNCTION public.f_on_kaubahaldur(text, text);
 DROP FUNCTION f_aktiveeri_kaup(character varying, character varying);
@@ -92,6 +100,18 @@ DROP FUNCTION f_unusta_kaup(character varying, character varying);
 DROP FUNCTION f_leia_tootaja(character varying, character varying);
 
 -- Vaated ja nende reeglid eemaldatakse enne baastabeleid.
+DROP VIEW public.v_kaupade_detailid_seostega;
+DROP VIEW public.v_kategooriate_valikud_tyybiga;
+DROP VIEW public.v_ekraani_resolutsioonide_valikud;
+DROP VIEW public.v_protsessorite_valikud;
+DROP VIEW public.v_diagonaalide_valikud;
+DROP VIEW public.v_sisemalude_valikud;
+DROP VIEW public.v_kaamerate_valikud;
+DROP VIEW public.v_brandide_valikud;
+DROP VIEW public.v_kauba_muutmise_vorm;
+DROP VIEW public.v_aktiivsed_kaubad_haldurile;
+DROP VIEW public.v_ootel_kaubad;
+
 DROP VIEW v_kaupade_json;
 DROP VIEW v_kaupade_kategooriate_pingeread;
 DROP VIEW v_kaupade_kategooriate_loendid;

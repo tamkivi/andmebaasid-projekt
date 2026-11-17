@@ -87,7 +87,7 @@ BEGIN
 END;
 $yhendus$;
 
--- Rakendus saab käivitada kümmet andmemuudatuse funktsiooni ja tuvastamisfunktsiooni.
+-- Rakendus saab käivitada kümmet andmemuudatuse funktsiooni, kaht vormifunktsiooni ja tuvastamisfunktsiooni.
 GRANT EXECUTE ON FUNCTION f_aktiveeri_kaup(character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kauba_variant(character varying, character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_eemalda_kaup_kategooriast(character varying, character varying, character varying) TO epood_rakendus;
@@ -129,3 +129,23 @@ GRANT EXECUTE ON FUNCTION f_registreeri_nutitelefon(character varying,
     character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION f_unusta_kaup(character varying, character varying) TO epood_rakendus;
 GRANT EXECUTE ON FUNCTION public.f_on_kaubahaldur(text, text) TO epood_rakendus;
+
+-- Rakenduse liides (Ü11).
+GRANT SELECT ON public.v_ootel_kaubad,
+    public.v_aktiivsed_kaubad_haldurile,
+    public.v_kauba_muutmise_vorm,
+    public.v_brandide_valikud,
+    public.v_kaamerate_valikud,
+    public.v_sisemalude_valikud,
+    public.v_diagonaalide_valikud,
+    public.v_protsessorite_valikud,
+    public.v_ekraani_resolutsioonide_valikud,
+    public.v_kategooriate_valikud_tyybiga,
+    public.v_kaupade_detailid_seostega
+    TO epood_rakendus;
+GRANT EXECUTE ON FUNCTION public.f_registreeri_nutitelefon_vormist(character varying,character varying,numeric,text,
+    character varying,character varying,character varying,boolean,boolean,numeric,numeric,
+    integer,numeric,character varying,character varying) TO epood_rakendus;
+GRANT EXECUTE ON FUNCTION public.f_muuda_kaup_vormist(text,character varying,character varying,character varying,
+    numeric,text,character varying,character varying,character varying,boolean,boolean,
+    numeric,numeric,integer,numeric,character varying,character varying) TO epood_rakendus;

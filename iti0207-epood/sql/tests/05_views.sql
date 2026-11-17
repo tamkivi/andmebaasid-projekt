@@ -107,7 +107,18 @@ DECLARE
         'v_kaubad_muutmiseks','v_kaubad','v_kauba_kategooriad','v_kauba_variandid',
         'v_kaupade_detailid','v_kaupade_koondaruanne','v_aktiivsed_kaubad',
         'v_kategooriate_valikud','v_varvide_valikud','v_kaupade_kategooriate_loendid',
-        'v_kaupade_kategooriate_pingeread','v_kaupade_json'];
+        'v_kaupade_kategooriate_pingeread','v_kaupade_json',
+        'v_ootel_kaubad',
+        'v_aktiivsed_kaubad_haldurile',
+        'v_kauba_muutmise_vorm',
+        'v_brandide_valikud',
+        'v_kaamerate_valikud',
+        'v_sisemalude_valikud',
+        'v_diagonaalide_valikud',
+        'v_protsessorite_valikud',
+        'v_ekraani_resolutsioonide_valikud',
+        'v_kategooriate_valikud_tyybiga',
+        'v_kaupade_detailid_seostega'];
     v_tabel record;
     v_sisu jsonb;
     v_enne jsonb:='{}'::jsonb;
@@ -116,7 +127,7 @@ DECLARE
 BEGIN
     IF (SELECT count(*) FROM pg_class AS c INNER JOIN pg_namespace AS n ON n.oid=c.relnamespace
         WHERE n.nspname='public' AND c.relkind='v')<>cardinality(v_nimed) THEN
-        RAISE EXCEPTION 'Avalikus liideses peab olema täpselt kaksteist kavandatud vaadet';
+        RAISE EXCEPTION 'Avalikus liideses peab olema täpselt 23 kavandatud vaadet';
     END IF;
     FOREACH v_vaade IN ARRAY v_nimed LOOP
         v_oid:=to_regclass('public.'||v_vaade);
