@@ -1,5 +1,30 @@
 # ITI0207 e-poe — progress
 
+## Seis 17.11.2026: Ü11 andmebaasiliides ja lehtede juhend
+
+Kaupade halduri jaoks lisandusid 12 lugemisvaadet ja kaks õhukest
+SQL-vormifunktsiooni. Need kohandavad ainult valimata märkeruudu NULL-i FALSE-iks;
+ärikontrollid jäävad senistesse rutiinidesse ja trigeritesse. Ü7–Ü10 lähtekood säilis.
+Detailvaade kasutab uuesti varasemaid vaateid; eemaldamise kategooriavalik sisaldab
+ka suletud väärtustega seoseid ja tüübi nimetust.
+
+Täielik SQL-komplekt läbis kontrolli PostgreSQL 17 ja 18 värskel paigaldusel,
+Ü10 seisust uuendamise ning uuesti ehitamise järel. Kontrolliti ka domeeni nime
+uuendust ja korduskäivitust ning õigusi. Pärast eemaldamist ei jäänud alles
+ühtegi projektiobjekti. Mõlemas versioonis läbisid kontrolli üheksa kahe seansi katset
+ja kaks 30-sekundilist koormustesti. Katsekonteinerid ning nende andmefailid eemaldati.
+
+Paigaldusjärjekord on `run_u5.sql`, `05_views.sql`, `07_tuvastamine.sql`,
+`08_trigerid.sql`, `09_rutiinid.sql`, `09_1_rakenduse_liides.sql`,
+`14_statistics.sql`, `16_rights.sql`. Olemasolevale Ü10 paigaldusele lisatakse
+ainult uus liides ja selle õiguste plokk.
+
+[Ü11 tehniline lisa](docs/u11-rakendus.md) annab täieliku pgApexi lehtede
+seadistuse. Lehed on veel ehitamata, kooliserver on kontrollimata ja Wordi
+originaali ei muudetud. Eriti tuleb koolis lahendada tavalise vormi tegija seos
+sisseloginud kasutajaga ning kontrollida sortimise, filtreerimise ja veateadete
+piiranguid. Hiljem tuleb teha pgapex3 plain-vormingus koopia. Töö on esitamata.
+
 ## Seis 17.11.2026: Ü10 tuvastamine kohalikult kontrollitud
 
 Kaupade halduri töökoha jaoks lisandus kommenteeritud PL/pgSQL-funktsioon

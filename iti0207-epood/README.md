@@ -27,7 +27,17 @@ Projekti kataloogid:
 
 ## Arendus
 
-_(Täiendatakse projekti edenedes)_
+Värske andmebaasi paigaldusjärjekord on `sql/run_u5.sql`, `sql/05_views.sql`,
+`sql/07_tuvastamine.sql`, `sql/08_trigerid.sql`, `sql/09_rutiinid.sql`,
+`sql/09_1_rakenduse_liides.sql`, `sql/14_statistics.sql`, `sql/16_rights.sql`.
+Olemasoleva Ü10 paigalduse uuendus kasutab ainult uut liideseskripti ja Ü11
+õiguste plokki; kogu õiguste faili uuesti ei käivitata, sest see loob rolli.
+
+[Ü11 lisa](docs/u11-rakendus.md) kirjeldab kaupade halduri lehti, vormivälju,
+valikuallikaid, autentimist ja veel kontrollimata pgApexi piiranguid.
+Andmebaasi liidest on kontrollitud kohalikult; lehed tuleb koolis ise ehitada.
+Täielik SQL-kontroll käivitatakse eraldi testandmebaasis failiga
+`sql/tests/run_all.sql`.
 
 ## Esitamine
 
