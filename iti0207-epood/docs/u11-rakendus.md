@@ -18,7 +18,7 @@ sellest erineda. Allpool eristan valmis SQL-i veel kontrollimata kasutajaliidese
 | Tuvasta kasutaja | Sisselogimine | `public.f_on_kaubahaldur` | — |
 | Registreeri nutitelefon | 5, seejärel 10 ja 11 | Klassifikaatorite valikuvaated, kategooria- ja variandivaade | OP1, OP7–OP10 |
 | Unusta kaup | 9 | `public.v_ootel_kaubad` | OP2 |
-| Muuda kaupa | 4, 6, 10 ja 11 | `public.v_kaubad_muutmiseks`, `public.v_kauba_muutmise_vorm`, seosevaated | OP6–OP10 |
+| Muuda kaupa | 3, 4, 6, 10 ja 11 | `public.v_kaubad_muutmiseks`, `public.v_kauba_muutmise_vorm`, seosevaated | OP6–OP10 |
 | Aktiveeri kaup | 7 | `public.v_kaubad_muutmiseks` | OP3 |
 | Muuda kaup mitteaktiivseks | 8 | `public.v_aktiivsed_kaubad_haldurile` | OP4 |
 | Vaata kõiki ootel või mitteaktiivseid kaupu | 4 | `public.v_kaubad_muutmiseks` | — |
@@ -132,7 +132,7 @@ ainult seadistusvormi. Pärast SQL-i muutmist kasuta „Refresh database objects
 Autentimise sinise nupu alt vali „User function”, skeem `public`, funktsioon
 `f_on_kaubahaldur` ning sisselogimise mall. Kasutajanimi läheb esimeseks ja parool
 teiseks argumendiks. Kasutajanimi on e-posti aadress; parool on tõstutundlik.
-Kõigil allpool kirjeldatud lehtedel lülita sisse „Authentication required”.
+Kõigil allpool kirjeldatud lehtedel lülita sisse „Is authentication required”.
 Avaleht peab olema rakenduse koduleht. Ka otse lehe aadressiga avamine peab
 ilma autentimiseta viima sisselogimiseni. Lisa nähtav väljalogimise link.
 
@@ -141,6 +141,9 @@ on eesti keeles. Sisselogimise tõrketeade peab olema „Sisselogimine ebaõnnes
 Avalikus versioonis on keeldumise tekst püsivalt „Permission denied!”; kui kooli
 versioonis seda oma malli kaudu muuta ei saa, jääb see tööriista piiranguks.
 Ära muuda selle pärast jagatud pgApexi funktsioone ega teiste rakenduste malle.
+Lähteprojekti kasutusjuht lubab kuni kolm sisselogimiskatset. Avaliku versiooni
+sisselogimiskoodis katsete loendurit ei ole; kontrolli kooli versiooni tuge.
+See nõue jääb täitmata, kui kasutatav versioon katseid ei piira.
 Piira paroolisisend 72 baidiga, mitte 72 märgiga; tavaline HTML-i märgipiir
 üksi ei kontrolli mitmebaidiste märkide korral seda nõuet. Kontrolli piir pärisvormis.
 
@@ -159,7 +162,8 @@ muuta ootel või mitteaktiivse kauba andmeid ja seoseid ning muuta kauba seisund
 Lisa lingid kõigi menüüs olevate tegevuste juurde. Registreerimise lingi juures
 selgita: „Pärast telefoni salvestamist lisa kategooriad ja värvivariandid.
 Aktiivseks muutmine on eraldi tegevus.”. Näita sisseloginud kasutajat ja
-väljalogimise linki malli vastavate muutujatega. Andmeallikat sellel lehel ei ole.
+väljalogimise linki: HTML-piirkonnas kuvatakse `#APP_USER#` asemel kasutajanimi.
+Väljalogimise lingi aadressiks kasuta `&LOGOUT_LINK&`. Andmeallikat sellel lehel ei ole.
 
 ## Lehed 2 Kõik kaubad ja 3 Kauba andmed
 
@@ -192,11 +196,17 @@ Lisa aruanne allikaga `public.v_kaubad_muutmiseks`. Kuva `kauba_kood`, `nimetus`
 „Pildi aadress” ja „Registreerimise aeg”. `xmin` jääb peitu.
 Suurus 20, leheküljenumbri parameeter `muudetavad_lk`.
 
-Lisa koodiveerule link tekstiga „Muuda %kauba_kood%”. URL on lehe 6 tegelik
-aadress, mille lõppu lisad `?kauba_kood=%kauba_kood%` (olemasoleva päringustringi
-korral kasuta `&`). pgApex asendab `%kauba_kood%` rea väärtusega. Siinsete koodide
-kuju on ainult suurtähed ja numbrid. Lehel 6 loodav URL-i üksus peab kandma nime
-`kauba_kood`. Lisa eraldi link „Aktiveeri kaup” lehele 7.
+Lisa aruandesse kaks eraldi lingiveergu, mitte linki koodiveeru omadusena.
+Esimese lingi tekst on „Muuda” ja aadress
+`&APPLICATION_ROOT&/app/&APPLICATION_ID&/<lehe 6 ID või alias>?kauba_kood=%kauba_kood%`.
+Teise lingi tekst on „Vaata” ja aadress
+`&APPLICATION_ROOT&/app/&APPLICATION_ID&/<lehe 3 ID või alias>?kauba_kood=%kauba_kood%`.
+Asenda nurksulgudes osa tegeliku lehe ID või aliasega. pgApex asendab
+`%kauba_kood%` rea väärtusega. Kaubakood koosneb ainult suurtähtedest ja numbritest.
+Lehel 6 loodav URL-i üksus peab kandma nime `kauba_kood`; lehe 3 detailvaade
+kasutab sama nimega unikaalse veeru URL-parameetrit. „Vaata” kaudu saab enne
+muutmist üle vaadata ka kategooriad ja variandid. Lisa eraldi link
+„Aktiveeri kaup” lehele 7.
 
 ## Leht 5 Registreeri nutitelefon
 
@@ -235,15 +245,17 @@ Kuus valikuvaadet seadista nii; kaameravaadet kasutavad mõlemad kaameraväljad.
 | `p_protsessori_kood` | `v_protsessorite_valikud` | `protsessori_kood` | `protsessori_nimetus` |
 | `p_ekraani_resolutsiooni_kood` | `v_ekraani_resolutsioonide_valikud` | `ekraani_resolutsiooni_kood` | `ekraani_resolutsiooni_nimetus` |
 
-Edukas salvestamine tagastab kauba koodi. Redirect URL on lehe 4 tegelik aadress;
-sealt ava uus kaup ja lisa lehtedel 10–11 kategooriad ning variandid.
-Tagastatud koodi paigutamist Redirect URL-i avalik versioon ei paku.
+Edukas salvestamine tagastab kauba koodi. Määra Success message alloleva tabeli
+järgi ja jäta „Redirect url” tühjaks: leht kuvatakse uuesti koos eduteatega.
+Lisa link „Ava muudetavad kaubad” lehele 4; sealt ava uus kaup ja lisa lehtedel
+10–11 kategooriad ning variandid. Tagastatud kaubakoodi jaoks pole avalikus
+versioonis ümbersuunamisaadressi muutujat.
 Kauba ning iga seose salvestamine on eraldi kinnitatud toiming; need ei moodusta
 ühte ühist tagasipööratavat registreerimistehingut.
 
 ## Leht 6 Muuda kaupa
 
-Lisa „Form”, funktsioon `public.f_muuda_kaup_vormist`. Lülita sisse „Pre-fill form”,
+Lisa „Form”, funktsioon `public.f_muuda_kaup_vormist`. Lülita sisse „Prefill form”,
 vali `public.v_kauba_muutmise_vorm`, lisa tingimus: URL-i parameeter `kauba_kood`
 vastab vaate veerule `kauba_kood`. Nupu tekst „Salvesta muudatused”.
 
@@ -268,11 +280,15 @@ vastab vaate veerule `kauba_kood`. Nupu tekst „Salvesta muudatused”.
 | 17 | `p_ekraani_resolutsiooni_kood` | `ekraani_resolutsiooni_kood` | Ekraani resolutsioon (pikslit) *, DROP_DOWN |
 
 Kasuta samu valikuvaateid nagu lehel 5. `p_ver` on tavaline funktsiooniargument;
-siin ei märgita tabelivormi xmin-valikut. Ära täida tegija aadressi kauba
-registreerija ega viimase muutja andmetega. Suletud klassifikaator ei ilmu valikusse;
-sellise kauba salvestamiseks vali aktiivne väärtus.
+sellel vormil ei kasutata tabelivormi xmin-erivalikut. Ära täida tegija aadressi
+kauba registreerija ega viimase muutja andmetega. Suletud klassifikaator ei ilmu valikusse;
+sellise kauba salvestamiseks vali aktiivne väärtus. Brauser näitab sel juhul
+valiku esimest väärtust; kontrolli enne salvestamist kõik valikud üle.
 
-Pärast salvestamist suuna lehele 4, sest kauba kood võis muutuda. Kategooriate ja
+Määra Success message alloleva tabeli järgi ja jäta „Redirect url” tühjaks.
+Leht kuvatakse uuesti koos eduteatega. Kui muutsid kauba koodi, ei leia vana
+URL-parameeter enam rida ja vorm jääb tühjaks. Lisa link „Tagasi muudetavate
+kaupade juurde” lehele 4 ning ava kaup sealt uue koodiga uuesti. Kategooriate ja
 variantide muutmiseks lisa lingid lehtedele 10 ja 11. Pärast seose muutmist ava
 leht 6 uuesti nimekirjast: seose muutmine uuendab kauba versiooni ja varem
 avatud vorm võib olla aegunud. Vorm ei võimalda muuta registreerimisandmeid ega
@@ -283,8 +299,9 @@ tühja vormi olemasoleva telefoni eduka eeltäitena.
 
 Igal lehel lisa „Tabular form”, mitte tavaline Form. Unikaalne veerg on
 `kauba_kood`, suurus 20, vastavalt parameeter `aktiveeri_lk`, `peata_lk`, `unusta_lk`.
-Lisa üks toimingunupp. Märgi „Add user as final parameter”; xmin-i parameetri
-valik jäta välja. Funktsioon saab `(kauba_kood, sisseloginud kasutajanimi)`.
+Lisa üks toimingunupp. Märgi „The final function parameter expects a value of
+APP_USER variable”; jäta „The second function parameter expects an xmin value”
+märkimata. Funktsioon saab `(kauba_kood, sisseloginud kasutajanimi)`.
 Kasutajanimi võetakse siin serveri seansist, mitte vormiväljast.
 
 | Leht | Allikas skeemis public | Kuva | Funktsioon skeemis public | Nupp |
@@ -342,12 +359,14 @@ toetab sõltuvat valikut, seo see valitud kaubakoodiga ja testi ka suletud vää
 
 Kõigi nelja vormi tegija Default value on `&USERNAME&`, Is visible on FALSE,
 eeltäiteveerg puudub. Nuppude tekstid on vastavalt „Lisa kategooria”,
-„Eemalda kategooria”, „Lisa variant” ja „Eemalda variant”. Redirect URL on sama
-lehe tegelik aadress. Lisa link „Tagasi muudetavate kaupade juurde” lehele 4.
+„Eemalda kategooria”, „Lisa variant” ja „Eemalda variant”. Määra iga vormi
+Success message alloleva tabeli järgi ja jäta „Redirect url” tühjaks. Sama leht
+kuvatakse uuesti koos teate ja värskendatud aruandega. Lisa link
+„Tagasi muudetavate kaupade juurde” lehele 4.
 
 ## Vormide teated ja tegija tuvastamise piir
 
-| Toiming | Edu teade | Error message |
+| Toiming | Eduteade (Success message) | Veateade (Error message) |
 |---|---|---|
 | Registreerimine | Telefon salvestatud. | Telefoni ei salvestatud. Kontrolli kohustuslikke välju, koodi ja nimetuse unikaalsust ning aktiivseid valikuid. |
 | Muutmine | Muudatused salvestatud. | Muudatusi ei salvestatud. Ava kaup uuesti; vorm võib olla aegunud. Kontrolli sisendeid ja kauba muudetavat seisundit. |
@@ -362,14 +381,18 @@ lehe tegelik aadress. Lisa link „Tagasi muudetavate kaupade juurde” lehele 4
 Kõigi muutmistoimingute tõrke juurde lisa ka „Kontrolli oma kasutaja kehtivaid
 õigusi.”. NULL ei sisalda ebaõnnestumise täpset põhjust. Trigerite ja kitsenduste
 vead jõuavad samuti seadistatud Error message alla; näiteks aktiveerimine ilma
-kategooriata ja mitteootel kauba kustutamine annavad `check_violation`-vea.
+kategooriata ja muus kui ootel seisundis kauba kustutamine annavad `check_violation`-vea.
 
-Avaliku versiooni tavaline Form lisab eduteate enne NULL-tulemuse kontrolli.
-Seetõttu jäta tavaliste Form-piirkondade Success message esialgu tühjaks ja
-kasuta edukal tagasisuunamisel värsket nimekirja tulemuse kontrollimiseks.
-Tabelis toodud eduteate võib Form-piirkonnas sisse lülitada alles siis, kui
-kooli versiooni katses ei näidata seda koos veaga. Tabelivormi nuppudele määra
-eduteated kohe; nende kood kontrollib tulemust enne eduteate lisamist.
+Määra kõigile vormidele ja tabelivormi nuppudele tabelis toodud eduteated.
+Avaliku versiooni tavaline Form lisab eduteate samas erandiplokis, kus kontrollib
+NULL-tulemust. Ebaõnnestumisel võetakse eduteate lisamine tagasi ja kuvatakse
+veateade. Ümbersuunamisel teated ei säili, seega jäta lehtede 5, 6, 10 ja 11
+Form-piirkondade „Redirect url” tühjaks. Kinnita see käitumine kooli versioonis.
+
+Success message ja Error message mahutavad kumbki kuni 255 märki, sealhulgas
+lisatava õiguste kontrollimise lause. Input name ja leheküljenumbri URL-parameeter
+tohivad sisaldada ainult ladina tähti A–Z ja a–z ning alakriipsu. Eespool toodud
+nimed ja teated mahuvad nendesse piiridesse.
 
 Peidetud `&USERNAME&` väljaga ei küsita töötajalt tema aadressi, kuid brauserist
 tagasi saadetud väärtust saab muuta. Ü8 rutiin kontrollib aadressile vastava
@@ -403,7 +426,8 @@ andmebaasi tasemel täiendavat kaitset.
 
 [Liidese kontrolltestid](../sql/tests/09_1_rakenduse_liides.sql) kontrollivad
 seisundeid erinevate tehniliste tunnustega, talve- ja suveaega, eeltäidet ja
-märkeruute, suletud klassifikaatoreid, koondloendeid, õigusi ning üheksa
+märkeruute, mõlema vormi positsioonilisi kutseid tüübita literaalidega,
+suurtähtedega kasutajanime, suletud klassifikaatoreid, koondloendeid, õigusi ning üheksa
 andmemuudatuse kutset. [Loetavad näited](../sql/tests/09_1_rakenduse_liides_naited.sql)
 kasutavad ainult väljamõeldud testkontot ja võtavad muudatused tagasi.
 Täielik SQL-komplekt sisaldab ka seniseid Ü7–Ü10 kontrolle ja parooliuuendust.
@@ -419,7 +443,8 @@ Pärast lehtede ehitamist tee järgmised katsed ja kirjuta tegelikud tulemused �
 
 1. Õige ja vale parool, suurtähtedega e-posti aadress, puuduva ja mitteaktiivse
    konto keeld ning ainult juhataja rolliga konto keeld. Kontrolli otseviite kaitset
-   ja väljalogimist. Konto puudumise põhjust kasutajale ei avaldata.
+   ja väljalogimist ning kuni kolme sisselogimiskatse piiri. Konto puudumise
+   põhjust kasutajale ei avaldata.
 2. Registreeri telefon tühja pildiaadressi ja kahe valimata ruuduga. Mõlemad
    väärtused peavad detailis olema „Ei”. Märgi kumbki ruut eraldi ja kontrolli
    kordussalvestamist. Proovi korduvat koodi, korduvat nimetust ja vigast hinda.
@@ -431,7 +456,11 @@ Pärast lehtede ehitamist tee järgmised katsed ja kirjuta tegelikud tulemused �
 5. Aktiveeri kategooriaga kaup; kategooriata aktiveerimine peab ebaõnnestuma.
    Muuda aktiivne kaup mitteaktiivseks. Proovi sama seisundimuudatust uuesti.
 6. Unusta ootel kaup. Aktiivse, mitteaktiivse ja lõpetatud kauba unustamine
-   peab ebaõnnestuma. Kontrolli, et ebaõnnestunud toimingu järel ei näidata edu.
+   peab ebaõnnestuma. Kontrolli kõigi vormide eduteadet eduka salvestamise järel
+   ning ainult veateadet NULL-tulemuse ja erandi korral. Lehed 5, 6, 10 ja 11
+   peavad jääma samale lehele ning seosearuanne peab uuenema. Muuda kauba koodi:
+   lehe 6 vorm peab vana aadressi korral tühjenema; ava kaup uuesti lehe 4 lingist.
+   Kontrolli ka lehe 4 linki „Vaata” koos kategooriate ja variantidega.
 7. Kontrolli kõiki nelja seisundit, seosteta ja telefonikirjeta kauba detaili,
    kaht kategooriat ja kaht värvi ühel kaubal, ajavorminguid, lipikuid ja ühikuid.
 8. Proovi muuta brauseri päringus peidetud tegija aadressi teise kehtiva halduri
@@ -451,7 +480,7 @@ parooliküsimist; SSH-ühenduse loomine ei ole selle juhendi osa.
 pg_dump --format=plain --no-owner --no-privileges --host=apex2.taltech.ee --username=<sinu_kasutaja> --dbname=pgapex3 --password --file=pgapex3-u11.sql
 ```
 
-See on käsu mall: asenda kasutajanimi enda omaga. Ära kopeeri nurksulgudega nime
+See on käsu mall: asenda kasutajanimi enda omaga. Ära kopeeri nurksulgudes nime
 käsureale. Varukoopia sisaldab rakenduse kirjeldust ja võib sisaldada ühenduskonto
 parooli. Hoia faili kaitstult, ära lisa seda repositooriumisse ning vaata enne
 üleslaadimist sisu ja taastatavus üle. Kasuta ainult selleks rakenduseks eraldi
