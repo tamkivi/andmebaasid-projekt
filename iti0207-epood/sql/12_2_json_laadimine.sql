@@ -32,7 +32,7 @@ WHERE jt.seisund=1
 ON CONFLICT (riik_id,isikukood) DO NOTHING;
 
 -- Seon lähteandmete testparooli õige isikuga riigi ja isikukoodi kaudu.
--- Avatekstilise parooli asemel salvestatakse bcrypt-räsi (korduste arv 12, sool on räsi osa).
+-- Avatekstilise parooli asemel salvestatakse bcrypt-räsi (kulutegur 12, sool on räsi osa).
 -- Olemasoleva konto parooli uuesti ei räsita ega muudeta.
 -- Konto aktiivsus saab vaikimisi väärtuse TRUE.
 INSERT INTO kasutajakonto (isik_id,parool)
