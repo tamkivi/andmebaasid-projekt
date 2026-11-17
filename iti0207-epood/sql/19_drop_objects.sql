@@ -2,6 +2,7 @@
 START TRANSACTION;
 
 -- Õigused.
+REVOKE epood_rakendus FROM t253787_epood_kaubahaldur;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM epood_rakendus;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM epood_rakendus;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM epood_rakendus;
@@ -163,6 +164,7 @@ DROP SERVER minu_testandmete_server_apex;
 -- Domeen eemaldatakse alles pärast kõiki sellest sõltuvaid objekte.
 DROP DOMAIN d_klassifikaatori_nimetus RESTRICT;
 
+DROP USER t253787_epood_kaubahaldur;
 DROP ROLE epood_rakendus;
 
 DROP EXTENSION postgres_fdw;

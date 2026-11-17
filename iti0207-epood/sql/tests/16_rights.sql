@@ -10,6 +10,16 @@ BEGIN
     IF has_language_privilege('epood_rakendus','plpgsql','USAGE') THEN
         RAISE EXCEPTION 'Rakendus ei vaja plpgsql kasutusõigust';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='t253787_epood_kaubahaldur'
+        AND rolcanlogin AND rolinherit AND NOT rolsuper AND NOT rolcreatedb
+        AND NOT rolcreaterole AND NOT rolreplication AND NOT rolbypassrls)
+        OR (SELECT count(*) FROM pg_auth_members WHERE member='t253787_epood_kaubahaldur'::regrole)<>1
+        OR NOT pg_has_role('t253787_epood_kaubahaldur','epood_rakendus','USAGE')
+        OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member='t253787_epood_kaubahaldur'::regrole AND admin_option)
+        OR EXISTS (SELECT 1 FROM pg_shdepend WHERE refclassid='pg_authid'::regclass
+            AND refobjid='t253787_epood_kaubahaldur'::regrole AND deptype='o') THEN
+        RAISE EXCEPTION 'Ühenduskasutaja atribuudid, liikmesus või omand pole minimaalsed';
+    END IF;
     FOR v_funktsioon IN SELECT p.oid,p.proname,p.proacl,p.proowner,p.prorettype
         FROM pg_proc AS p INNER JOIN pg_namespace AS n ON n.oid=p.pronamespace
         WHERE n.nspname='public'

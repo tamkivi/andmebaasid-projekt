@@ -154,3 +154,8 @@ REVOKE SELECT ON v_kaubad,v_kaupade_detailid,v_kaupade_koondaruanne,
     v_kaupade_kategooriate_pingeread,v_kaupade_json FROM epood_rakendus;
 REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA laiendused FROM PUBLIC;
+CREATE USER t253787_epood_kaubahaldur NOSUPERUSER NOCREATEDB NOCREATEROLE
+    INHERIT NOREPLICATION NOBYPASSRLS;
+COMMENT ON ROLE t253787_epood_kaubahaldur IS
+    'Kaupade halduri rakenduse piiratud ühenduskasutaja; õigused rolli epood_rakendus kaudu.';
+GRANT epood_rakendus TO t253787_epood_kaubahaldur;
