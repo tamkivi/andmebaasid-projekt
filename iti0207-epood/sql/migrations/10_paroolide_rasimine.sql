@@ -1,5 +1,5 @@
--- Enne käivitamist tee andmebaasist pg_dump-varukoopia ja jäta meelde kasutajanime ja parooli paarid.
--- Asendab ainult bcrypt-kujuta paroolid; korduv käivitamine ei muuda juba räsitud ridu.
+-- Enne käivitamist tee andmebaasist pg_dump-varukoopia ning veendu, et tead kontrollkonto kasutajanime ja parooli.
+-- Asendab ainult paroolid, mis ei ole bcrypt-räsi kujul; korduv käivitamine ei muuda juba räsitud ridu.
 \set ON_ERROR_STOP on
 CREATE SCHEMA IF NOT EXISTS laiendused;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA laiendused;
