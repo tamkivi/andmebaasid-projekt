@@ -11,9 +11,10 @@ Varasema avatekstilise parooli uuendus jätab olemasolevad bcrypt-räsid puutuma
 
 Täielik SQL-komplekt läbis kontrolli kohalikes PostgreSQL 17.12 ja 18.6
 andmebaasides värske paigalduse, Ü9 uuenduse ja uuesti ehitamise järel.
-Kontrolliti õigusi, avateksti uuendust ja korduskäivitust, eemaldamist ning
-null projektiobjekti. PostgreSQL 17-s läbisid kontrolli üheksa kahe seansi
-katset ning kaks koormustesti; tõrkeid ja ummikseise oli null. Eraldi
+Kontrolliti õigusi, avateksti uuendust ja korduskäivitust ning eemaldamist,
+mille järel ei jäänud alles ühtegi projektiobjekti. Mõlemas versioonis läbisid
+kontrolli üheksa kahe seansi katset ning kaks 30-sekundilist koormustesti;
+tõrkeid ja ummikseise oli null. Eraldi
 konteinerid koos nende andmefailidega on eemaldatud.
 
 [Ü10 tehniline lisa](docs/u10-tuvastamine.md) kirjeldab pääsureeglit, kontrolle

@@ -84,7 +84,7 @@ skeemi `laiendused` funktsioone otse.
 
 Tuvastamine ei asenda hilisemate toimingute volituste kontrolli. Ü8 rutiinid
 kontrollivad endiselt neile antud töötaja meiliaadressi; pgApexis tuleb see võtta
-sisselogitud kasutaja seansist, mitte kasutaja muudetavast väljast. Andmebaasi
+sisseloginud kasutaja seansist, mitte kasutaja muudetavast väljast. Andmebaasi
 ühise rakendusekonto olemasolev õiguste hulk iseenesest seda seost ei tõenda.
 
 ## Kontrollimine
@@ -106,11 +106,11 @@ otsekutse annavad õiguste vea 42501. Lähteandmete paroole ei väljastata.
 
 Mõlemas versioonis läbisid kontrolli värske paigaldus, täielik
 [SQL-komplekt](../sql/tests/run_all.sql), Ü9 paigalduse uuendus, kahe
-avatekstilise testkonto räsimine, korduskäivitus, eemaldamine, null
-projektiobjekti kontroll, uuesti ehitamine ja sama SQL-komplekt. Avateksti
-uuendus muutis esimesel korral kaks rida ja teisel null rida. Näidetes on
+avatekstilise testkonto räsimine, korduskäivitus, eemaldamine (pärast seda
+ei jäänud alles ühtegi projektiobjekti), uuesti ehitamine ja sama SQL-komplekt.
+Avateksti uuendus muutis esimesel korral kaks rida ja teisel null rida. Näidetes on
 endiselt 23 tahtlikku Ü8 ja Ü9 viga; kontrollisin ka nende sõnumite vastavust.
-PostgreSQL 17-s läbisid kontrolli üheksa kahe seansi katset ja kaks
+Mõlemas versioonis läbisid kontrolli üheksa kahe seansi katset ja kaks
 30-sekundilist koormustesti. Koormustestide tõrgete ja ummikseisude arv oli null.
 
 Mõõtsin igas versioonis kümmet kutset juhtumi kohta. Tabelis on mediaan
@@ -118,8 +118,8 @@ millisekundites; tegu on kohaliku mõõtmisega, mitte täitmisaegade võrdsuse t
 
 | PostgreSQL | Olemasolev kasutaja, vale parool | Tundmatu kasutaja | Mitteaktiivne konto |
 |---|---:|---:|---:|
-| 17.12 | 212.961 | 213.171 | 213.879 |
-| 18.6 | 214.074 | 213.177 | 213.038 |
+| 17.12 | 213,539 | 213,438 | 212,897 |
+| 18.6 | 214,288 | 213,047 | 213,497 |
 
 ## Paigaldamine, eemaldamine ja järgmised sammud
 
@@ -130,7 +130,8 @@ kontrolli käivitada `migrations/10_paroolide_rasimine.sql`, seejärel
 `07_tuvastamine.sql` ning anda tuvastamisfunktsiooni käivitusõigus olemasolevale
 rakenduserollile faili `16_rights.sql` vastava GRANT-lausega. Kogu õiguste faili
 uuesti ei käivitata, sest see loob rolli. Enne tuvastamise kasutamist peavad
-senised avatekstilised paroolid olema räsitud; muu soolavorming võib anda vea.
+senised avatekstilised paroolid olema räsitud; sobimatus vormingus salvestatud
+parool võib põhjustada vea.
 [Eemaldamise skript](../sql/19_drop_objects.sql) kustutab tuvastamisfunktsiooni
 enne tabeleid ja pgcrypto-laiendust. Kohalikud testikonteinerid koos nende
 andmefailidega on eemaldatud.
