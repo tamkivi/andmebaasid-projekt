@@ -166,6 +166,7 @@ DECLARE
     v_juhataja varchar:=current_setting('epood.vormi_juhataja');
     v_vaade text;
     v_arv bigint;
+    v_tulemus text;
     v_r public.v_kauba_muutmise_vorm%ROWTYPE;
     v_reegel text;
 BEGIN
@@ -245,6 +246,29 @@ BEGIN
             p_kaamera_kood_tagumine:='48',p_sisemalu_kood:='128',p_diagonaali_kood:='6.1',
             p_protsessori_kood:='A16',p_ekraani_resolutsiooni_kood:='2556x1179') IS DISTINCT FROM 'UAP005' THEN
         RAISE EXCEPTION 'Alusfunktsiooni võrdluskutse ebaõnnestus';
+    END IF;
+    -- pgApex koostab positsioonilise kutse tüübita literaalidest; märgitud ruut saadab TRUE.
+    -- Vormindamine lisab ka kasutajanime literaalina, mitte tüübitud avaldisena.
+    EXECUTE format($kutse$
+        SELECT public.f_registreeri_nutitelefon_vormist('UAP006','Vormi kontrolltelefon UAP006','899.50',
+            'Positsiooniline kutse tüübita literaalidega.',NULL,%L,'APPLE','TRUE',NULL,
+            '12','48','128','6.1','A16','2556x1179')
+        $kutse$,upper(v_e_meil)) INTO v_tulemus;
+    IF v_tulemus IS DISTINCT FROM 'UAP006'
+        OR NOT EXISTS (SELECT 1 FROM public.v_kauba_muutmise_vorm WHERE kauba_kood='UAP006'
+            AND on_veekindel IS TRUE AND on_sormejalelugeja IS NULL AND hind=899.50) THEN
+        RAISE EXCEPTION 'Positsiooniline registreerimiskutse ei andnud oodatud tulemust';
+    END IF;
+    SELECT * INTO STRICT v_r FROM public.v_kauba_muutmise_vorm WHERE kauba_kood='UAP006';
+    EXECUTE format($kutse$
+        SELECT public.f_muuda_kaup_vormist(%L,'UAP006','UAP006','Vormi kontrolltelefon UAP006','900.50',
+            'Positsiooniline muutmiskutse tüübita literaalidega.',NULL,%L,'APPLE',NULL,'TRUE',
+            '12','48','128','6.1','A16','2556x1179')
+        $kutse$,v_r.ver,upper(v_e_meil)) INTO v_tulemus;
+    IF v_tulemus IS DISTINCT FROM 'UAP006'
+        OR NOT EXISTS (SELECT 1 FROM public.v_kauba_muutmise_vorm WHERE kauba_kood='UAP006'
+            AND on_veekindel IS NULL AND on_sormejalelugeja IS TRUE AND hind=900.50) THEN
+        RAISE EXCEPTION 'Positsiooniline muutmiskutse ei andnud oodatud tulemust';
     END IF;
     -- Andmebaasis varem kinnitatud rea xmin muutub esimesel vormikutsest salvestamisel.
     SELECT * INTO STRICT v_r FROM public.v_kauba_muutmise_vorm WHERE kauba_kood='APL001';
