@@ -24,6 +24,7 @@ SET search_path TO public;
 START TRANSACTION;
 \ir 16_rights.sql
 ROLLBACK;
+\ir 17_turvalisus.sql
 -- Laadimisskriptid sisaldavad oma tehinguid; neid ei tohi pakkida välise tehingu sisse.
 \ir run_u5.sql
 

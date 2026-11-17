@@ -32,11 +32,11 @@ WHERE jt.seisund=1
 ON CONFLICT (riik_id,isikukood) DO NOTHING;
 
 -- Seon lähteandmete testparooli õige isikuga riigi ja isikukoodi kaudu.
--- Avatekstilise parooli asemel salvestatakse bcrypt-räsi (kulutegur 12, sool on räsi osa).
--- Olemasoleva konto parooli uuesti ei räsita ega muudeta.
+-- Allika testparool lisatakse avatekstina ja räsitakse samas tehingus kohe pärast INSERT-i.
+-- Olemasolevat parooliräsi uuesti ei räsita ega muudeta.
 -- Konto aktiivsus saab vaikimisi väärtuse TRUE.
 INSERT INTO kasutajakonto (isik_id,parool)
-SELECT i.isik_id,laiendused.crypt(jt.parool,laiendused.gen_salt('bf',12))
+SELECT i.isik_id,jt.parool
 FROM valine.Isik_sisend AS a
 CROSS JOIN LATERAL JSON_TABLE(a.isik,'$.isikud[*]' COLUMNS (
     isikukood varchar(50) PATH '$.isikukood',
@@ -48,5 +48,10 @@ INNER JOIN isik AS i ON (i.riik_id=r.riik_id AND i.isikukood=jt.isikukood)
 WHERE jt.seisund=1
     AND NOT EXISTS (SELECT 1 FROM kasutajakonto AS k WHERE k.isik_id=i.isik_id)
 ON CONFLICT (isik_id) DO NOTHING;
+
+-- Enne tehingu kinnitamist asendan avateksti bcrypt-räsiga; olemasolevaid räsisid ei muudeta.
+UPDATE public.kasutajakonto
+SET parool = laiendused.crypt(parool,laiendused.gen_salt('bf',12))
+WHERE parool !~ '^\$2[abxy]\$(0[4-9]|[12][0-9]|3[01])\$[./A-Za-z0-9]{53}$';
 
 COMMIT;
