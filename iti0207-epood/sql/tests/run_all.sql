@@ -19,6 +19,7 @@ SET search_path TO public;
 \ir 12_json_laadimine.sql
 \ir 13_testandmed.sql
 \ir 14_statistics.sql
+\ir 15_explain.sql
 -- Õiguste test vajab SAVEPOINTi ja SET LOCAL ROLE tõttu välist tehingut.
 START TRANSACTION;
 \ir 16_rights.sql

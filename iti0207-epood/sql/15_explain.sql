@@ -1,6 +1,4 @@
--- Kolme baastabelit ühendava kaupade nimekirja päringu täitmisplaan.
-EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON)
+-- Ü7 kolme baastabelit ühendava vaate päringu tekstiline täitmisplaan.
+EXPLAIN (ANALYZE, BUFFERS)
 SELECT kauba_kood,nimetus,brand_nimetus,seisundi_nimetus,hind,kirjeldus
-FROM public.v_kaubad
-WHERE hind BETWEEN 100 AND 1000
-ORDER BY nimetus,kauba_kood;
+FROM public.v_kaubad;
