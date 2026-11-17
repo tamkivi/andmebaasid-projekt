@@ -1,5 +1,27 @@
 # ITI0207 e-poe — progress
 
+## Seis 17.11.2026: Ü10 tuvastamine kohalikult kontrollitud
+
+Kaupade halduri töökoha jaoks lisandus kommenteeritud PL/pgSQL-funktsioon
+`f_on_kaubahaldur`. See kontrollib tõstutundetut meiliaadressi, tõstutundlikku
+parooli, konto aktiivsust, elus isikut, töötaja lubatud seisundit ning aktiivse
+kaubahalduri rolli kehtivust. Sobimatu konto korral arvutatakse räsi sama
+kuluteguriga näidisräsi abil. Ü8 rutiinide ja Ü9 trigerite käitumine säilis.
+Varasema avatekstilise parooli uuendus jätab olemasolevad bcrypt-räsid puutumata.
+
+Täielik SQL-komplekt läbis kontrolli kohalikes PostgreSQL 17.12 ja 18.6
+andmebaasides värske paigalduse, Ü9 uuenduse ja uuesti ehitamise järel.
+Kontrolliti õigusi, avateksti uuendust ja korduskäivitust, eemaldamist ning
+null projektiobjekti. PostgreSQL 17-s läbisid kontrolli üheksa kahe seansi
+katset ning kaks koormustesti; tõrkeid ja ummikseise oli null. Eraldi
+konteinerid koos nende andmefailidega on eemaldatud.
+
+[Ü10 tehniline lisa](docs/u10-tuvastamine.md) kirjeldab pääsureeglit, kontrolle
+ja paigaldamist. Kooliserver, tegelikud kontod ning pgApexi autentimine ja
+seansi kasutaja sidumine toimingutega jäävad üle kontrollida. Wordi dokumenti
+ei muudetud; Ü10 tekst tuleb sinna hiljem lisada ja sisukord uuendada.
+Töö on esitamata.
+
 ## Seis 16.11.2026: Ü9 trigerid kohalikult kontrollitud
 
 Ü9 juhendi versiooni 3 järgi lisandusid 20 trigerit ja 10 kommenteeritud
